@@ -1,198 +1,4 @@
-%% QUESTIONS FOR UTRECHT
-% HOW DO YOU DEAL WITH TRIGGERS (FMRI)/ ECOG?
-% CALIBRATION FILES (INC SCREEN RESOLUTION)
-% HOW DO YOU RECEIVE KEY PRESSES? (65-68 for fMRI)
-% WHAT SOFTWARE DO YOU NORMALLY USE FOR PRFS?
-% CHECK ON GAMMA TABLES INC NYU SOM, UTRECHT IEMU, 3T/7T
-
-
-%% General
-% Height of display in pixels
-imsize = 768;
-
-% load example file
-readPth = 'https://wikis.nyu.edu/download/attachments/85394548/BAIRstimExample.mat?api=v2';
-stimDir = fullfile(BAIRRootPath, 'stimuli');
-fname = 'BAIRstimExample.mat';
-writePth = fullfile(stimDir, fname);
-
-if ~exist(stimDir, 'dir'), mkdir(stimDir); end
-addpath(stimDir);
-
-websave(writePth,readPth);
-
-s_example = load(writePth);
-
-%% MAKE TASK EXPERIMENT
-
-modalities = {'MEG', 'fMRI'};
-for m = 1:length(modalities)
-    
-    modality = modalities{m};
-    
-    switch(modality)
-        case 'fMRI'
-            numruns = 2;
-        case 'MEG'
-            numruns = 2;
-    end
-    
-    for runnum = 1:numruns
-        stimulus = [];
-        stimulus.cmap       = s_example.stimulus.cmap;
-        stimulus.srcRect    = s_example.stimulus.srcRect;
-        stimulus.dstRect    = s_example.stimulus.dstRect;
-        stimulus.images     = s_example.stimulus.images(:,:,end);
-        stimulus.seqtiming  = (0:4*216-1)/4;
-        stimulus.seq        = ones(size(stimulus.seqtiming));
-        stimulus.seqtiming  = (0:4*216-1)/4;
-        stimulus.seq        = ones(size(stimulus.seqtiming));
-        stimulus.fixSeq     = ones(size(stimulus.seqtiming));
-        
-        idx = mod(stimulus.seqtiming,24)<12;
-        stimulus.fixSeq(idx) = 3;
-        
-        % insert blips
-        n = 54;
-        mint = 1.5;
-        maxt = 8;
-        x = linspace(0,1,n) * (1-exp(-mint)) + exp(-mint);
-        y= -log(x)/mint;
-        y = y*(maxt-mint)+mint;
-        
-        y = round(y*4);
-        stim_seq = randperm(n);
-        y = y(stim_seq);
-        blips = cumsum(y);
-        
-        stimulus.fixSeq(blips) = stimulus.fixSeq(blips)+1;
-        
-        switch lower(modality)
-            case 'fmri'
-            otherwise
-                stimulus.diodeSeq = stimulus.fixSeq > 2;
-                stimulus.trigSeq  = stimulus.fixSeq;
-        end
-        
-        
-        fname = sprintf('task_%s_%d', modality, runnum);
-        save(fullfile(stimDir, fname), 'stimulus')
-        
-    end
-    
-end
-
-%% HRF (zebras)
-
-
-numruns = 12;
-numim   = n+1;
-images  = zeros(768, 768, numim, 'uint8')+127;
-
-load('bar_carrier.mat')
-
-bar_carrier = bar_carrier-0.5;
-[x,y] = meshgrid(linspace(-1,1,imsize));
-[th,r] = cart2pol(x,y);
-mask = r<=1;
-
-
-for ii = 1:numim-1
-    images(:,:,ii) =   (bar_carrier(:,:,ii) .* double(mask))*127+128;
-end
-figure, 
-for runnum = 1:numruns
-    seq    = randperm(n);
-    onsets = cumsum(lags(randperm(n)));
-    
-    
-    stimulus = [];
-    stimulus.cmap       = s_example.stimulus.cmap;
-    stimulus.srcRect    = s_example.stimulus.srcRect;
-    stimulus.dstRect    = s_example.stimulus.dstRect;
-    stimulus.images     = images;
-    stimulus.seqtiming  = (1:300*4)/4;
-    stimulus.seq        = zeros(size(stimulus.seqtiming))+numim;
-    stimulus.seq(onsets) = seq;
-    stimulus.fixSeq     = ones(size(stimulus.seqtiming));    
-
-    this_frame = 0;
-    while true
-        % wait between 4 and 20 frames (1 to 5 seconds)
-        isi = randperm(16,1)+3;
-        this_frame = this_frame + isi;
-        if this_frame > length(stimulus.fixSeq), break; end
-        stimulus.fixSeq(this_frame:end) = mod(stimulus.fixSeq(this_frame-1),2)+1;
-    end
-    
-    switch lower(modality)
-        case 'fmri'
-        otherwise
-            stimulus.trigSeq  = double(stimulus.seq>0);
-            stimulus.diodeSeq = stimulus.trigSeq;
-    end
-    
-    
-    pth = '~/matlab/toolboxes/BAIR/stimuli/';
-    fname = sprintf('hrf_%s_%d', modality, runnum);
-    save(fullfile(pth, fname), 'stimulus')
-    subplot(4,4,runnum),
-    plot(stimulus.seqtiming, stimulus.seq)
-end
-
-
-%% PRF
-modality = 'fMRI';
-s_example=load(sprintf('spatiotemporal_%s_1.mat', modality));
-numruns = 2;
-
-load('bar_apertures.mat')
-load('bar_carrier.mat')
-
-bar_carrier = bar_carrier-0.5;
-
-numim = size(bar_apertures,3)*3;
-% 3 images per aperture
-images = zeros(768, 768, numim, 'uint8')+127;
-for ii = 1:numim
-    idx = ceil(ii/3);
-    idx2 = randsample(size(bar_carrier,3),1);
-    images(:,:,ii) = bar_apertures(:,:,idx) .* bar_carrier(:,:,idx2) * 127+127;
-end
-
-
-
-for runnum = 1:numruns
-    stimulus = [];
-    stimulus.cmap       = s_example.stimulus.cmap;
-    stimulus.srcRect    = s_example.stimulus.srcRect;
-    stimulus.dstRect    = s_example.stimulus.destRect;
-    stimulus.images     = images;
-    stimulus.seqtiming  = (0:numim-1)/2;
-    stimulus.seq        = 1:length(stimulus.seqtiming);
-    stimulus.fixSeq     = ones(size(stimulus.seqtiming));    
-    
-   
-    
-    pth = '~/matlab/toolboxes/BAIR/stimuli/';
-    fname = sprintf('ret_%s_%d', modality, runnum);
-    save(fullfile(pth, fname), 'stimulus')
-    
-end
-
-% HRF
-%       Exponential ISI, mean XX, range XX
-% TASK
-%       12 s fixation task, 12 s relax, repeat 8 times (to measure anticipatory BOLD)
-% RETINOTOPY
-%       Like Dumoulin and Wandell, 2008: 8 sweeps ? 4 cardinal, 4 diagonal (diagonals include 50% blanks)
-% SPATIOTEMPORAL
-%        VISUAL: 36 unique stimuli, shown once each per scan (0.5 s except for temporal stimuli),
-%                with mean ISI of 4.5 s, range 3-6 s; orientation (3; 1 grating, 1 plaid, 1 circular);
-%                contrast (5; noise patterns); spacing: (5: noise patterns, 1 overlaps with contrast);
-%                objects (12: 3 faces, 3 scenes, 3 objects, 3 bodies); temporal (12; 6 durations; 6 ISIs);
-
-
+function stimMakeSpatiotemporalExperiment(s_example, modality)
 %% SPATIO TEMPORAL (12 repeats, ECoG, fMRI; 24 for E/MEG !?)
 % For visual experiments, we use band-pass, gray-scale images, spanning
 % many stimulus dimensions. Twelve were used in a prior publication [69,70],
@@ -215,14 +21,38 @@ end
 % Letters -  4                             KNK 173 (sample 6 * 8 for 12 runs, 4 each)
 % Scenes -   4                             KNK 175 (sample 6 * 8 for 12 runs, 4 each)
 
+imsize = s_example.stimulus.srcRect(4);
 
-% make stimulus struct
-load('/Volumes/server/Projects/SOC/knk/socmodel/stimuli.mat');
+% Download spatiotemporal stimuli
+images = [];
+for ii = 1:13
+    readPth = sprintf('https://wikis.nyu.edu/download/attachments/85394548/spatiotemporal%d.mat?api=v2', ii);
+    stimDir = fullfile(BAIRRootPath, 'stimuli');
+    fname = sprintf('spatiotemporal%d.mat', ii);
+    writePth = fullfile(stimDir, fname);
+    if ~exist(writePth, 'file'),  websave(writePth,readPth); end
+    tmp = load(writePth);
+    images = [images tmp.im];
+end
 
+switch(lower(modality))
+    case 'fmri'
+        numruns = 4;
+        ITI_min  = 3;
+        ITI_max  = 6;
+        prescan  = 9; % seconds
+        postscan = 9; % seconds
+    case {'ecog' 'eeg' 'meg'}
+        numruns = 12;
+        ITI_min  = 1.25;
+        ITI_max  = 1.75;
+        prescan  = 2; % seconds
+        postscan = 2; % seconds
+    otherwise
+        error('Unknown modality')
+end
 
-%% SPATIOTEMPORAL
-modality = 'MEG';
-for runnum = 2:12
+for runnum = 1:numruns
     
     stimulus = [];
     
@@ -231,17 +61,6 @@ for runnum = 2:12
     
     switch lower(modality)
         case 'fmri'
-            ITI_min  = 3;
-            ITI_max  = 6;
-            prescan  = 9; % seconds
-            postscan = 9; % seconds
-        case {'ecog' 'eeg' 'meg'}
-            ITI_min  = 1.25;
-            ITI_max  = 1.75;
-            prescan  = 2; % seconds
-            postscan = 2; % seconds
-        otherwise
-            error('Unknown modality')
     end
     
     knk_idx = [...
@@ -469,7 +288,7 @@ for runnum = 2:12
     stimulus.seq = seq;
     stimulus.seqtiming = seqtiming;
     
-    % triggers    
+    % triggers
     trigSeq  = zeros(size(stimulus.seq));
     diodeSeq = zeros(size(stimulus.seq));
     
@@ -517,7 +336,7 @@ for runnum = 2:12
     stimulus.cmap = (1:256)' * ones(1,3);
     
     stimulus.srcRect = [0 0 imsize imsize];
-    stimulus.destRect = [128 0 896 768];
+    stimulus.dstRect = [128 0 896 768];
     %       images: [768×768×91 uint8]
     %          cmap: [256×3 double]
     %           seq: [182×1 double]
@@ -529,85 +348,10 @@ for runnum = 2:12
     %      diodeSeq: [182×1 double]
     
     
-    pth = '~/matlab/toolboxes/BAIR/stimuli/';
+    
     fname = sprintf('spatiotemporal_%s_%d', modality, runnum);
-    if ~exist(pth, 'dir'), mkdir(pth); end
-    save(fullfile(pth, fname), 'stimulus')
+    save(fullfile(BAIRRootPath, 'stimuli', fname), 'stimulus')
     
 end
 
 
-
-%%
-
-% test it
-figure
-for ii = 1:length(stimulus.seq_sparse)-1
-    imshow(stimulus.images(:,:,stimulus.seq_sparse(ii)));
-    axis image; colormap gray;
-    pause(stimulus.seqtiming_sparse(ii+1)-stimulus.seqtiming_sparse(ii));
-end
-
-stimulus.cmap = (ones(3,1)*(1:256))';
-stimulus.srcRect = [0 0 size(stimulus.images,1) size(stimulus.images,1)];
-
-if saveStimulus
-    stimulus = rmfield(stimulus, 'im_cell');
-    save ~/matlab/BAIR_spatiotemporal stimulus
-end
-
-% FIXATION
-% MULTIPLE RUNS
-
-
-%% Run it
-
-params = retCreateDefaultGUIParams;
-params.experiment = 'experiment from file';
-params.loadMatrix = 'BAIR_spatiotemporal.mat';
-params.calibration = 'gunjou';
-ret(params)
-
-
-%% HRF
-x = 3:.01:24;
-
-y = exp(-(x-3)/21);
-
-x = 0:.001:1;
-y = exp(-x);
-% log(y) = -(x-3)/21;
-% 21*log(y) = -(x-3);
-% -21*log(y)+3 = x;
-
-figure(1); clf;
-plot(x,y)
-
-sum(x.*y)
-
-%%
-x = rand(1,100000);
-y = -log(x);
-y(y>4) = 4;
-y = y/4;
-y = y*21+3;
-figure(1), histogram(y)
-
-%%
-% log(y) = -(x-3)/21;
-% 21*log(y) = -(x-3);
-x = rand(1,100000) * (1-exp(-3)) + exp(-3);
-y= -log(x)/3;
-y = y*21+3;
-disp(mean(y))
-figure(1),
-clf
-
-histogram(y, 'Normalization', 'pdf')
-hold on
-
-x = 0:.001:1;
-y = exp(-x*3);
-x = x*21+3;
-y = y / (mean(y)*21);
-plot(x,y)
