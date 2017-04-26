@@ -1,2 +1,7 @@
-*.mat
+*~
+*.m~
+*.asv
 *.DS_Store
+*.swp
+*.mat
+
