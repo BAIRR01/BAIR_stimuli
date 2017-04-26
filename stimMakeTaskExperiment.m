@@ -47,7 +47,7 @@ for runnum = 1:numruns
     
     
     fname = sprintf('task_%s_%d', modality, runnum);
-    save(fullfile(BAIRRootPath, 'stimuli', fname), 'stimulus')
+    save(fullfile(vistadispRootPath, 'Retinotopy', 'storedImagesMatrices', fname), 'stimulus')
     
 end
 

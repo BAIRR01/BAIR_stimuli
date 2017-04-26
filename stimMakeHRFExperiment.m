@@ -86,7 +86,7 @@ for runnum = 1:numruns
     
     
     fname = sprintf('hrf_%s_%d', modality, runnum);
-    save(fullfile(BAIRRootPath, 'Stimuli', fname), 'stimulus')
+    save(fullfile(vistadispRootPath, 'Retinotopy', 'storedImagesMatrices',  fname), 'stimulus')
     subplot(4,4,runnum),
     plot(stimulus.seqtiming, stimulus.seq)
 end

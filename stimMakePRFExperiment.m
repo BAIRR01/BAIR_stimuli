@@ -22,10 +22,6 @@ for ii = 1:numim
     images(:,:,ii) = bar_apertures(:,:,idx) .* bar_carrier(:,:,idx2) * 127+127;
 end
 
-
-
-
-
 switch(modality)
     case 'fMRI'
         numruns = 4;
@@ -51,6 +47,6 @@ for runnum = 1:numruns
     
     
     fname = sprintf('ret_%s_%d', modality, runnum);
-    save(fullfile(BAIRRootPath, 'stimuli', fname), 'stimulus')
+    save(fullfile(vistadispRootPath, 'Retinotopy', 'storedImagesMatrices', fname), 'stimulus')
     
 end
