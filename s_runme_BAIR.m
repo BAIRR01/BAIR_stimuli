@@ -15,17 +15,17 @@ end
 
 % 204 SECONDS
 for n = 1:2
-    runmefun(n, 'ret_%s_', modality))
+    runmefun(n, sprintf('ret_%s_', modality))
 end
 
 % 176 SECONDS
 for n = 1:8
-    runmefun(n, 'spatiotemporal_%s_', modality))
+    runmefun(n, sprintf('spatiotemporal_%s_', modality))
 end
 
 % 216 SECONDS
 for n = 1:2
-    runmefun(n, 'task_%s_', modality))
+    runmefun(n, sprintf('task_%s_', modality))
 end
 
 
