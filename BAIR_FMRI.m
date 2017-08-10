@@ -30,7 +30,7 @@ if notDefined('stimfile'), stimfile = 'spatiotemporal_fMRI_'; end
 Screen('Preference', 'SkipSyncTests', 1);
 
 %% Calibration
-cal = 'CBI_NYU_projector';
+cal = 'CBI_Propixx';
 
 
 %% Default parameters
@@ -44,7 +44,7 @@ params.calibration      = cal;
 params.startScan        = 0;
 params.repetitions      = 1;
 params.experiment       = 'Experiment From File';
-params.triggerKey       = '`';
+params.triggerKey       = '5';
 params.devices          = 'External: 2';
 
 

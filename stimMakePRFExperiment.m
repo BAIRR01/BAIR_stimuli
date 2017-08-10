@@ -19,7 +19,7 @@ images = zeros(imsize, imsize, numim, 'uint8')+127;
 for ii = 1:numim
     idx = ceil(ii/3);
     idx2 = randsample(size(bar_carrier,3),1);
-    images(:,:,ii) = bar_apertures(:,:,idx) .* bar_carrier(:,:,idx2) * 127+127;
+    images(:,:,ii) = bar_apertures(:,:,idx) .* (bar_carrier(:,:,idx2)-.5) * 255+127;
 end
 
 switch(modality)
