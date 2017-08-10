@@ -1,6 +1,6 @@
 
 modalities = {'fMRI' 'MEG' 'EEG' 'ECoG'};
-m = input('Which modality (1/2/3/4)? 1 fMRI; 2 MEG; 3 EEG; 4 ECoG');
+m = input('Which modality (1/2/3/4)? 1 fMRI; 2 MEG; 3 EEG; 4 ECoG\n');
 modality = modalities{m};
 
 switch modality
