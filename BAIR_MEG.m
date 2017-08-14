@@ -70,13 +70,14 @@ params.calibration      = cal;
 params.startScan        = 0;
 params.repetitions      = 1;
 params.experiment       = 'Experiment From File';
-
+params.saveMatrix       = 'saveMe';
+params.skipSyncTests    = false;
 
 switch stimfile
     case {'spatiotemporal_MEG_' 'ret_MEG_' 'hrf_MEG_'}
         params.fixation = 'disk';
     case 'task_MEG_'
-        params.fixation = 'dot';
+        params.fixation = '4 color dot';
     otherwise 
         error('Unknown stimfile: %s.', stimfile);
 end
