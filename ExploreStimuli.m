@@ -1,14 +1,14 @@
 %% Load the bpfilter and the base images
 %load(fullfile(rootpath, 'data', 'input', 'stimuli.mat'), 'bpfilter');
 
-addpath(genpath('~/matlab/git/matlabPyrTools'))
 addpath(genpath('~/matlab/git/soccode'))
-addpath(genpath('~/matlab/git/knkutils'))
+addpath(genpath('~/matlab/toolboxes/knkutils'))
 
-load('bpfilter')
-%%
-[output, edge, thresh, res] = createPatternStimulus([768, 768], 1/20, bpfilter);
-[output, edge, thresh, res] = createPatternStimulus([768, 768], 1/10, bpfilter);
+%load('bpfilter')
+load('/Users/jonathanwinawer/matlab/junk/bpfilter.mat')
+%% 
+[output, edge, thresh, res] = createPatternStimulus([768, 768], 1/40, bpfilter);
+%[output, edge, thresh, res] = createPatternStimulus([768, 768], 1/10, bpfilter);
 
 output = output / max(abs(output(:))) + 0.5;
 output(output<0) = 0;output(output>1) = 1;

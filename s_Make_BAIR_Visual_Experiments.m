@@ -20,34 +20,68 @@
 % HOW DO YOU RECEIVE KEY PRESSES? (65-68 for fMRI)
 % CHECK ON GAMMA TABLES INC NYU SOM, UTRECHT IEMU, 3T/7T
 
+%   max stimulus radius (in deg)
+%       16.6º is the height of the screen for the 3T display at Utrecht,
+%       which is the smallest FOV among NYU-3T, UMC-3T, NYU-ECoG, UMC-ECoG,
+%       NYU-MEG
 
-% General
+stimDiameterDeg = 16.6;       % degrees
+peakSFcpd       = 3;          % peak sf of all stimuli (and therefore peak of bandpass filter to make stimuli)
+sfAtHalfMax     = [1.4 4.7];  % spatial frequencies where filter falls off to half-height
 
-% Size of display in pixels
-screensz = [1024 768];
 
-% Example stimulus
-s_example = stimExample(screensz);
+% These are the available displays
+sites       = {'NYU-3T'; 'NYU-MEG'; 'NYU-ECoG'; 'UMC-3T'; 'UMC-7T'; 'UMC-ECoG'};
+displays    = {'CBI_Propixx'; 'meg_lcd'; 'SoMMacBook'; 'default'; 'default'; 'default'};
+modalities  = {'fMRI'; 'MEG'; 'ECoG'; 'fMRI'; 'fMRI'; 'ECoG'};
+%radii       = {12.4 11 11.8 8.3 6.45 11.8}
+
+experimentSpecs = table(displays, modalities, 'RowNames', sites);
+
+% USER SPECIFIED
+%   which display?
+whichSite = listdlg('PromptString', 'Which site?', 'SelectionMode', 'single', 'ListString', sites);
+
+% Generate stimulus template
+stimParams = stimInitialize(experimentSpecs, whichSite, stimDiameterDeg);
+
+stimParams.bpFilter = stimMakeBandPassFilter(stimParams, peakSFcpd, sfAtHalfMax);
 
 % Directory for storing stim files
 stimdir = fullfile(BAIRRootPath, 'stimuli');
 if ~exist(stimdir, 'dir'), mkdir(stimdir); end
 
-% MAKE TASK EXPERIMENT
-
-stimMakeTaskExperiment(s_example, 'fMRI');
-stimMakeTaskExperiment(s_example, 'MEG');
-
 % Make HRF experiment
-stimMakeHRFExperiment(s_example, 'fMRI');
-stimMakeHRFExperiment(s_example, 'MEG');
+stimMakeHRFExperiment(stimParams, 1, .125, 'same');
+stimMakeHRFExperiment(stimParams, 2, .125, 'same');
+stimMakeHRFExperiment(stimParams, 3, .125, 'same');
+stimMakeHRFExperiment(stimParams, 4, .125, 'same');
+stimMakeHRFExperiment(stimParams, 1, .125, 'inverted');
+stimMakeHRFExperiment(stimParams, 2, .125, 'inverted');
+stimMakeHRFExperiment(stimParams, 3, .125, 'inverted');
+stimMakeHRFExperiment(stimParams, 4, .125, 'inverted');
+
+stimMakeHRFExperiment(stimParams, 1, .125, 'checkersame');
+stimMakeHRFExperiment(stimParams, 2, .125, 'checkersame');
+stimMakeHRFExperiment(stimParams, 3, .125, 'checkersame');
+stimMakeHRFExperiment(stimParams, 4, .125, 'checkersame');
+stimMakeHRFExperiment(stimParams, 1, .125, 'checkerinverted');
+stimMakeHRFExperiment(stimParams, 2, .125, 'checkerinverted');
+stimMakeHRFExperiment(stimParams, 3, .125, 'checkerinverted');
+stimMakeHRFExperiment(stimParams, 4, .125, 'checkerinverted');
+
+
+% MAKE TASK EXPERIMENT
+stimMakeTaskExperiment(stimParams, 'fMRI');
+stimMakeTaskExperiment(stimParams, 'MEG');
+
 
 % Make PRF experiment
-stimMakePRFExperiment(s_example, 'fMRI');
-stimMakePRFExperiment(s_example, 'MEG');
+stimMakePRFExperiment(stimParams, 'fMRI');
+stimMakePRFExperiment(stimParams, 'MEG');
 
 % Make spatiotemporal experiment
-stimMakeSpatiotemporalExperiment(s_example, 'fMRI');
-stimMakeSpatiotemporalExperiment(s_example, 'MEG');
+stimMakeSpatiotemporalExperiment(stimParams, 'fMRI');
+stimMakeSpatiotemporalExperiment(stimParams, 'MEG');
 
 

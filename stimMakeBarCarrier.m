@@ -1,4 +1,8 @@
-function bar_carrier = stimMakeBarCarrier()
+function bar_carrier = stimMakeBarCarrier(stimParams)
+
+
+[output, edge, thresh, res] = createPatternStimulus([768, 768], 1/40, stimParams.bpfilter);
+
 % Download bar stimuli
 bar_carrier = [];
 for ii = 1:16

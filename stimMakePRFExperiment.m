@@ -8,7 +8,8 @@ fname    = 'bar_apertures.mat';
 writePth = fullfile(stimDir, fname);
 websave(writePth,readPth);
 im = load(writePth);
-bar_apertures = im.bar_apertures;
+
+bar_apertures = imresize(im.bar_apertures, imsize, 'nearest');
 bar_carrier   = stimMakeBarCarrier();
 
 
@@ -34,7 +35,7 @@ for runnum = 1:numruns
     stimulus.srcRect    = s_example.stimulus.srcRect;
     stimulus.dstRect    = s_example.stimulus.dstRect;
     stimulus.images     = images;
-    stimulus.seqtiming  = (0:numim-1)/2;
+    stimulus.seqtiming  = (0:numim-1)/3;
     stimulus.seq        = 1:length(stimulus.seqtiming);
     stimulus.fixSeq     = ones(size(stimulus.seqtiming));
     
