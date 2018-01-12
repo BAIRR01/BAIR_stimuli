@@ -1,7 +1,7 @@
 
-modalities = {'fMRI' 'MEG' 'EEG' 'ECoG'};
-m = input('Which modality (1/2/3/4)? 1 fMRI; 2 MEG; 3 EEG; 4 ECoG\n');
-modality = modalities{m};
+[experimentSpecs, whichSite] = bairExperimentSpecs('prompt', true);
+
+modality = experimentSpecs.modalities{whichSite};
 
 switch lower(modality)
     case 'fmri', runmefun = @(n, str) BAIR_FMRI(n, str);
@@ -11,10 +11,12 @@ switch lower(modality)
 end
 
 for n = 1:2
-    runmefun(n, sprintf('hrfinverted_%s_', modality))
-    runmefun(n, sprintf('hrfsame_%s_', modality))
+    runmefun(n, sprintf('hrfpatterninverted_%s_', modality))
+    
+    return
+    runmefun(n, sprintf('hrfpattern_%s_', modality))
     runmefun(n, sprintf('hrfcheckerinverted_%s_', modality))
-    runmefun(n, sprintf('hrfcheckersame_%s_', modality))
+    runmefun(n, sprintf('hrfchecker_%s_', modality))
 end
 
 % hrf: 300 SECONDS

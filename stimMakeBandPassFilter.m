@@ -14,6 +14,30 @@ function bandpassFilter   = stimMakeBandPassFilter(stimParams, peakSFcpd, sfAtHa
 % endeavor. Even with the spatial frequency restriction, it is possible
 % to construct a rich diversity of stimuli including objects and other
 % naturalistic stimuli."
+%
+% Example
+% % Check results with a plot
+% 
+% stimDiameterDeg = 16.6;       % degrees
+% peakSFcpd       = 3;          % peak sf of all stimuli (and therefore peak of bandpass filter to make stimuli)
+% sfAtHalfMax     = [1.4 4.7];  % spatial frequencies where filter falls off to half-height
+% 
+% experimentSpecs = bairExperimentSpecs;
+% whichSite = 1;
+% stimParams = stimInitialize(experimentSpecs, whichSite, stimDiameterDeg);
+% bandpassFilter = stimMakeBandPassFilter(stimParams, peakSFcpd, sfAtHalfMax);
+% figure
+% subplot(1,2,1)
+% surf(bandpassFilter)
+% 
+% subplot(1,2,2); hold on
+% 
+% [frequencies, amplitudes, binnedFrequencies, binnedAmplitudes] = ...
+%     compute2DamplitudeSpectrum(bandpassFilter, stimParams.display);
+% 
+% plot(frequencies(:), amplitudes(:), '-', binnedFrequencies, binnedAmplitudes);
+% set(gca, 'XTick', sort([peakSFcpd sfAtHalfMax]), 'XGrid', 'on', 'XLim', [0 10])
+% xlabel('Frequency (cycles per degree)')
 
 
 stimDiameterInPixels = stimParams.stimulus.srcRect(4);
@@ -35,20 +59,6 @@ surroundFilter = fspecial('gaussian', gaussianSupport, surroundSigma);  % low  f
 bandpassFilter =  centerFilter/(mean(centerFilter(:))) - surroundFilter/mean(surroundFilter(:));
 bandpassFilter = bandpassFilter / norm(bandpassFilter(:));
 
-% DEBUG
-% % Check results with a plot
-% figure
-% subplot(1,2,1)
-% surf(bandpassFilter)
-% 
-% subplot(1,2,2); hold on
-% 
-% [frequencies, amplitudes, binnedFrequencies, binnedAmplitudes] = ...
-%     compute2DamplitudeSpectrum(bandpassFilter, stimParams.display);
-% 
-% plot(frequencies(:), amplitudes(:), '-', binnedFrequencies, binnedAmplitudes);
-% set(gca, 'XTick', sort([peakSFcpd sfAtHalfMax]), 'XGrid', 'on', 'XLim', [0 10])
-% xlabel('Frequency (cycles per degree)')
 
 
 

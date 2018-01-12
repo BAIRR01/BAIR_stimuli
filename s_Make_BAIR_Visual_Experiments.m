@@ -29,18 +29,7 @@ stimDiameterDeg = 16.6;       % degrees
 peakSFcpd       = 3;          % peak sf of all stimuli (and therefore peak of bandpass filter to make stimuli)
 sfAtHalfMax     = [1.4 4.7];  % spatial frequencies where filter falls off to half-height
 
-
-% These are the available displays
-sites       = {'NYU-3T'; 'NYU-MEG'; 'NYU-ECoG'; 'UMC-3T'; 'UMC-7T'; 'UMC-ECoG'};
-displays    = {'CBI_Propixx'; 'meg_lcd'; 'SoMMacBook'; 'default'; 'default'; 'default'};
-modalities  = {'fMRI'; 'MEG'; 'ECoG'; 'fMRI'; 'fMRI'; 'ECoG'};
-%radii       = {12.4 11 11.8 8.3 6.45 11.8}
-
-experimentSpecs = table(displays, modalities, 'RowNames', sites);
-
-% USER SPECIFIED
-%   which display?
-whichSite = listdlg('PromptString', 'Which site?', 'SelectionMode', 'single', 'ListString', sites);
+[experimentSpecs, whichSite] = bairExperimentSpecs('prompt', true);
 
 % Generate stimulus template
 stimParams = stimInitialize(experimentSpecs, whichSite, stimDiameterDeg);
@@ -52,24 +41,33 @@ stimdir = fullfile(BAIRRootPath, 'stimuli');
 if ~exist(stimdir, 'dir'), mkdir(stimdir); end
 
 % Make HRF experiment
-stimMakeHRFExperiment(stimParams, 1, .125, 'same');
-stimMakeHRFExperiment(stimParams, 2, .125, 'same');
-stimMakeHRFExperiment(stimParams, 3, .125, 'same');
-stimMakeHRFExperiment(stimParams, 4, .125, 'same');
-stimMakeHRFExperiment(stimParams, 1, .125, 'inverted');
-stimMakeHRFExperiment(stimParams, 2, .125, 'inverted');
-stimMakeHRFExperiment(stimParams, 3, .125, 'inverted');
-stimMakeHRFExperiment(stimParams, 4, .125, 'inverted');
+%   Timing should be specified with values that are integer multiples of
+%   the default refresh rate of 60 Hz (ie 16.66666 ms). And the stimulus
+%   duration should be an even multiple of this value since we may use
+%   paired stimuli for the hRF experiment (a contrast pattern immediately
+%   followed by its contrast-reversed pattern). 
+stimulusDuration  = 0.200; % seconds. 
+dwellTimePerImage = 0.050; % temporal resolution, in s, at which the image sequence is specified 
 
-stimMakeHRFExperiment(stimParams, 1, .125, 'checkersame');
-stimMakeHRFExperiment(stimParams, 2, .125, 'checkersame');
-stimMakeHRFExperiment(stimParams, 3, .125, 'checkersame');
-stimMakeHRFExperiment(stimParams, 4, .125, 'checkersame');
-stimMakeHRFExperiment(stimParams, 1, .125, 'checkerinverted');
-stimMakeHRFExperiment(stimParams, 2, .125, 'checkerinverted');
-stimMakeHRFExperiment(stimParams, 3, .125, 'checkerinverted');
-stimMakeHRFExperiment(stimParams, 4, .125, 'checkerinverted');
+stimMakeHRFExperiment(stimParams, 1, stimulusDuration, dwellTimePerImage,  'pattern');
+stimMakeHRFExperiment(stimParams, 2, stimulusDuration, dwellTimePerImage,  'pattern');
+stimMakeHRFExperiment(stimParams, 3, stimulusDuration, dwellTimePerImage,  'pattern');
+stimMakeHRFExperiment(stimParams, 4, stimulusDuration, dwellTimePerImage,  'pattern');
+stimMakeHRFExperiment(stimParams, 1, stimulusDuration, dwellTimePerImage,  'patternInverted');
+stimMakeHRFExperiment(stimParams, 2, stimulusDuration, dwellTimePerImage,  'patternInverted');
+stimMakeHRFExperiment(stimParams, 3, stimulusDuration, dwellTimePerImage,  'patternInverted');
+stimMakeHRFExperiment(stimParams, 4, stimulusDuration, dwellTimePerImage,  'patternInverted');
 
+stimMakeHRFExperiment(stimParams, 1, stimulusDuration, dwellTimePerImage,  'checker');
+stimMakeHRFExperiment(stimParams, 2, stimulusDuration, dwellTimePerImage,  'checker');
+stimMakeHRFExperiment(stimParams, 3, stimulusDuration, dwellTimePerImage,  'checker');
+stimMakeHRFExperiment(stimParams, 4, stimulusDuration, dwellTimePerImage,  'checker');
+stimMakeHRFExperiment(stimParams, 1, stimulusDuration, dwellTimePerImage,  'checkerinverted');
+stimMakeHRFExperiment(stimParams, 2, stimulusDuration, dwellTimePerImage,  'checkerinverted');
+stimMakeHRFExperiment(stimParams, 3, stimulusDuration, dwellTimePerImage,  'checkerinverted');
+stimMakeHRFExperiment(stimParams, 4, stimulusDuration, dwellTimePerImage,  'checkerinverted');
+
+return
 
 % MAKE TASK EXPERIMENT
 stimMakeTaskExperiment(stimParams, 'fMRI');

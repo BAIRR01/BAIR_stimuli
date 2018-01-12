@@ -6,7 +6,9 @@ function [output, edge, thresh, result] = createPatternStimulus(stimParams, relC
 
 stimWidth  = stimParams.stimulus.srcRect(3)-stimParams.stimulus.srcRect(1);
 stimHeight = stimParams.stimulus.srcRect(4)-stimParams.stimulus.srcRect(2);
+
 % Create a random seed
+
 im = randn(stimHeight, stimWidth);
 im = im./(max(im(:) - min(im(:)))) + 0.5;
 
@@ -14,8 +16,9 @@ im = im./(max(im(:) - min(im(:)))) + 0.5;
 mid = ceil((size(im)+1)/2);
 
 % Create a soft round filter in Fourier space
-radius = relCutoff*size(im,1)/2;
+radius = relCutoff;%  size(im,1)/2;
 mask = mkDisc(size(im), radius, mid, radius/5);
+%IM  = mkDisc(SIZE, RADIUS, ORIGIN, TWIDTH, VALS)
 
 % Filter the image
 dft = fftshift(fft2(im));

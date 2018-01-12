@@ -50,14 +50,10 @@ params.saveMatrix       = 'saveMe';
 params.skipSyncTests    = false;
 
 switch stimfile
-    case {'spatiotemporal_fMRI_' 'ret_fMRI_' 'hrf_fMRI_' ...
-            'hrfrepeat_fMRI_' 'hrfinverted_fMRI_' 'hrfnone_fMRI_'  'hrfsame_fMRI_' ...
-            'hrfcheckerrepeat_fMRI_' 'hrfcheckerinverted_fMRI_' 'hrfcheckernone_fMRI_'  'hrfcheckersame_fMRI_'}
-        params.fixation = 'disk';
     case 'task_fMRI_'
         params.fixation = '4 color dot';
     otherwise 
-        error('Unknown stimfile: %s.', stimfile);
+        params.fixation = 'disk';
 end
 
 

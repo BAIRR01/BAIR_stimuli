@@ -1,81 +1,125 @@
-function stimMakeHRFExperiment(stimParams, runnum, stimDurationSeconds, repeatStyle)
-%stimMakeHRFExperiment(stimParams)
-%  Stimuli are presented for 0.25 seconds, with an exponentially
+function stimMakeHRFExperiment(stimParams, runnum, stimDurationSeconds, dwellTimePerImage, stimulusType)
+%stimMakeHRFExperiment(stimParams, runnum, stimDurationSeconds, dwellTimePerImage, stimulusType)
+%
+%  Stimuli are presented for stimDurationSeconds, with an exponentially
 %  distributed interstimulus interval (mean ~9s, range 3-24s).
+% 
+%  stimulusType = ... FIX THESE
+%     {'hrfPattern' 'hrfPatternInverted' 'hrfChecker' 'hrfCheckerInverted'};
+
+    
+% See s_Make_BAIR_Visual_Experiments for context
 
 %% Experiment timing
-% stimDurationSeconds = 0.125; % seconds
-% repeatStyles = {'same' 'inverted' 'random' 'none'};
 
+numberOfEventsPerRun  = 32;  
+minimumISIinSeconds   = 3; 
+maximumISIinSeconds   = 24;
 
+% Specify event timing, with an exponential distribution of ISIs
+[~, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun,...
+    minimumISIinSeconds, maximumISIinSeconds, dwellTimePerImage);
 
-numStimuli  = 32;
-minISI      = 3;
-maxISI      = 24;
+%% Make the images
 
-% Choose ISIs with an exponential distribution, ranging from minISI to
-% maxISI in numStimuli equal steps
-[onsets, indices] = getExponentialOnsets(numStimuli, minISI, maxISI, stimDurationSeconds);
+% Specify the pattern density in some arbitrary unit: relCutoff of 1/20
+% gives a moderately dense pattern: See Kay et al, 2013 PLOS CB, figure 5B
+stripesPerImage = 20; 
 
-%% Spatial patterns
+imageSizeInPixels = size(stimParams.stimulus.images);
 
-relCutoff = 1/20;
-sz = size(stimParams.stimulus.images);
-numImages = numStimuli*2+1;
+% The number of images is 2 x the number of stimuli + 1. We multiply by 2
+% because the stimuli may be shown as paired images (a pattern and its
+% contrast reversal). We add 1 to define the blank stimulus.
+numImages = numberOfEventsPerRun*2+1; 
 
-BLANK     = numImages;
+blankImageIndex = numImages;
 
-bkgrnd = 128;
-images = zeros([sz numImages], 'uint8')+bkgrnd;
-for ii = 1:numStimuli
-    
-    if contains(repeatStyle, 'checker')
-        im = createCheckerboard(stimParams, 1/relCutoff/2);
-    else
-        im = createPatternStimulus(stimParams, relCutoff);
+backgroundIntensity = 128;
+
+images = zeros([imageSizeInPixels numImages], 'uint8')+backgroundIntensity;
+
+% Loop to make the images
+for ii = 1:numberOfEventsPerRun
+    ii
+    if contains(stimulusType, 'checker','IgnoreCase',true)
+        imageForThisTrial = createCheckerboard(stimParams, stripesPerImage*2);
+        
+    elseif contains(stimulusType, 'pattern','IgnoreCase',true)
+        imageForThisTrial = createPatternStimulus(stimParams, stripesPerImage);
+        
+    else 
+        error('Unknown stimulus type %s', stimulusType);
+        
     end
     
-    mask = mkDisc(size(im), size(im,1)/2);
+    % Soft circular mask (2 pixels of blurring)
+    circularMask          = mkDisc(imageSizeInPixels, imageSizeInPixels(1)/2);    
+    imageForThisTrial     = imageForThisTrial .* circularMask;
     
-    im = im .*mask;
-    images(:,:,ii) = uint8((im+.5)*255);
-    images(:,:,ii+numStimuli) = uint8((-im+.5)*255);
+    % Double to unsigned 8 bit integer, needed for vistadisp
+    image8Bit             = uint8((imageForThisTrial+.5)*255);
+    
+    % The contrast reversed images will be used for only those experiments
+    % where the pulse has a contrast reversal, otherwise ignored
+    imageContrastReversed = uint8((-imageForThisTrial+.5)*255);
+    
+    images(:,:,ii) = image8Bit;
+    
+    images(:,:,ii+numberOfEventsPerRun) = imageContrastReversed;
 end
 
 
-
+% This is the stimulus structure used by vistadisp
 stimulus = [];
 stimulus.cmap         = stimParams.stimulus.cmap;
 stimulus.srcRect      = stimParams.stimulus.srcRect;
 stimulus.dstRect      = stimParams.stimulus.destRect;
 stimulus.images       = images;
-stimulus.seqtiming    = 0:stimDurationSeconds:300;
-stimulus.seq          = zeros(size(stimulus.seqtiming))+BLANK;
+stimulus.seqtiming    = 0:dwellTimePerImage:300;
+stimulus.seq          = zeros(size(stimulus.seqtiming))+blankImageIndex;
 
-stimOrder = randperm(numStimuli);
-stimulus.seq(indices) = stimOrder;
+% Randomize the assignment of image to trial
+imageIndex = randperm(numberOfEventsPerRun);
+stimulus.seq(onsetIndices) = imageIndex;
 
-switch repeatStyle
-    % repeatStyle = {'same' 'inverted' 'random' 'none'};
-    case {'same' 'checkersame'}
-        stimulus.seq(indices+1) = stimOrder;  
-    case {'none' 'checkernone'}
-    % do nothing
-    case {'inverted' 'checkerinverted'}
-        stimulus.seq(indices+1) = stimOrder+numStimuli;
-    case {'random' 'checkerrandom'}
-        stimulus.seq(indices+1) = randperm(numStimuli);
-    otherwise
-        error('Unknown stimulus repeat style %s', repeatStyle);
-    
+% Specificy the image sequence within each stimulus, which depends on the
+% stimulus duration and the dwell time per image, as well as wehther or not
+% we include a contrast reversal
+imagesPerTrial = round(stimDurationSeconds/dwellTimePerImage);
+sequencePerTrial = zeros(1,imagesPerTrial);
+
+switch lower(stimulusType)
+    case {'pattern' 'checker'}
+        % single image pre trial
+        contrastReversal = false;
+    case {'patterninverted' 'checkerinverted'}
+         % paired images per trial, ie an image and its contrast reversal
+        contrastReversal = true;
 end
 
+if contrastReversal
+    sequencePerTrial(imagesPerTrial/2+1:imagesPerTrial) = numberOfEventsPerRun;
+end
+
+for ii = 1:numberOfEventsPerRun
+    indices = onsetIndices(ii) + (0:imagesPerTrial-1);
+    stimulus.seq(indices) = sequencePerTrial + imageIndex(ii);
+end
+    
 stimulus.fixSeq       = ones(size(stimulus.seqtiming));
 
 this_frame = 0;
+minDurationInSeconds = 1;
+maxDurationInSeconds = 5;
+
+minDurationInImageNumber = round(minDurationInSeconds / dwellTimePerImage);
+maxDurationInImageNumber = round(maxDurationInSeconds / dwellTimePerImage);
+
 while true
-    % wait between 4 and 20 frames (1 to 5 seconds)
-    isi = randperm(16,1)+3;
+    % wait between minDurationInSeconds and maxDurationInSeconds before
+    % flipping the dot color
+    isi = randperm(maxDurationInImageNumber-minDurationInImageNumber,1)+minDurationInImageNumber-1;
     this_frame = this_frame + isi;
     if this_frame > length(stimulus.fixSeq), break; end
     stimulus.fixSeq(this_frame:end) = mod(stimulus.fixSeq(this_frame-1),2)+1;
@@ -88,12 +132,9 @@ switch lower(stimParams.modality{1})
         stimulus.diodeSeq = stimulus.trigSeq;
 end
 
-
-
-fname = sprintf('hrf%s_%s_%d', repeatStyle, stimParams.modality{1}, runnum);
+site = stimParams.experimentSpecs.Row{1};
+fname = sprintf('hrf%s_%s_%d', stimulusType, site, runnum);
 save(fullfile(vistadispRootPath, 'Retinotopy', 'storedImagesMatrices',  fname), 'stimulus')
-%plot(stimulus.seqtiming, stimulus.seq)
-
 
 end
 
