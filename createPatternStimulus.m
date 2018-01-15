@@ -18,7 +18,6 @@ mid = ceil((size(im)+1)/2);
 % Create a soft round filter in Fourier space
 radius = relCutoff;%  size(im,1)/2;
 mask = mkDisc(size(im), radius, mid, radius/5);
-%IM  = mkDisc(SIZE, RADIUS, ORIGIN, TWIDTH, VALS)
 
 % Filter the image
 dft = fftshift(fft2(im));
@@ -33,9 +32,8 @@ edge1 = [0, 0, 0; 1, 0, -1; 0, 0, 0];
 edge2 = [0, 1, 0; 0, 0, 0; 0, -1, 0];
 edge = -1*(imfilter(double(thresh), edge1, 'circular').^2 + imfilter(double(thresh), edge2, 'circular').^2);
 
-% 
+% ?
 edge = 0.18*edge; 
-
 
 % Filter convolutionally with bpfilter in the image domain
 output = imfilter(edge, stimParams.bpFilter, 'circular');

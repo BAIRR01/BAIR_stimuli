@@ -29,6 +29,8 @@ stimDiameterDeg = 16.6;       % degrees
 peakSFcpd       = 3;          % peak sf of all stimuli (and therefore peak of bandpass filter to make stimuli)
 sfAtHalfMax     = [1.4 4.7];  % spatial frequencies where filter falls off to half-height
 
+numberOfRuns    = 1;         
+
 [experimentSpecs, whichSite] = bairExperimentSpecs('prompt', true);
 
 % Generate stimulus template
@@ -49,30 +51,18 @@ if ~exist(stimdir, 'dir'), mkdir(stimdir); end
 stimulusDuration  = 0.200; % seconds. 
 dwellTimePerImage = 0.050; % temporal resolution, in s, at which the image sequence is specified 
 
-stimMakeHRFExperiment(stimParams, 1, stimulusDuration, dwellTimePerImage,  'pattern');
-stimMakeHRFExperiment(stimParams, 2, stimulusDuration, dwellTimePerImage,  'pattern');
-stimMakeHRFExperiment(stimParams, 3, stimulusDuration, dwellTimePerImage,  'pattern');
-stimMakeHRFExperiment(stimParams, 4, stimulusDuration, dwellTimePerImage,  'pattern');
-stimMakeHRFExperiment(stimParams, 1, stimulusDuration, dwellTimePerImage,  'patternInverted');
-stimMakeHRFExperiment(stimParams, 2, stimulusDuration, dwellTimePerImage,  'patternInverted');
-stimMakeHRFExperiment(stimParams, 3, stimulusDuration, dwellTimePerImage,  'patternInverted');
-stimMakeHRFExperiment(stimParams, 4, stimulusDuration, dwellTimePerImage,  'patternInverted');
-
-stimMakeHRFExperiment(stimParams, 1, stimulusDuration, dwellTimePerImage,  'checker');
-stimMakeHRFExperiment(stimParams, 2, stimulusDuration, dwellTimePerImage,  'checker');
-stimMakeHRFExperiment(stimParams, 3, stimulusDuration, dwellTimePerImage,  'checker');
-stimMakeHRFExperiment(stimParams, 4, stimulusDuration, dwellTimePerImage,  'checker');
-stimMakeHRFExperiment(stimParams, 1, stimulusDuration, dwellTimePerImage,  'checkerinverted');
-stimMakeHRFExperiment(stimParams, 2, stimulusDuration, dwellTimePerImage,  'checkerinverted');
-stimMakeHRFExperiment(stimParams, 3, stimulusDuration, dwellTimePerImage,  'checkerinverted');
-stimMakeHRFExperiment(stimParams, 4, stimulusDuration, dwellTimePerImage,  'checkerinverted');
+for runNum = 1:numberOfRuns
+    stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'pattern');
+%     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'patternInverted');
+%     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'checker');
+%     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'checkerinverted');
+end
 
 return
 
 % MAKE TASK EXPERIMENT
 stimMakeTaskExperiment(stimParams, 'fMRI');
 stimMakeTaskExperiment(stimParams, 'MEG');
-
 
 % Make PRF experiment
 stimMakePRFExperiment(stimParams, 'fMRI');

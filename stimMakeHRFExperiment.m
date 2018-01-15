@@ -1,12 +1,11 @@
-function stimMakeHRFExperiment(stimParams, runnum, stimDurationSeconds, dwellTimePerImage, stimulusType)
-%stimMakeHRFExperiment(stimParams, runnum, stimDurationSeconds, dwellTimePerImage, stimulusType)
+function stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, dwellTimePerImage, stimulusType)
+%stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, dwellTimePerImage, stimulusType)
 %
 %  Stimuli are presented for stimDurationSeconds, with an exponentially
 %  distributed interstimulus interval (mean ~9s, range 3-24s).
 % 
-%  stimulusType = ... FIX THESE
+%  stimulusType = ... 
 %     {'hrfPattern' 'hrfPatternInverted' 'hrfChecker' 'hrfCheckerInverted'};
-
     
 % See s_Make_BAIR_Visual_Experiments for context
 
@@ -22,7 +21,7 @@ maximumISIinSeconds   = 24;
 
 %% Make the images
 
-% Specify the pattern density in some arbitrary unit: relCutoff of 1/20
+% Specify the pattern density in some arbitrary unit: a value of 20  
 % gives a moderately dense pattern: See Kay et al, 2013 PLOS CB, figure 5B
 stripesPerImage = 20; 
 
@@ -39,34 +38,55 @@ backgroundIntensity = 128;
 
 images = zeros([imageSizeInPixels numImages], 'uint8')+backgroundIntensity;
 
-% Loop to make the images
-for ii = 1:numberOfEventsPerRun
-    ii
-    if contains(stimulusType, 'checker','IgnoreCase',true)
-        imageForThisTrial = createCheckerboard(stimParams, stripesPerImage*2);
+% determine if we're creating the master or loading resizing for a specific display
+site = stimParams.experimentSpecs.Row{1};
+
+switch lower(site)
+    case 'master'
+
+        % Loop to make the images
+        for ii = 1:numberOfEventsPerRun
+            
+            disp(['Creating stimulus number: ' num2str(ii)]);
+            
+            if contains(stimulusType, 'checker','IgnoreCase',true)
+                imageForThisTrial = createCheckerboard(stimParams, stripesPerImage*2);
+
+            elseif contains(stimulusType, 'pattern','IgnoreCase',true)
+                imageForThisTrial = createPatternStimulus(stimParams, stripesPerImage);
+
+            else 
+                error('Unknown stimulus type %s', stimulusType);
+
+            end
+
+            % Soft circular mask (1 pixel of blurring per 250 pixels in the image)
+            circularMask          = mkDisc(imageSizeInPixels, imageSizeInPixels(1)/2, (imageSizeInPixels+1)./2, 1/250 * imageSizeInPixels(1));    
+            imageForThisTrial     = imageForThisTrial .* circularMask;
+
+            % Double to unsigned 8 bit integer, needed for vistadisp
+            image8Bit             = uint8((imageForThisTrial+.5)*255);
+
+            % The contrast reversed images will be used for only those experiments
+            % where the pulse has a contrast reversal, otherwise ignored
+            imageContrastReversed = uint8((-imageForThisTrial+.5)*255);
+
+            images(:,:,ii) = image8Bit;
+
+            images(:,:,ii+numberOfEventsPerRun) = imageContrastReversed;
+        end
+    otherwise
         
-    elseif contains(stimulusType, 'pattern','IgnoreCase',true)
-        imageForThisTrial = createPatternStimulus(stimParams, stripesPerImage);
+        disp(['Loading and resizing Master stimuli for: ' site]);
+
+        % Load the Master stimuli
+        masterImages = loadBAIRStimulus(stimulusType, 'Master', runNum);
         
-    else 
-        error('Unknown stimulus type %s', stimulusType);
+        % Resize the Master stimuli to the required stimulus size for this
+        % modality and display
+        images = imresize(masterImages, size(stimParams.stimulus.images));
         
-    end
-    
-    % Soft circular mask (2 pixels of blurring)
-    circularMask          = mkDisc(imageSizeInPixels, imageSizeInPixels(1)/2);    
-    imageForThisTrial     = imageForThisTrial .* circularMask;
-    
-    % Double to unsigned 8 bit integer, needed for vistadisp
-    image8Bit             = uint8((imageForThisTrial+.5)*255);
-    
-    % The contrast reversed images will be used for only those experiments
-    % where the pulse has a contrast reversal, otherwise ignored
-    imageContrastReversed = uint8((-imageForThisTrial+.5)*255);
-    
-    images(:,:,ii) = image8Bit;
-    
-    images(:,:,ii+numberOfEventsPerRun) = imageContrastReversed;
+        % INSERT EXCEPTION: UMCU 7T display??
 end
 
 
@@ -83,8 +103,8 @@ stimulus.seq          = zeros(size(stimulus.seqtiming))+blankImageIndex;
 imageIndex = randperm(numberOfEventsPerRun);
 stimulus.seq(onsetIndices) = imageIndex;
 
-% Specificy the image sequence within each stimulus, which depends on the
-% stimulus duration and the dwell time per image, as well as wehther or not
+% Specify the image sequence within each stimulus, which depends on the
+% stimulus duration and the dwell time per image, as well as whether or not
 % we include a contrast reversal
 imagesPerTrial = round(stimDurationSeconds/dwellTimePerImage);
 sequencePerTrial = zeros(1,imagesPerTrial);
@@ -98,6 +118,7 @@ switch lower(stimulusType)
         contrastReversal = true;
 end
 
+% Add the contrast reversed stimuli to the sequence
 if contrastReversal
     sequencePerTrial(imagesPerTrial/2+1:imagesPerTrial) = numberOfEventsPerRun;
 end
@@ -106,7 +127,8 @@ for ii = 1:numberOfEventsPerRun
     indices = onsetIndices(ii) + (0:imagesPerTrial-1);
     stimulus.seq(indices) = sequencePerTrial + imageIndex(ii);
 end
-    
+
+% Create the fixation dot color change sequence
 stimulus.fixSeq       = ones(size(stimulus.seqtiming));
 
 this_frame = 0;
@@ -125,15 +147,15 @@ while true
     stimulus.fixSeq(this_frame:end) = mod(stimulus.fixSeq(this_frame-1),2)+1;
 end
 
+% add triggers for non-fMRI modalities
 switch lower(stimParams.modality{1})
-    case 'fmri'
+    case 'fmri' 
     otherwise
         stimulus.trigSeq  = double(stimulus.seq>0);
         stimulus.diodeSeq = stimulus.trigSeq;
 end
 
-site = stimParams.experimentSpecs.Row{1};
-fname = sprintf('hrf%s_%s_%d', stimulusType, site, runnum);
+fname = sprintf('hrf%s_%s_%d', stimulusType, site, runNum);
 save(fullfile(vistadispRootPath, 'Retinotopy', 'storedImagesMatrices',  fname), 'stimulus')
 
 end
