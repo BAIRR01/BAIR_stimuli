@@ -5,7 +5,10 @@ function [masterImages] = loadBAIRStimulus(stimulusType, site, runNum)
 readPth = vistadispRootPath; 
 
 % Source needs to be updated to location where stimuli are stored and shared, e.g. Flywheel
-% example code:
+% use SciTran software: https://github.com/scitran/client, create toolboxes
+% to add to bairStimuli json files
+%
+% older example code for downloading files:
 % readPth = sprintf('https://wikis.nyu.edu/download/attachments/85394548/bar_carrier%d.mat?api=v2', ii);
 % stimDir = fullfile(BAIRRootPath, 'stimuli');
 % fname = sprintf('bar_carrier%d.mat', ii);

@@ -8,7 +8,6 @@ stimWidth  = stimParams.stimulus.srcRect(3)-stimParams.stimulus.srcRect(1);
 stimHeight = stimParams.stimulus.srcRect(4)-stimParams.stimulus.srcRect(2);
 
 % Create a random seed
-
 im = randn(stimHeight, stimWidth);
 im = im./(max(im(:) - min(im(:)))) + 0.5;
 
@@ -32,7 +31,8 @@ edge1 = [0, 0, 0; 1, 0, -1; 0, 0, 0];
 edge2 = [0, 1, 0; 0, 0, 0; 0, -1, 0];
 edge = -1*(imfilter(double(thresh), edge1, 'circular').^2 + imfilter(double(thresh), edge2, 'circular').^2);
 
-% ?
+% Scale the edge contrast (this value was found empirically to maximize
+% contrast whilst preventing too much clipping for SOC stimuli)
 edge = 0.18*edge; 
 
 % Filter convolutionally with bpfilter in the image domain

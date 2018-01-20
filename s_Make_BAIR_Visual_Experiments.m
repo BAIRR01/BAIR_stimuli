@@ -29,7 +29,7 @@ stimDiameterDeg = 16.6;       % degrees
 peakSFcpd       = 3;          % peak sf of all stimuli (and therefore peak of bandpass filter to make stimuli)
 sfAtHalfMax     = [1.4 4.7];  % spatial frequencies where filter falls off to half-height
 
-numberOfRuns    = 1;         
+numberOfRuns    = 1%10;         
 
 [experimentSpecs, whichSite] = bairExperimentSpecs('prompt', true);
 
@@ -53,9 +53,9 @@ dwellTimePerImage = 0.050; % temporal resolution, in s, at which the image seque
 
 for runNum = 1:numberOfRuns
     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'pattern');
-%     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'patternInverted');
-%     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'checker');
-%     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'checkerinverted');
+    stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'patternInverted');
+    stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'checker');
+    stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'checkerinverted');
 end
 
 return

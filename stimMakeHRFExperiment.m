@@ -41,8 +41,8 @@ images = zeros([imageSizeInPixels numImages], 'uint8')+backgroundIntensity;
 % determine if we're creating the master or loading resizing for a specific display
 site = stimParams.experimentSpecs.Row{1};
 
-switch lower(site)
-    case 'master'
+switch site
+    case 'Master'
 
         % Loop to make the images
         for ii = 1:numberOfEventsPerRun
@@ -75,18 +75,27 @@ switch lower(site)
 
             images(:,:,ii+numberOfEventsPerRun) = imageContrastReversed;
         end
-    otherwise
         
-        disp(['Loading and resizing Master stimuli for: ' site]);
+    otherwise        
+        % Resize the Master stimuli to the required stimulus size for this
+                % modality and display
+        disp(['Loading Master stimuli for: ' site]);
 
         % Load the Master stimuli
         masterImages = loadBAIRStimulus(stimulusType, 'Master', runNum);
-        
-        % Resize the Master stimuli to the required stimulus size for this
-        % modality and display
-        images = imresize(masterImages, size(stimParams.stimulus.images));
-        
-        % INSERT EXCEPTION: UMCU 7T display??
+    
+        switch site
+            case 'UCM-7T'
+                disp(['Resizing AND cropping Master stimuli for: ' site]);
+                
+                % how to do the cropping?
+                images = imresize(masterImages, size(stimParams.stimulus.images));
+            
+            otherwise    
+                
+                disp(['Resizing Master stimuli for: ' site]);
+                images = imresize(masterImages, size(stimParams.stimulus.images));
+        end
 end
 
 
