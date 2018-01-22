@@ -16,7 +16,7 @@ minimumISIinSeconds   = 3;
 maximumISIinSeconds   = 24;
 
 % Specify event timing, with an exponential distribution of ISIs
-[~, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun,...
+[onsets, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun,...
     minimumISIinSeconds, maximumISIinSeconds, dwellTimePerImage);
 
 %% Make the images
@@ -164,7 +164,40 @@ switch lower(stimParams.modality{1})
         stimulus.diodeSeq = stimulus.trigSeq;
 end
 
+% create stimulus.mat filename
 fname = sprintf('hrf%s_%s_%d', stimulusType, site, runNum);
+
+% add table with elements to write to tsv file for BIDS
+onset = reshape(onsets, [numberOfEventsPerRun 1]);
+duration = ones(numberOfEventsPerRun,1) * stimDurationSeconds;
+trial_type = repmat('Pulse', numberOfEventsPerRun,1);
+stim_file = repmat(fname, numberOfEventsPerRun,1);
+stim_file_index = reshape(imageIndex, [numberOfEventsPerRun 1]);
+
+stimulus.tsv = table(onset, duration, trial_type, stim_file, stim_file_index);
+
+% NOTES:
+% columns here were determined based on example script and file in:
+% /Volumes/server/Projects/BAIR/MRI/data/visual/wl_subj001_20170823/code/makeHRFTSVFiles.m
+% /Volumes/server/Projects/BAIR/BIDS_example/visualFullSet/sub-wlsubj014/ses-nyu3T01/func/sub-wlsubj014_ses-nyu3T01_task-spat_run-01_bold.tsv
+% TO WRITE TSV FILE OUT use this function: 
+% writetable(stimulus.tsv, 'output.tsv', 'FileType','text', 'Delimiter', '\t') 
+
+% QUESTIONS: 
+% Q1: should onsets be the ones derived with getExponentialOnsets (below)?
+%     or should they be in units of dwellTimePerImage? In that case use this:
+%           blankIdx = mode(stimulus.seq);
+%           eventIdx = stimulus.seq ~= blankIdx;
+%           onset = stimulus.seqtiming(eventIdx)
+%           stim_file_index = stimulus.seq(eventIdx)
+%     !!! onsets from getExponentialOnsets appears to be shifted relative to using
+%         stimulus.seq? !!!
+% Q3: are these the columns we want in the TSV file?
+% Q4: writing out the TSV file should happen in stimulus presentation code? e.g. BAIR_FMRI
+%     (probably needs to be updated anyway to accomodate filenaming changes?)
+% Q5: do we want to add StimParams to stimulus file?
+
+% save
 save(fullfile(vistadispRootPath, 'Retinotopy', 'storedImagesMatrices',  fname), 'stimulus')
 
 end
