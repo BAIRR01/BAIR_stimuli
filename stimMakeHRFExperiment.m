@@ -60,10 +60,6 @@ switch site
 
             end
 
-            % Soft circular mask (1 pixel of blurring per 250 pixels in the image)
-            circularMask          = mkDisc(imageSizeInPixels, imageSizeInPixels(1)/2, (imageSizeInPixels+1)./2, 1/250 * imageSizeInPixels(1));    
-            imageForThisTrial     = imageForThisTrial .* circularMask;
-
             % Double to unsigned 8 bit integer, needed for vistadisp
             image8Bit             = uint8((imageForThisTrial+.5)*255);
 
@@ -84,9 +80,18 @@ switch site
         % Load the Master stimuli
         masterImages = loadBAIRStimulus(stimulusType, 'Master', runNum);
     
-                 
+        % Resize         
         disp(['Resizing Master stimuli for: ' site]);
         images = imresize(masterImages, size(stimParams.stimulus.images));
+        
+        % Soft circular mask (1 pixel of blurring per 250 pixels in the image)
+        supportDiameter       = imageSizeInPixels(1);
+        maskRadius            = (stimParams.stimulus.srcRect(3) - stimParams.stimulus.srcRect(1))/2;
+        circularMask          = mkDisc(supportDiameter, maskRadius, (imageSizeInPixels+1)./2, 1/250 * imageSizeInPixels(1));
+        imagesDouble          = double(images)/255-.5;
+        imagesMasked          = bsxfun(@times,imagesDouble,  circularMask);
+        images                = uint8((imagesMasked+.5)*255);
+
 end
 
 
@@ -193,7 +198,6 @@ stimulus.tsv = table(onset, duration, trial_type, stim_file, stim_file_index);
 stimulus.display  = stimParams.display;
 stimulus.modality = stimParams.modality;
 stimulus.site     = site;
-stimulus          = bairCheckStimulus(stimulus);
 
 save(fullfile(vistadispRootPath, 'Retinotopy', 'storedImagesMatrices',  fname), 'stimulus')
 
