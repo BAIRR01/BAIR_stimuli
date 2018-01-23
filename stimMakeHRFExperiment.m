@@ -50,7 +50,7 @@ switch site
             disp(['Creating stimulus number: ' num2str(ii)]);
             
             if contains(stimulusType, 'checker','IgnoreCase',true)
-                imageForThisTrial = createCheckerboard(stimParams, stripesPerImage*2);
+                imageForThisTrial = createCheckerboard(stimParams, round(stripesPerImage/3));
 
             elseif contains(stimulusType, 'pattern','IgnoreCase',true)
                 imageForThisTrial = createPatternStimulus(stimParams, stripesPerImage);
@@ -75,13 +75,13 @@ switch site
     otherwise        
         % Resize the Master stimuli to the required stimulus size for this
                 % modality and display
-        disp(['Loading Master stimuli for: ' site]);
+        fprintf('[%s]: Loading Master stimuli for: %s\n', mfilename, site);
 
         % Load the Master stimuli
         masterImages = loadBAIRStimulus(stimulusType, 'Master', runNum);
     
         % Resize         
-        disp(['Resizing Master stimuli for: ' site]);
+        fprintf('[%s]: Resizing Master stimuli for: %s\n', mfilename,  site);
         images = imresize(masterImages, size(stimParams.stimulus.images));
         
         % Soft circular mask (1 pixel of blurring per 250 pixels in the image)
@@ -164,13 +164,14 @@ end
 fname = sprintf('hrf%s_%s_%d', stimulusType, site, runNum);
 
 % add table with elements to write to tsv file for BIDS
-onset = reshape(onsets, [numberOfEventsPerRun 1]);
-duration = ones(numberOfEventsPerRun,1) * stimDurationSeconds;
-trial_type = repmat('Pulse', numberOfEventsPerRun,1);
-stim_file = repmat(fname, numberOfEventsPerRun,1);
+onset       = reshape(onsets, [numberOfEventsPerRun 1]);
+duration    = ones(numberOfEventsPerRun,1) * stimDurationSeconds;
+trial_type  = ones(numberOfEventsPerRun,1);
+trial_name  = repmat(stimulusType, numberOfEventsPerRun,1);
+stim_file   = repmat(fname, numberOfEventsPerRun,1);
 stim_file_index = reshape(imageIndex, [numberOfEventsPerRun 1]);
 
-stimulus.tsv = table(onset, duration, trial_type, stim_file, stim_file_index);
+stimulus.tsv = table(onset, duration, trial_type, trial_name, stim_file, stim_file_index);
 
 % NOTES:
 % columns here were determined based on example script and file in:
@@ -180,18 +181,7 @@ stimulus.tsv = table(onset, duration, trial_type, stim_file, stim_file_index);
 % writetable(stimulus.tsv, 'output.tsv', 'FileType','text', 'Delimiter', '\t') 
 
 % QUESTIONS: 
-% Q1: should onsets be the ones derived with getExponentialOnsets (below)?
-%     or should they be in units of dwellTimePerImage? In that case use this:
-%           blankIdx = mode(stimulus.seq);
-%           eventIdx = stimulus.seq ~= blankIdx;
-%           onset = stimulus.seqtiming(eventIdx)
-%           stim_file_index = stimulus.seq(eventIdx)
-%     !!! onsets from getExponentialOnsets appears to be shifted relative to using
-%         stimulus.seq? !!!
-% Q3: are these the columns we want in the TSV file?
-% Q4: writing out the TSV file should happen in stimulus presentation code? e.g. BAIR_FMRI
-%     (probably needs to be updated anyway to accomodate filenaming changes?)
-% Q5: do we want to add StimParams to stimulus file?
+% Are these the columns we want in the TSV file?
 
 % save
 
@@ -223,7 +213,7 @@ ISIs = round(ISIs/temporalResolution)*temporalResolution;
 
 % Compute the cummulative sum of ISIs to get the onset times
 onsets = cumsum([8 ISIs(randperm(numStimuli-1))]);
-indices  = round(onsets/temporalResolution);
+indices  = round(onsets/temporalResolution)+1;
 % % Debug
 % figure(2), clf; set(gcf, 'Color', 'w')
 % set(gca, 'FontSize', 24, 'XTick', 0:60:300, 'YTick', []); hold on

@@ -1,43 +1,57 @@
-function BAIR_FMRI(n, stimfile)
-% BAIR_FMRI(n, stimfile)
+function BAIR_FMRI(n, stimPrefix, specs, subjID)
+% BAIR_FMRI(n, stimPrefix, specs, subjID)
 %
 % FMRI BAIR experiments
 % ------
 %   Run time per experiment = XX seconds
 %
 % INPUTS
-%   n is the runnumber [1 24]
-%   stimfile is the prefix for the stimulus fils containing images, and
-%           should be
-%               - spatiotemporal_fMRI_
-%               - task_fMRI_
-%           
-% The actual stim files have names like
-%   spatiotemporal_fMRI_1.mat
-%   spatiotemporal_fMRI_2.mat
-
-% Example
-%   BAIR_FMRI(1, 'spatiotemporal_fMRI_');
+%   n:              run number
+%   stimPrefix      prefix for the stimulus files containing images
+%                      should be 
+%                       - spatiotemporal
+%                       - task
+%                       - hrfchecker
+%                       etc
+%   specs           one-row table generated from the function bairExperimentSpecs
+%   subjID          alphanumeric subject ID 
+%
+%   Example
+%    experimentSpecs = bairExperimentSpecs;
+%    siteSpecs = experimentSpecs(2,:);
+%    runnum = 1;
+%    stimPrefix = 'hrfchecker';
+%    subjID     = 'wl001';
+%    BAIR_FMRI(runnum, stimPrefix, siteSpecs, subjID);
 
 
 %% 
 
 if notDefined('n'), n = 1; end
-if notDefined('stimfile'), stimfile = 'spatiotemporal_fMRI_'; end
+if notDefined('stimPrefix')
+    help(mfilename)
+    error('stimPrefix is a required input');
+end
+if notDefined('specs')
+    help(mfilename)
+    error('specs is a required input');
+end
 
 % debug mode?
 % PsychDebugWindowConfiguration
 Screen('Preference', 'SkipSyncTests', 1);
 
-%% Calibration
-cal = 'CBI_Propixx';
+% Calibration
+cal = specs.displays{1};
 
+% Site
+site = specs.Row{1};
 
-%% Default parameters
+% Default parameters
 params = retCreateDefaultGUIParams;
 
 
-%% Hemifield and ONOFF mixture
+% Set parameters for this experiment
 params.modality         = 'fMRI'; 
 params.prescanDuration  = 0;
 params.calibration      = cal;
@@ -47,37 +61,14 @@ params.experiment       = 'Experiment From File';
 params.triggerKey       = '5';
 params.devices          = 'External: 2';
 params.saveMatrix       = 'saveMe';
+params.loadMatrix       = sprintf('%s_%s_%d.mat', stimPrefix, site, n);
 params.skipSyncTests    = false;
+params.fixation         = 'disk';
+params.subjID           = subjID;
 
-switch stimfile
-    case 'task_fMRI_'
-        params.fixation = '4 color dot';
-    otherwise 
-        params.fixation = 'disk';
-end
+if contains(stimPrefix, 'task'), params.fixation = '4 color dot';end
 
-
-
-%% ********************
-%  ***** GO ***********
-%  *********************
-params.loadMatrix = sprintf('%s%d.mat', stimfile, n);
+% Go!
 ret(params);
 
-%% Check timing results
-f = dir('~/Desktop/201*.mat');
-load(fullfile('~', 'Desktop', f(end).name));
-figure(101); clf
-
-% desired inter-stimulus duration
-plot(diff(stimulus.seqtiming));
-
-% measured inter-stimulus duration
-hold on; plot(diff(response.flip), 'r-'); 
-
-ylim(median(diff(response.flip)) + [-.001 .001])
-% frames between stimuli
-frames = round(diff(response.flip) / (1/60)); 
-
-% how many interstimulus frames differed from the median?
-disp(sum(frames ~= median(frames)))
+end

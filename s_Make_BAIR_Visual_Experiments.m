@@ -29,7 +29,7 @@ stimDiameterDeg = 16.6;       % degrees
 peakSFcpd       = 3;          % peak sf of all stimuli (and therefore peak of bandpass filter to make stimuli)
 sfAtHalfMax     = [1.4 4.7];  % spatial frequencies where filter falls off to half-height
 
-numberOfRuns    = 1;%10;         
+numberOfRuns    = 10;         
 
 [experimentSpecs, whichSite] = bairExperimentSpecs('prompt', true);
 
@@ -40,8 +40,7 @@ stimParams.bpFilter = stimMakeBandPassFilter(stimParams, peakSFcpd, sfAtHalfMax)
 
 % Directory for storing stim files
 stimdir = fullfile(BAIRRootPath, 'stimuli');
-if ~exist(stimdir, 'dir'), mkdir(stimdir); end
-
+ 
 % Make HRF experiment
 %   Timing should be specified with values that are integer multiples of
 %   the default refresh rate of 60 Hz (ie 16.66666 ms). And the stimulus
@@ -52,10 +51,10 @@ stimulusDuration  = 0.200; % seconds.
 dwellTimePerImage = 0.050; % temporal resolution, in s, at which the image sequence is specified 
 
 for runNum = 1:numberOfRuns
-    stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'pattern');
-    stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'patternInverted');
     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'checker');
     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'checkerinverted');
+%     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'pattern');
+%     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'patternInverted');
 end
 
 return

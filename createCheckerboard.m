@@ -16,7 +16,7 @@ yr = x*sin(th) + y*cos(th);
 
 phX = rand*2*pi;
 phY = rand*2*pi;
-plaid = cos(2*pi*xr*cpi+phX)+cos(2*pi*yr*cpi+phY);
+plaid = cos(2*pi*xr*cpi*sqrt(2)+phX)+cos(2*pi*yr*cpi*sqrt(2)+phY);
 
 im = double(plaid>0)-.5;
 
