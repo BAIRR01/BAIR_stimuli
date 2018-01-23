@@ -29,7 +29,7 @@ stimDiameterDeg = 16.6;       % degrees
 peakSFcpd       = 3;          % peak sf of all stimuli (and therefore peak of bandpass filter to make stimuli)
 sfAtHalfMax     = [1.4 4.7];  % spatial frequencies where filter falls off to half-height
 
-numberOfRuns    = 1%10;         
+numberOfRuns    = 1;%10;         
 
 [experimentSpecs, whichSite] = bairExperimentSpecs('prompt', true);
 

@@ -84,18 +84,9 @@ switch site
         % Load the Master stimuli
         masterImages = loadBAIRStimulus(stimulusType, 'Master', runNum);
     
-        switch site
-            case 'UCM-7T'
-                disp(['Resizing AND cropping Master stimuli for: ' site]);
-                
-                % how to do the cropping?
-                images = imresize(masterImages, size(stimParams.stimulus.images));
-            
-            otherwise    
-                
-                disp(['Resizing Master stimuli for: ' site]);
-                images = imresize(masterImages, size(stimParams.stimulus.images));
-        end
+                 
+        disp(['Resizing Master stimuli for: ' site]);
+        images = imresize(masterImages, size(stimParams.stimulus.images));
 end
 
 
@@ -157,7 +148,7 @@ while true
 end
 
 % add triggers for non-fMRI modalities
-switch lower(stimParams.modality{1})
+switch lower(stimParams.modality)
     case 'fmri' 
     otherwise
         stimulus.trigSeq  = double(stimulus.seq>0);
@@ -198,6 +189,12 @@ stimulus.tsv = table(onset, duration, trial_type, stim_file, stim_file_index);
 % Q5: do we want to add StimParams to stimulus file?
 
 % save
+
+stimulus.display  = stimParams.display;
+stimulus.modality = stimParams.modality;
+stimulus.site     = site;
+stimulus          = bairCheckStimulus(stimulus);
+
 save(fullfile(vistadispRootPath, 'Retinotopy', 'storedImagesMatrices',  fname), 'stimulus')
 
 end
