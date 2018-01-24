@@ -25,12 +25,15 @@ end
 % Do it!
 
 % hrf: 300 SECONDS
-for n = 1:2
+for n = 1:3
     runmefun(n, 'hrfpatterninverted', siteSpecs, subjID)
     runmefun(n, 'hrfpattern', siteSpecs, subjID)
     runmefun(n, 'hrfcheckerinverted', siteSpecs, subjID)
     runmefun(n, 'hrfchecker', siteSpecs, subjID)
 end
+
+% RUN ONLY HRF for now
+return
 
 % spatiotemporal: 176 SECONDS
 for n = 1:8

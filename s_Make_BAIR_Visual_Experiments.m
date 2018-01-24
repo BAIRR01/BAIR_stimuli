@@ -50,11 +50,11 @@ stimdir = fullfile(BAIRRootPath, 'stimuli');
 stimulusDuration  = 0.200; % seconds. 
 dwellTimePerImage = 0.050; % temporal resolution, in s, at which the image sequence is specified 
 
-for runNum = 1:numberOfRuns
+for runNum = 6:numberOfRuns
     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'checker');
     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'checkerinverted');
-%     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'pattern');
-%     stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'patternInverted');
+    stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'pattern');
+    stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  'patternInverted');
 end
 
 return
