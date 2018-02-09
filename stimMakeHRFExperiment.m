@@ -78,11 +78,11 @@ switch site
         fprintf('[%s]: Loading Master stimuli for: %s\n', mfilename, site);
 
         % Load the Master stimuli
-        masterImages = loadBAIRStimulus(stimulusType, 'Master', runNum);
+        master_stimulus = loadBAIRStimulus(['hrf' stimulusType], 'Master', runNum);
     
         % Resize         
         fprintf('[%s]: Resizing Master stimuli for: %s\n', mfilename,  site);
-        images = imresize(masterImages, size(stimParams.stimulus.images));
+        images = imresize(master_stimulus.images, imageSizeInPixels);
         
         % Soft circular mask (1 pixel of blurring per 250 pixels in the image)
         supportDiameter       = imageSizeInPixels(1);

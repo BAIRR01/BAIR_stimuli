@@ -1,4 +1,4 @@
-function [masterImages] = loadBAIRStimulus(stimulusType, site, runNum)
+function [master_stimulus] = loadBAIRStimulus(stimulusType, site, runNum)
 
 % LOAD MASTER STIMULUS 
 
@@ -16,9 +16,9 @@ readPth = vistadispRootPath;
 % if ~exist(writePth, 'file'), websave(writePth,readPth); end
 % im = load(writePth);
 
-fname = sprintf('hrf%s_%s_%d', stimulusType, site, runNum);
+fname = sprintf('%s_%s_%d', stimulusType, site, runNum);
 load(fullfile(readPth, 'Retinotopy', 'storedImagesMatrices',  fname), 'stimulus')
 
-masterImages = stimulus.images;
+master_stimulus= stimulus;
 
 end

@@ -25,7 +25,7 @@ end
 % Do it!
 
 % hrf: 300 SECONDS
-for n = 1:3
+for n = 1:1
     runmefun(n, 'hrfpatterninverted', siteSpecs, subjID)
     runmefun(n, 'hrfpattern', siteSpecs, subjID)
     runmefun(n, 'hrfcheckerinverted', siteSpecs, subjID)
