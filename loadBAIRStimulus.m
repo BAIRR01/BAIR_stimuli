@@ -2,8 +2,6 @@ function [master_stimulus] = loadBAIRStimulus(stimulusType, site, runNum)
 
 % LOAD MASTER STIMULUS 
 
-readPth = vistadispRootPath; 
-
 % Source needs to be updated to location where stimuli are stored and shared, e.g. Flywheel
 % use SciTran software: https://github.com/scitran/client, create toolboxes
 % to add to bairStimuli json files
@@ -17,7 +15,7 @@ readPth = vistadispRootPath;
 % im = load(writePth);
 
 fname = sprintf('%s_%s_%d', stimulusType, site, runNum);
-load(fullfile(readPth, 'Retinotopy', 'storedImagesMatrices',  fname), 'stimulus')
+load(fullfile(vistadispRootPath, 'StimFiles',  fname), 'stimulus')
 
 master_stimulus= stimulus;
 

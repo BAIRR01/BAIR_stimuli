@@ -13,7 +13,7 @@ p.parse(varargin{:});
 prompt = p.Results.prompt;
 
 % These are the available displays
-sites       = {'Master'; 'NYU-3T'; 'NYU-MEG'; 'NYU-ECoG'; 'UMC-3T'; 'UMC-7T'; 'UMC-ECoG'};
+sites       = {'Master'; 'NYU-3T'; 'NYU-MEG'; 'NYU-ECOG'; 'UMC-3T'; 'UMC-7T'; 'UMC-ECOG'};
 displays    = {'HiResDefault'; 'CBI_Propixx'; 'meg_lcd'; 'SoMMacBook'; 'UMC_3TLCD'; 'UMC_7TDLP'; 'default'};
 modalities  = {'fMRI'; 'fMRI'; 'MEG'; 'ECoG'; 'fMRI'; 'fMRI'; 'ECoG'};
 radii       = {8.3; 12.4; 11; 11.8; 8.3; 6.4287; 11.8};

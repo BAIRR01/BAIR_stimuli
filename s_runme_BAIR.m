@@ -9,46 +9,47 @@ defaults = {'Test099'};
 answer = inputdlg(prompt, 'Subject Number', 1, defaults);
 subjID = answer{1,:};
 
-
-% Name of modality-specific runme function
-switch lower(siteSpecs.modalities{1})
-    % a: run number (integer)
-    % b: stimulus prefix
-    % c: site specs
-    % d: subject ID
-    case 'fmri', runmefun = @(a,b,c,d) BAIR_FMRI(a,b,c,d);
-    case 'meg',  runmefun = @(a,b,c,d) BAIR_MEG(a,b,c,d);
-    case 'ecog', runmefun = @(a,b,c,d) BAIR_ECOG(a,b,c,d);        
-    otherwise, error('Not yet implemented');
+% Site-specific stuff
+switch siteSpecs.Row{1}
+    case 'NYU-ECOG'
+        % calibrate display
+        NYU_ECOG_Cal();
+        
+        % Check paths
+        if isempty(which('PsychtoolboxVersion'))
+            error('Please add Psychtoolbox to path before running')
+        end
+    otherwise
+        % for now, do nothing
 end
 
 % Do it!
 
-% hrf: 300 SECONDS
-for n = 1:1
-    runmefun(n, 'hrfpatterninverted', siteSpecs, subjID)
-    runmefun(n, 'hrfpattern', siteSpecs, subjID)
-    runmefun(n, 'hrfcheckerinverted', siteSpecs, subjID)
-    runmefun(n, 'hrfchecker', siteSpecs, subjID)
+% spatiotemporal: 176 s for fMRI, XX for ECOG
+for n = 101:108
+    BAIR_RUNME(n, 'spatiotemporal', siteSpecs, subjID)
 end
 
-% RUN ONLY HRF for now
 return
 
-% spatiotemporal: 176 SECONDS
-for n = 1:8
-    runmefun(n, 'spatiotemporal', siteSpecs, subjID)
+% hrf: 300 SECONDS
+for n = 1:1
+    BAIR_RUNME(n, 'hrfpattern', siteSpecs, subjID)
+    %BAIR_RUNME(n, 'hrfpatterninverted', siteSpecs, subjID)
+    %BAIR_RUNME(n, 'hrfcheckerinverted', siteSpecs, subjID)
+    %BAIR_RUNME(n, 'hrfchecker', siteSpecs, subjID)
 end
+
 
 % task: 216 SECONDS
 for n = 1:10
-    runmefun(mod(n,2)+1, 'task', siteSpecs, subjID)
+    BAIR_RUNME(mod(n,2)+1, 'task', siteSpecs, subjID)
 end
 
 
 % retinotopy: 204 SECONDS 
 for n = 1:2
-    runmefun(n, 'ret', siteSpecs, subjID)
+    BAIR_RUNME(n, 'ret', siteSpecs, subjID)
 end
 
 

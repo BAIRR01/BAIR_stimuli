@@ -1,7 +1,8 @@
-function BAIR_FMRI(n, stimPrefix, specs, subjID)
-% BAIR_FMRI(n, stimPrefix, specs, subjID)
+function BAIR_RUNME(n, stimPrefix, specs, subjID)
+% BAIR_RUNME(n, stimPrefix, specs, subjID)
 %
-% FMRI BAIR experiments
+% Run BAIR experiments (Do not call this function directly. It gets called
+% from the wrapper function, s_runme_BAIR)
 % ------
 %   Run time per experiment = XX seconds
 %
@@ -22,7 +23,7 @@ function BAIR_FMRI(n, stimPrefix, specs, subjID)
 %    runnum = 1;
 %    stimPrefix = 'hrfchecker';
 %    subjID     = 'wl001';
-%    BAIR_FMRI(runnum, stimPrefix, siteSpecs, subjID);
+%    BAIR_RUNME(runnum, stimPrefix, siteSpecs, subjID);
 
 
 %% 
@@ -54,7 +55,8 @@ params = retCreateDefaultGUIParams;
 
 
 % Set parameters for this experiment
-params.modality         = modality; 
+params.modality         = modality;
+params.site             = site;
 params.prescanDuration  = 0;
 params.calibration      = cal;
 params.startScan        = 0;

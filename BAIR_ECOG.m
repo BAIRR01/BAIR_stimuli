@@ -1,5 +1,5 @@
 function BAIR_ECOG(n, stimfile)
-%RUNME BAIR_ECOG(n, stimfile)
+% BAIR_ECOG(n, stimfile)
 %
 % ECoG BAIR spatiotemporal experiments
 % ------
@@ -40,9 +40,7 @@ params.prescanDuration  = 0;
 params.calibration      = cal;
 params.startScan        = 0;
 params.repetitions      = 1;
-params.experiment       = 'Experiment From File';
-params.saveMatrix       = 'saveMe';
-params.skipSyncTests    = false;
+params.skipSyncTests    = 0;
 
 switch stimfile
     case {'spatiotemporal_ECOG_' 'ret_ECOG_' 'hrf_ECOG_'}

@@ -69,8 +69,6 @@ params.prescanDuration  = 0;
 params.calibration      = cal;
 params.startScan        = 0;
 params.repetitions      = 1;
-params.experiment       = 'Experiment From File';
-params.saveMatrix       = 'saveMe';
 params.skipSyncTests    = false;
 
 switch stimfile

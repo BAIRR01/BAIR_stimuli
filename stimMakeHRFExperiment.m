@@ -156,7 +156,7 @@ end
 switch lower(stimParams.modality)
     case 'fmri' 
     otherwise
-        stimulus.trigSeq  = double(stimulus.seq>0);
+        stimulus.trigSeq  = double(stimulus.seq~=blankImageIndex);
         stimulus.diodeSeq = stimulus.trigSeq;
 end
 
@@ -189,7 +189,7 @@ stimulus.display  = stimParams.display;
 stimulus.modality = stimParams.modality;
 stimulus.site     = site;
 
-save(fullfile(vistadispRootPath, 'Retinotopy', 'storedImagesMatrices',  fname), 'stimulus')
+save(fullfile(vistadispRootPath, 'StimFiles',  fname), 'stimulus')
 
 end
 
