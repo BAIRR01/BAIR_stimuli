@@ -51,9 +51,9 @@ stimulus.seq        = [];
 stimulus.fixSeq     = [];
 
 
-stimParams.stimulus = stimulus;
-stimParams.display  = displayParameters;
-stimParams.modality = experimentSpecs.modalities{whichSite};
-stimParams.experimentSpecs = experimentSpecs(whichSite,:);
-
+stimParams.stimulus         = stimulus;
+stimParams.display          = displayParameters;
+stimParams.modality         = experimentSpecs.modalities{whichSite};
+stimParams.experimentSpecs  = experimentSpecs(whichSite,:);
+stimParams.site             = experimentSpecs.Row{whichSite};
 return

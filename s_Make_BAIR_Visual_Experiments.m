@@ -79,10 +79,14 @@ for ii = whichExperiment
             end
             
         case 'PRF'
+            stimulusDuration  = 0.200; % seconds.
+            isi               = 0.300; % seconds
+            dwellTimePerImage = 0.100; % temporal resolution, in s, at which the image sequence is specified
+          
             for runNum = 1:numberOfRuns
                 
                 % Make PRF experiment
-                stimMakePRFExperiment(stimParams, runNum);
+                stimMakePRFExperiment(stimParams, runNum, stimulusDuration,dwellTimePerImage, isi);
             end
     end
     

@@ -25,10 +25,18 @@ end
 
 % Do it!
 
+% retinotopy: 136 SECONDS 
+for n = 1:2
+    BAIR_RUNME(n, 'prf', siteSpecs, subjID)
+end
+
+
+
 % spatiotemporal: 176 s for fMRI, XX for ECOG
 for n = 101:108
     BAIR_RUNME(n, 'spatiotemporal', siteSpecs, subjID)
 end
+
 
 return
 
@@ -44,12 +52,6 @@ end
 % task: 216 SECONDS
 for n = 1:10
     BAIR_RUNME(mod(n,2)+1, 'task', siteSpecs, subjID)
-end
-
-
-% retinotopy: 204 SECONDS 
-for n = 1:2
-    BAIR_RUNME(n, 'ret', siteSpecs, subjID)
 end
 
 

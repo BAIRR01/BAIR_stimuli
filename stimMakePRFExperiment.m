@@ -1,53 +1,110 @@
-function stimMakePRFExperiment(s_example, modality)
+function stimMakePRFExperiment(stimParams, runNum, stimulusDuration,dwellTimePerImage, isi)
 
-imsize = s_example.stimulus.srcRect(4);
- 
-readPth  = 'https://wikis.nyu.edu/download/attachments/85394548/bar_apertures.mat?api=v2';
-stimDir  = fullfile(BAIRRootPath, 'stimuli');
-fname    = 'bar_apertures.mat';
-writePth = fullfile(stimDir, fname);
-websave(writePth,readPth);
-im = load(writePth);
+% Load aperture images
+barApertures = stimMakePRFApertures(stimParams);
 
-bar_apertures = imresize(im.bar_apertures, imsize, 'nearest');
-bar_carrier   = stimMakeBarCarrier();
+% Load carrier images
+barCarriers   = stimMakePRFCarriers(stimParams);
 
+% How many images shown for each aperture?
+imagesPerPosition = round(1 / (stimulusDuration + isi));
 
-numim = size(bar_apertures,3)*3;
+% Total number of images
+numberOfImages = imagesPerPosition * size(barApertures,3);
 
-% 3 images per aperture
-images = zeros(imsize, imsize, numim, 'uint8')+127;
-for ii = 1:numim
-    idx = ceil(ii/3);
-    idx2 = randsample(size(bar_carrier,3),1);
-    images(:,:,ii) = bar_apertures(:,:,idx) .* (bar_carrier(:,:,idx2)-.5) * 255+127;
+% First image is a blank
+blankImageIndex  = 1;
+
+% Total time points
+numberOfTimePoints = 1/dwellTimePerImage * size(barApertures,3);
+
+% Image size
+imageSizeInPixels = size(stimParams.stimulus.images);
+
+% Recast to double centered at background color
+barCarriers = double(barCarriers);
+backgroundColor = mode(barCarriers(:));
+barCarriers = barCarriers  - backgroundColor;
+
+% Make the images by mulitplying the carriers and the apertures
+images = zeros(imageSizeInPixels(1), imageSizeInPixels(2), numberOfImages, 'double');
+for ii = 1:numberOfImages
+    idx = ceil(ii/imagesPerPosition);
+    idx2 = randsample(size(barCarriers,3),1);
+    images(:,:,ii) = barApertures(:,:,idx) .*  barCarriers(:,:,idx2);
 end
 
-switch(modality)
-    case 'fMRI'
-        numruns = 4;
-    case 'MEG'
-        numruns = 12;
+% Recast as 8 bit integers
+images = uint8(images + backgroundColor);
+
+
+stimulus = [];
+stimulus.cmap       = stimParams.stimulus.cmap;
+stimulus.srcRect    = stimParams.stimulus.srcRect;
+stimulus.dstRect    = stimParams.stimulus.destRect;
+stimulus.images     = images;
+stimulus.seqtiming  = (0:numberOfTimePoints-1)*dwellTimePerImage;
+stimulus.seq        = zeros(size(stimulus.seqtiming))+blankImageIndex;
+stimulus.fixSeq     = ones(size(stimulus.seqtiming));
+
+
+numIms =    round(stimulusDuration/dwellTimePerImage);
+numBlanks = round(isi/dwellTimePerImage);
+chunkSize = numIms + numBlanks;
+
+for ii = 1:numberOfImages
+    idx = (1:chunkSize) + (ii-1)*chunkSize;
+    stimOrder = [repmat(ii, [1,numIms]) repmat(blankImageIndex, [1, numBlanks])];
+    stimulus.seq(idx) = stimOrder;
 end
-for runnum = 1:numruns
-    stimulus = [];
-    stimulus.cmap       = s_example.stimulus.cmap;
-    stimulus.srcRect    = s_example.stimulus.srcRect;
-    stimulus.dstRect    = s_example.stimulus.dstRect;
-    stimulus.images     = images;
-    stimulus.seqtiming  = (0:numim-1)/3;
-    stimulus.seq        = 1:length(stimulus.seqtiming);
-    stimulus.fixSeq     = ones(size(stimulus.seqtiming));
-    
-    switch lower(modality)
-        case 'fmri'
-        otherwise
-            stimulus.trigSeq  = double(stimulus.seq>0);
-            stimulus.diodeSeq = stimulus.trigSeq;
-    end
-    
-    
-    fname = sprintf('ret_%s_%d', modality, runnum);
-    save(fullfile(vistadispRootPath, 'Retinotopy', 'storedImagesMatrices', fname), 'stimulus')
-    
+
+
+
+% Create the fixation dot color change sequence
+stimulus.fixSeq       = ones(size(stimulus.seqtiming));
+
+this_frame = 0;
+minDurationInSeconds = 1;
+maxDurationInSeconds = 5;
+
+minDurationInImageNumber = round(minDurationInSeconds / dwellTimePerImage);
+maxDurationInImageNumber = round(maxDurationInSeconds / dwellTimePerImage);
+
+while true
+    % wait between minDurationInSeconds and maxDurationInSeconds before
+    % flipping the dot color
+    isi = randperm(maxDurationInImageNumber-minDurationInImageNumber,1)+minDurationInImageNumber-1;
+    this_frame = this_frame + isi;
+    if this_frame > length(stimulus.fixSeq), break; end
+    stimulus.fixSeq(this_frame:end) = mod(stimulus.fixSeq(this_frame-1),2)+1;
 end
+
+% add triggers for non-fMRI modalities
+switch lower(stimParams.modality)
+    case 'fmri' 
+    otherwise
+        stimulus.trigSeq  = double(stimulus.seq~=blankImageIndex);
+        stimulus.diodeSeq = stimulus.trigSeq;
+end
+
+% create stimulus.mat filename
+fname = sprintf('prf_%s_%d', stimParams.site, runNum);
+
+% add table with elements to write to tsv file for BIDS
+onset       = stimulus.seqtiming((0:numberOfImages-1)*chunkSize+1)';
+duration    = ones(numberOfImages,1) * stimulusDuration;
+trial_type  = ceil((1:numberOfImages)/imagesPerPosition)';
+trial_name  = num2str(trial_type);
+stim_file   = repmat(fname, numberOfImages,1);
+stim_file_index = (1:numberOfImages)';
+
+stimulus.tsv = table(onset, duration, trial_type, trial_name, stim_file, stim_file_index);
+
+% save
+
+stimulus.display  = stimParams.display;
+stimulus.modality = stimParams.modality;
+stimulus.site     = stimParams.site;
+
+save(fullfile(vistadispRootPath, 'StimFiles',  fname), 'stimulus')
+
