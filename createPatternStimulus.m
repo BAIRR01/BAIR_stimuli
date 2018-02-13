@@ -1,8 +1,16 @@
-function [output, edge, thresh, result] = createPatternStimulus(stimParams, relCutoff)
+function [output, edge, thresh, result] = createPatternStimulus(stimParams, relCutoff, scaleContrast)
 % CREATE PATTERN STIMULUS
 %   sz - the desired image size
 %   relCutoff - Define a relative cutoff in terms of the available frequencies
 %   bpfilter - the convolutional bandpass filter to use, in space domain
+
+if nargin < 3 || isempty(scaleContrast)
+    % Scale the edge contrast (this value was found empirically to maximize
+    % contrast whilst preventing too much clipping for SOC stimuli)
+    scaleContrast = 0.18;
+else
+    scaleContrast = scaleContrast * 0.18;
+end
 
 stimWidth  = stimParams.stimulus.srcRect(3)-stimParams.stimulus.srcRect(1);
 stimHeight = stimParams.stimulus.srcRect(4)-stimParams.stimulus.srcRect(2);
@@ -31,9 +39,8 @@ edge1 = [0, 0, 0; 1, 0, -1; 0, 0, 0];
 edge2 = [0, 1, 0; 0, 0, 0; 0, -1, 0];
 edge = -1*(imfilter(double(thresh), edge1, 'circular').^2 + imfilter(double(thresh), edge2, 'circular').^2);
 
-% Scale the edge contrast (this value was found empirically to maximize
-% contrast whilst preventing too much clipping for SOC stimuli)
-edge = 0.18*edge; 
+% Scale the edge contrast
+edge = scaleContrast*edge; 
 
 % Filter convolutionally with bpfilter in the image domain
 output = imfilter(edge, stimParams.bpFilter, 'circular');
