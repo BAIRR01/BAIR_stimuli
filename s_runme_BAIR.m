@@ -3,6 +3,9 @@
 [experimentSpecs, whichSite] = bairExperimentSpecs('prompt', true);
 siteSpecs = experimentSpecs(whichSite,:);
 
+% Which experiment to run?
+[experimentType, numberOfRuns] = bairWhichExperiment();
+
 % Prompt for patient ID
 prompt = {'Enter subject ID'};
 defaults = {'Test099'};
@@ -13,8 +16,7 @@ subjID = answer{1,:};
 switch siteSpecs.Row{1}
     case 'NYU-ECOG'
         % calibrate display
-        NYU_ECOG_Cal();
-        
+        NYU_ECOG_Cal();        
         % Check paths
         if isempty(which('PsychtoolboxVersion'))
             error('Please add Psychtoolbox to path before running')
@@ -24,34 +26,8 @@ switch siteSpecs.Row{1}
 end
 
 % Do it!
-
-% retinotopy: 136 SECONDS 
-for n = 1:2
-    BAIR_RUNME(n, 'prf', siteSpecs, subjID)
-end
-
-
-
-% spatiotemporal: 176 s for fMRI, XX for ECOG
-for n = 101:108
-    BAIR_RUNME(n, 'spatiotemporal', siteSpecs, subjID)
-end
-
-
-return
-
-% hrf: 300 SECONDS
-for n = 1:1
-    BAIR_RUNME(n, 'hrfpattern', siteSpecs, subjID)
-    %BAIR_RUNME(n, 'hrfpatterninverted', siteSpecs, subjID)
-    %BAIR_RUNME(n, 'hrfcheckerinverted', siteSpecs, subjID)
-    %BAIR_RUNME(n, 'hrfchecker', siteSpecs, subjID)
-end
-
-
-% task: 216 SECONDS
-for n = 1:10
-    BAIR_RUNME(mod(n,2)+1, 'task', siteSpecs, subjID)
+for n = 1:numberOfRuns
+    BAIR_RUNME(n, lower(experimentType), siteSpecs, subjID)    
 end
 
 
