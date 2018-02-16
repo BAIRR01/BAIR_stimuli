@@ -11,7 +11,6 @@ function stimMakeSpatiotemporalExperiment(stimParams, runNum)
 % with different temporal profiles (single pulses with variable duration;
 % or multiple pulses with variable interstimulus interval).
 
-
 % CRF      - 5 (zebra)                     KNK 162 164 166 168 116
 % Orient   - 3 (grating, plaid, circular)  KNK 150, 154, 158 (*HC)
 % Sparsity - 4 (zebras)                    KNK 181 182 183 184
@@ -24,15 +23,9 @@ function stimMakeSpatiotemporalExperiment(stimParams, runNum)
 
 %% QUESTIONS
 
-% CRF: how to scale the contrast levels?
-
-% SPARSITY: do we take our 20 stripes per image (as we picked for HRF) as
-%   the middle density or 4th density?
-
-% TEMPORAL: should this always be the same stimulus (as before)? Or same on
-%   first pulse, different on second?
-
-% GRATING / CIRCULAR / PLAID: create using knkutils?
+% GRATING / CIRCULAR / PLAID: % how to equate spacing of dark and light
+%   lines? PLAID looks like pattern stimulus: maybe bp filter should be
+%   adapted for these stimuli?
 
 % FACES / HOUSES / LETTERS: resolution sufficient? do we want the exact
 %   same images as in the SOC paper? are some images repeated?
@@ -147,7 +140,11 @@ switch site
             SPARSITYim_cell{cc} = SPARSITYimages(:,:,(cc-1)*numberOfImagesPerCat+1);
         end
         
-        % Create TEMPORAL       
+        % Create TEMPORAL
+        
+        % First and second for double pulse should be same stimulus (TO DO
+        % check how this is determined in stim sequencing)
+        
         numberOfCategories = length(find(contains(categories, 'PULSE')));
         numberOfImagesPerCat = 6;
         PULSEimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
@@ -155,7 +152,7 @@ switch site
         
         contrastLevels = 1; % max contrast
         densityLevels = 20; % middle density
-
+        
         for cc = 1:numberOfCategories
             for ii = 1:numberOfImagesPerCat
                 imageForThisTrial = createPatternStimulus(stimParams, densityLevels, contrastLevels);
@@ -171,38 +168,107 @@ switch site
         
         % Create GRATING, PLAID, CIRCULAR
         
-        numberOfCategories = length(find(contains(categories, {'GRATING', 'PLAID', 'CIRCULAR'})));
-        numberOfImagesPerCat = 6;
-        GPCimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
-        GPCim_cell = cell([numberOfCategories 1]);
-      
         % From Kay et al, 2013 PLOS CB
 
-            % GRATING (4 stimuli). These stimuli consisted of horizontal
-            %   sinusoidal gratings at 2%, 4%, 9%, and 20% Michelson contrast.
-            %   The spatial frequency of the gratings was fixed at 3 cycles per
-            %   degree. Each stimulus consisted of gratings with the same
-            %   contrast but nine different phases (equally spaced from 0 to 2p).
-            % PLAID (4 stimuli). These stimuli consisted of plaids at 2%, 4%,
-            %   9%, and 20% contrast (defined below). Each condition comprised
-            %   nine plaids, and each plaid was constructed as the sum of a
-            %   horizontal and a vertical sinusoidal grating (spatial frequency 3
-            %   cycles per degree, random phase). The plaids were scaled in
-            %   contrast to match the root-mean-square (RMS) contrast of the
-            % GRATING stimuli. For example, the plaids in the 9% condition were
-            %   scaled such that the average RMS contrast of the plaids is
-            %   identical to the average RMS contrast of the gratings in the 9%
-            %   GRATING stimulus. CIRCULAR (4 stimuli). These stimuli were
-            %   identical to the PLAID stimuli except that sixteen different
-            %   orientations were used instead of two.
+        % GRATING (4 stimuli). These stimuli consisted of horizontal
+        %   sinusoidal gratings at 2%, 4%, 9%, and 20% Michelson contrast.
+        %   The spatial frequency of the gratings was fixed at 3 cycles per
+        %   degree. Each stimulus consisted of gratings with the same
+        %   contrast but nine different phases (equally spaced from 0 to 2p).
+        % PLAID (4 stimuli). These stimuli consisted of plaids at 2%, 4%,
+        %   9%, and 20% contrast (defined below). Each condition comprised
+        %   nine plaids, and each plaid was constructed as the sum of a
+        %   horizontal and a vertical sinusoidal grating (spatial frequency 3
+        %   cycles per degree, random phase). The plaids were scaled in
+        %   contrast to match the root-mean-square (RMS) contrast of the
+        %   GRATING stimuli. For example, the plaids in the 9% condition were
+        %   scaled such that the average RMS contrast of the plaids is
+        %   identical to the average RMS contrast of the gratings in the 9%
+        %   GRATING stimulus. 
+        % CIRCULAR (4 stimuli). These stimuli were identical to the
+        %   PLAID stimuli except that sixteen different orientations
+        %   were used instead of two.
         
-        % use knkutils?
-        % '/Volumes/server/Projects/SCO/old/knk/socmodel/code/knkutils/imageprocessing'
-        % e.g.
-        % I = makegrating2d(imageSizeInPixels,3,0,0) (sum horz+vert for plaid) 
-        % I = makeconcentricgrating2d(1000,3,0);
-        % then apply stimParams.bpfilter?
-                    
+        numberOfCategories = length(find(contains(categories, {'GRATING'})));
+        numberOfImagesPerCat = 6;
+        GRATINGimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
+        GRATINGim_cell = cell([numberOfCategories 1]);
+
+        contrastLevels = 1; % max contrast
+        densityLevels = 10; % middle density
+        orientation = pi/2; % horizontal
+        
+        for cc = 1:numberOfCategories
+            for ii = 1:numberOfImagesPerCat
+                imageForThisTrial = createGratingStimulus(stimParams, densityLevels, contrastLevels, orientation);
+
+                % Double to unsigned 8 bit integer, needed for vistadisp
+                image8Bit = uint8((imageForThisTrial+.5)*255);
+                imCount = ii+(cc-1)*numberOfImagesPerCat;
+                GRATINGimages(:,:,imCount) = image8Bit;
+
+            end
+            GRATINGim_cell{cc} = GRATINGimages(:,:,(cc-1)*numberOfImagesPerCat+1);
+        end
+
+        % DEBUG  % compare with old version
+        %load('/Users/winawerlab/Box Sync/Stimuli/spatiotemporal_NYU-ECOG_101.mat')
+        % figure;imshow(stimulus.images(:,:,31)); title('OLD');
+        % figure;imshow(image8Bit); title('NEW');
+
+        numberOfCategories = length(find(contains(categories, {'PLAID'})));
+        numberOfImagesPerCat = 6;
+        PLAIDimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
+        PLAIDim_cell = cell([numberOfCategories 1]);
+
+        contrastLevels = 1; % max contrast
+        densityLevels = 10; % middle density
+        orientation = pi/4; 
+        
+        for cc = 1:numberOfCategories
+            for ii = 1:numberOfImagesPerCat
+                imageForThisTrial = createPlaidStimulus(stimParams, densityLevels, contrastLevels, orientation);
+
+                % Double to unsigned 8 bit integer, needed for vistadisp
+                image8Bit = uint8((imageForThisTrial+.5)*255);
+                imCount = ii+(cc-1)*numberOfImagesPerCat;
+                PLAIDimages(:,:,imCount) = image8Bit;
+
+            end
+            PLAIDim_cell{cc} = PLAIDimages(:,:,(cc-1)*numberOfImagesPerCat+1);
+        end
+
+%         DEBUG  % compare with old version
+%         load('/Users/winawerlab/Box Sync/Stimuli/spatiotemporal_NYU-ECOG_101.mat')
+%         figure;imshow(stimulus.images(:,:,37)); title('OLD');
+%         figure;imshow(image8Bit); title('NEW');
+
+        numberOfCategories = length(find(contains(categories, {'CIRCULAR'})));
+        numberOfImagesPerCat = 6;
+        CIRCULARimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
+        CIRCULARim_cell = cell([numberOfCategories 1]);
+
+        contrastLevels = 1; % max contrast
+        densityLevels = 10; % middle density
+        
+        for cc = 1:numberOfCategories
+            for ii = 1:numberOfImagesPerCat
+                imageForThisTrial = createCircularStimulus(stimParams, densityLevels, contrastLevels);
+
+                % Double to unsigned 8 bit integer, needed for vistadisp
+                image8Bit = uint8((imageForThisTrial+.5)*255);
+                imCount = ii+(cc-1)*numberOfImagesPerCat;
+                CIRCULARimages(:,:,imCount) = image8Bit;
+
+            end
+            CIRCULARim_cell{cc} = CIRCULARimages(:,:,(cc-1)*numberOfImagesPerCat+1);
+        end
+
+%         DEBUG  % compare with old version
+%         load('/Users/winawerlab/Box Sync/Stimuli/spatiotemporal_NYU-ECOG_101.mat')
+%         figure;imshow(stimulus.images(:,:,43)); title('OLD');
+%         figure;imshow(image8Bit); title('NEW');
+
         % Create FACES / HOUSES / LETTERS
         
         numberOfCategories = length(find(contains(categories, {'FACES', 'LETTERS', 'HOUSES'})));
@@ -211,7 +277,7 @@ switch site
         FLHim_cell = cell([numberOfCategories 1]);
      
 %         % load orig stim from Kay et al., 2013
-%        load('/Volumes/server/Projects/BAIR/Stimuli/Kay2013_unfilteredstimuli/stim.mat');
+        load('/Volumes/server/Projects/BAIR/Stimuli/Kay2013_unfilteredstimuli/stim.mat');
          
         % - what you have for 'faces' and 'houses' are values between
         % [0,1].  They are intended to be displayed on standard monitors
@@ -234,29 +300,37 @@ switch site
 %          previously). Finally, the contrast of each image was scaled to
 %          fill the full luminance range.
         
-%         I = faces(:,:,1).^2;
-%         
+%         I = faces(:,:,1);
+%          
 %         % resize to match bp filter resolution
-%         I2 = imresize(I, imageSizeInPixels); 
+%         I1 = imresize(I, imageSizeInPixels); 
 %         
 %         % whiten (?)
 %         % whiten = @(x) (x - mean(x(:)))./ diff(prctile(x(:), [.1 .9]));
-%         I3 = I2 - mean(I2(:));
+%         I2 = I1 - mean(I1(:));
 %         
+%         % take square to 'simulate luminance' values (see above)
+%         I3 = I2.^2;
+%        
 %         % band-pass filter
 %         I4 = imfilter(I3, stimParams.bpFilter);
 %         I5 = uint8((I4+.5)*255);
 %         
 %         figure;
-%         subplot(1,2,1);imshow(I4);
-%         subplot(1,2,2);imshow(I5);
+%         subplot(2,3,1);imshow(I0);axis on; title('original');
+%         subplot(2,3,2);imshow(I1);axis on; title('resized');
+%         subplot(2,3,3);imshow(I2);axis on; title('whiten');
+%         subplot(2,3,4);imshow(I3);title('squared');
+%         subplot(2,3,5);imshow(I4);title('filter');
+%         subplot(2,3,6);imshow(I5);title('8bit');
 %         
         % why is the image (background) noisy? is it due to the resizing?
+        % how about the contrast enhancement step in the SOC description?
         % NOTE: old face stim seem to be cropped + pasted into background
         
         % Concatenate all category types
-        images = cat(3, CRFimages, GPCimages, SPARSITYimages, FLHimages, PULSEimages);
-        im_cell = cat(1, CRFim_cell, GPCim_cell, SPARSITYim_cell, FLHim_cell, PULSEim_cell);
+        images = cat(3, CRFimages, GRATINGimages, PLAIDimages, CIRCULARimages, SPARSITYimages, FLHimages, PULSEimages);
+        im_cell = cat(1, CRFim_cell, GRATINGim_cell, PLAIDim_cell, CIRCULARim_cell, SPARSITYim_cell, FLHim_cell, PULSEim_cell);
         
         % Set durations
         durations = [ ...
@@ -443,6 +517,7 @@ fname = sprintf('spatiotemporal_%s_%d', site, runNum);
 
 save(fullfile(vistadispRootPath, 'Retinotopy', 'storedImagesMatrices',  fname), 'stimulus', '-v7.3')
 
+return
 % movie ----
 %     movieName = sprintf('~/Desktop/spatiotemporal%02d.avi', runnum);
 %     nFramePerSec = 60;
@@ -492,9 +567,6 @@ end
 
 %% DEBUG : plot all exemplar stim, compute SF
 
-% read stim params directly from
-d = loadDisplayParams('HiResDefault');
-
 %% Plot all stim
 figure;hold on
 for ii = 1:length(stimulus.im_cell)
@@ -502,6 +574,9 @@ for ii = 1:length(stimulus.im_cell)
     imshow(stimulus.im_cell{ii}(:,:,1));
     title(stimulus.categories{ii});
 end
+
+% read stim params directly from
+d = loadDisplayParams('HiResDefault');
 
 %% Power spectrum
 

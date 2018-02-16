@@ -1,12 +1,17 @@
-function [output, edge, thresh, result] = createPatternStimulus(stimParams, relCutoff, scaleContrast)
+function [output, edge, thresh, result] = createPatternStimulus(stimParams, stripesPerImage, scaleContrast)
 % CREATE PATTERN STIMULUS
-%   sz - the desired image size
-%   relCutoff - Define a relative cutoff in terms of the available frequencies
-%   bpfilter - the convolutional bandpass filter to use, in space domain
+%   stimParams - defined using stimInitialize.m; should contain a the
+%       convolutional bandpass filter to use, in space domain
+%       (stimParams.bpfilter)
+%   stripesPerImage - Define approximate number of repetitions of lines
+%       across image (previous variable name: relCutOff)
+%   scaleContrast (optional) - Scale the edge contrast relative to the
+%       empirically found maximum that prevented too much clipping for SOC
+%       stimuli
 
 if nargin < 3 || isempty(scaleContrast)
-    % Scale the edge contrast (this value was found empirically to maximize
-    % contrast whilst preventing too much clipping for SOC stimuli)
+    % (this value was found empirically to maximize contrast whilst
+    % preventing too much clipping for SOC stimuli)
     scaleContrast = 0.18;
 else
     scaleContrast = scaleContrast * 0.18;
@@ -23,7 +28,7 @@ im = im./(max(im(:) - min(im(:)))) + 0.5;
 mid = ceil((size(im)+1)/2);
 
 % Create a soft round filter in Fourier space
-radius = relCutoff;%  size(im,1)/2;
+radius = stripesPerImage;%  size(im,1)/2;
 mask = mkDisc(size(im), radius, mid, radius/5);
 
 % Filter the image
