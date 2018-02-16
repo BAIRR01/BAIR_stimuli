@@ -6,8 +6,7 @@ if ~ok, return; end
 siteSpecs = experimentSpecs(whichSite,:);
 
 % Which experiment to run?
-[experimentType, numberOfRuns, ok] = bairWhichExperiment();
-if ~ok, return; end
+[experimentType, numberOfRuns] = bairWhichExperiment();
 
 % Prompt for patient ID
 prompt = {'Enter subject ID'};
