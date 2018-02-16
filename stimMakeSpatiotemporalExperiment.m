@@ -195,12 +195,12 @@ switch site
         GRATINGim_cell = cell([numberOfCategories 1]);
 
         contrastLevels = 1; % max contrast
-        densityLevels = 10; % middle density
+        cpd = 3;            % degrees
         orientation = pi/2; % horizontal
         
         for cc = 1:numberOfCategories
             for ii = 1:numberOfImagesPerCat
-                imageForThisTrial = createGratingStimulus(stimParams, densityLevels, contrastLevels, orientation);
+                imageForThisTrial = createGratingStimulus(stimParams, cpd, contrastLevels, (1:16)/pi);
 
                 % Double to unsigned 8 bit integer, needed for vistadisp
                 image8Bit = uint8((imageForThisTrial+.5)*255);
@@ -212,7 +212,7 @@ switch site
         end
 
         % DEBUG  % compare with old version
-        %load('/Users/winawerlab/Box Sync/Stimuli/spatiotemporal_NYU-ECOG_101.mat')
+        % load('~/Box Sync/BAIR/Stimuli/spatiotemporal_NYU-ECOG_101.mat')
         % figure;imshow(stimulus.images(:,:,31)); title('OLD');
         % figure;imshow(image8Bit); title('NEW');
 
@@ -222,7 +222,7 @@ switch site
         PLAIDim_cell = cell([numberOfCategories 1]);
 
         contrastLevels = 1; % max contrast
-        densityLevels = 10; % middle density
+        densityLevels = 50; % middle density
         orientation = pi/4; 
         
         for cc = 1:numberOfCategories

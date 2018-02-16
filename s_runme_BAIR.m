@@ -1,15 +1,20 @@
 
 % Which site?
-[experimentSpecs, whichSite] = bairExperimentSpecs('prompt', true);
+[experimentSpecs, whichSite, ok] = bairExperimentSpecs('prompt', true);
+if ~ok, return; end
+
 siteSpecs = experimentSpecs(whichSite,:);
 
 % Which experiment to run?
-[experimentType, numberOfRuns] = bairWhichExperiment();
+[experimentType, numberOfRuns, ok] = bairWhichExperiment();
+if ~ok, return; end
 
 % Prompt for patient ID
 prompt = {'Enter subject ID'};
 defaults = {'Test099'};
-answer = inputdlg(prompt, 'Subject Number', 1, defaults);
+[answer, ok] = inputdlg(prompt, 'Subject Number', 1, defaults);
+if ~ok, return; end
+
 subjID = answer{1,:};
 
 % Site-specific stuff

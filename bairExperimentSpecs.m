@@ -1,4 +1,4 @@
-function [experimentSpecs, whichSite] = bairExperimentSpecs(varargin)
+function [experimentSpecs, whichSite, ok] = bairExperimentSpecs(varargin)
 % Choose a display for running experiments, making stimuli, analyzing data
 % 
 % Optional input is paired value, {'prompt', [true or false]}
@@ -22,7 +22,7 @@ experimentSpecs = table(displays, modalities, radii, 'RowNames', sites);
 
 % If requested, ask the user to select a display
 if prompt
-    whichSite = listdlg('PromptString', 'Which site?', 'SelectionMode', 'single', 'ListString', sites);
+    [whichSite, ok] = listdlg('PromptString', 'Which site?', 'SelectionMode', 'single', 'ListString', sites);
 end
 
 end

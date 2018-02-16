@@ -17,7 +17,8 @@
 % file?
 
 % Prompt for ExperimentSpecs
-[experimentSpecs, whichSite] = bairExperimentSpecs('prompt', true);
+[experimentSpecs, whichSite, ok] = bairExperimentSpecs('prompt', true);
+if ~ok, return; end
 
 % Which experiment to make?
 [experimentType, numberOfRuns] = bairWhichExperiment();

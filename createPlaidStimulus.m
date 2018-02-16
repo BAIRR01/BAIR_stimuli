@@ -30,6 +30,7 @@ th = stripeAngle;
 
 xr = x*cos(th) - y*sin(th);
 phX = rand*2*pi; % phase 
+phX = pi/2;
 
 result1 = cos(2*pi*xr*cpi*sqrt(2)+phX);
 
@@ -40,6 +41,7 @@ th = stripeAngle+pi/2;
 
 xr = x*cos(th) - y*sin(th);
 phX = rand*2*pi; % phase 
+phX = pi/2;
 
 result2 = cos(2*pi*xr*cpi*sqrt(2)+phX);
 
@@ -48,7 +50,7 @@ result2 = cos(2*pi*xr*cpi*sqrt(2)+phX);
 result = (result1+result2)/2;
 
 % % % compare with grating created using knkutils
-% result = makegrating2d(size(stimParams.stimulus.images(1),cpi,0,1);
+% result = makegrating2d(size(stimParams.stimulus.images,1),cpi,0,1);
 
 % Threshold the filtered noise
 thresh = result - min(result(:)) > (max(result(:)) - min(result(:)))/2;

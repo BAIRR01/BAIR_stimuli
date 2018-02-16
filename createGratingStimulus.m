@@ -1,4 +1,4 @@
-function [output, edge, thresh, result] = createGratingStimulus(stimParams, stripesPerImage, scaleContrast, stripeAngle)
+function output = createGratingStimulus(stimParams, cyclesPerDegree, scaleContrast, stripeAngle)
 % CREATE GRATING STIMULUS
 %   stimParams - defined using stimInitialize.m; should contain a the
 %       convolutional bandpass filter to use, in space domain
@@ -22,35 +22,27 @@ end
 stimWidth  = stimParams.stimulus.srcRect(3)-stimParams.stimulus.srcRect(1);
 stimHeight = stimParams.stimulus.srcRect(4)-stimParams.stimulus.srcRect(2);
 
+imSizeInDeg = stimParams.experimentSpecs.radii{1} * 2;
+cpi = cyclesPerDegree * imSizeInDeg;
+
 % Create a grating
 [x,y] = meshgrid(linspace(0,1,stimWidth), linspace(0,1,stimHeight));
 
-th = stripeAngle;
-cpi = stripesPerImage;
+for ii = 1:length(stripeAngle)
+    th = stripeAngle(ii);
+    
+    xr = x*cos(th) - y*sin(th);
+    phX = rand*2*pi; % phase
+    
+    if ii == 1
+        output = cos(2*pi*xr*cpi+phX) / 2; rms_single = rms(output(:));
+    else
+        output = output + cos(2*pi*xr*cpi+phX) / 2;
+    end
+end
 
-xr = x*cos(th) - y*sin(th);
-phX = rand*2*pi; % phase 
-
-result = cos(2*pi*xr*cpi*sqrt(2)+phX);
-
-% % % compare with grating created using knkutils
-% result = makegrating2d(size(stimParams.stimulus.images(1),cpi,0,1);
-
-% Threshold the filtered noise
-thresh = result - min(result(:)) > (max(result(:)) - min(result(:)))/2;
-
-% Grab edges with derivative filter
-edge1 = [0, 0, 0; 1, 0, -1; 0, 0, 0];
-edge2 = [0, 1, 0; 0, 0, 0; 0, -1, 0];
-edge = -1*(imfilter(double(thresh), edge1, 'circular').^2 + imfilter(double(thresh), edge2, 'circular').^2);
-
-% Scale the edge contrast
-edge = scaleContrast*edge; 
-
-% Filter convolutionally with bpfilter in the image domain
-output = imfilter(edge, stimParams.bpFilter, 'circular');
-
+output = output / rms(output(:)) * rms_single;
 return
 
-end
+
 
