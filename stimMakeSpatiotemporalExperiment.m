@@ -23,9 +23,7 @@ function stimMakeSpatiotemporalExperiment(stimParams, runNum)
 
 %% QUESTIONS
 
-% GRATING / CIRCULAR / PLAID: % how to equate spacing of dark and light
-%   lines? PLAID looks like pattern stimulus: maybe bp filter should be
-%   adapted for these stimuli?
+% GRATING / CIRCULAR / PLAID: 
 
 % FACES / HOUSES / LETTERS: resolution sufficient? do we want the exact
 %   same images as in the SOC paper? are some images repeated?
@@ -189,85 +187,41 @@ switch site
         %   PLAID stimuli except that sixteen different orientations
         %   were used instead of two.
         
-        numberOfCategories = length(find(contains(categories, {'GRATING'})));
+        numberOfCategories = length(find(contains(categories, {'GRATING', 'PLAID', 'CIRCULAR'})));
         numberOfImagesPerCat = 6;
-        GRATINGimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
-        GRATINGim_cell = cell([numberOfCategories 1]);
+        GPCimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
+        GPCim_cell = cell([numberOfCategories 1]);
 
-        contrastLevels = 1; % max contrast
-        cpd = 3;            % degrees
-        orientation = pi/2; % horizontal
+        cyclesPerDegree     = 3;     % cycles per degree
+        peak2peakContrast   = 50;    % percentage Michelson contrast
         
+        % luminance values need to range between -0.5 and 0.5 prior to 8Bit conversion 
         for cc = 1:numberOfCategories
+            if cc == 1
+                gratingOrientation = pi/2; % GRATING: horizontal
+            elseif cc == 2
+                gratingOrientation = [pi/2 pi]; % PLAID: horizontal + vertical
+            elseif cc == 3
+                gratingOrientation =  (1:16)/pi; % CIRCULAR: 16 superimposed
+            end
             for ii = 1:numberOfImagesPerCat
-                imageForThisTrial = createGratingStimulus(stimParams, cpd, contrastLevels, (1:16)/pi);
+                imageForThisTrial = createGratingStimulus(stimParams,cyclesPerDegree,gratingOrientation, peak2peakContrast);
 
                 % Double to unsigned 8 bit integer, needed for vistadisp
                 image8Bit = uint8((imageForThisTrial+.5)*255);
                 imCount = ii+(cc-1)*numberOfImagesPerCat;
-                GRATINGimages(:,:,imCount) = image8Bit;
+                GPCimages(:,:,imCount) = image8Bit;
 
             end
-            GRATINGim_cell{cc} = GRATINGimages(:,:,(cc-1)*numberOfImagesPerCat+1);
+            GPCim_cell{cc} = GPCimages(:,:,(cc-1)*numberOfImagesPerCat+1);
         end
 
         % DEBUG  % compare with old version
-        % load('~/Box Sync/BAIR/Stimuli/spatiotemporal_NYU-ECOG_101.mat')
-        % figure;imshow(stimulus.images(:,:,31)); title('OLD');
-        % figure;imshow(image8Bit); title('NEW');
-
-        numberOfCategories = length(find(contains(categories, {'PLAID'})));
-        numberOfImagesPerCat = 6;
-        PLAIDimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
-        PLAIDim_cell = cell([numberOfCategories 1]);
-
-        contrastLevels = 1; % max contrast
-        densityLevels = 50; % middle density
-        orientation = pi/4; 
-        
-        for cc = 1:numberOfCategories
-            for ii = 1:numberOfImagesPerCat
-                imageForThisTrial = createPlaidStimulus(stimParams, densityLevels, contrastLevels, orientation);
-
-                % Double to unsigned 8 bit integer, needed for vistadisp
-                image8Bit = uint8((imageForThisTrial+.5)*255);
-                imCount = ii+(cc-1)*numberOfImagesPerCat;
-                PLAIDimages(:,:,imCount) = image8Bit;
-
-            end
-            PLAIDim_cell{cc} = PLAIDimages(:,:,(cc-1)*numberOfImagesPerCat+1);
-        end
-
-%         DEBUG  % compare with old version
 %         load('/Users/winawerlab/Box Sync/Stimuli/spatiotemporal_NYU-ECOG_101.mat')
+
+%         figure;imshow(stimulus.images(:,:,31)); title('OLD');
 %         figure;imshow(stimulus.images(:,:,37)); title('OLD');
-%         figure;imshow(image8Bit); title('NEW');
-
-        numberOfCategories = length(find(contains(categories, {'CIRCULAR'})));
-        numberOfImagesPerCat = 6;
-        CIRCULARimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
-        CIRCULARim_cell = cell([numberOfCategories 1]);
-
-        contrastLevels = 1; % max contrast
-        densityLevels = 10; % middle density
-        
-        for cc = 1:numberOfCategories
-            for ii = 1:numberOfImagesPerCat
-                imageForThisTrial = createCircularStimulus(stimParams, densityLevels, contrastLevels);
-
-                % Double to unsigned 8 bit integer, needed for vistadisp
-                image8Bit = uint8((imageForThisTrial+.5)*255);
-                imCount = ii+(cc-1)*numberOfImagesPerCat;
-                CIRCULARimages(:,:,imCount) = image8Bit;
-
-            end
-            CIRCULARim_cell{cc} = CIRCULARimages(:,:,(cc-1)*numberOfImagesPerCat+1);
-        end
-
-%         DEBUG  % compare with old version
-%         load('/Users/winawerlab/Box Sync/Stimuli/spatiotemporal_NYU-ECOG_101.mat')
 %         figure;imshow(stimulus.images(:,:,43)); title('OLD');
-%         figure;imshow(image8Bit); title('NEW');
 
         % Create FACES / HOUSES / LETTERS
         
@@ -276,8 +230,8 @@ switch site
         FLHimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
         FLHim_cell = cell([numberOfCategories 1]);
      
-%         % load orig stim from Kay et al., 2013
-        load('/Volumes/server/Projects/BAIR/Stimuli/Kay2013_unfilteredstimuli/stim.mat');
+         % load orig stim from Kay et al., 2013
+       load('/Volumes/server/Projects/BAIR/Stimuli/Kay2013_unfilteredstimuli/stim.mat');
          
         % - what you have for 'faces' and 'houses' are values between
         % [0,1].  They are intended to be displayed on standard monitors
@@ -329,8 +283,8 @@ switch site
         % NOTE: old face stim seem to be cropped + pasted into background
         
         % Concatenate all category types
-        images = cat(3, CRFimages, GRATINGimages, PLAIDimages, CIRCULARimages, SPARSITYimages, FLHimages, PULSEimages);
-        im_cell = cat(1, CRFim_cell, GRATINGim_cell, PLAIDim_cell, CIRCULARim_cell, SPARSITYim_cell, FLHim_cell, PULSEim_cell);
+        images = cat(3, CRFimages, GPCimages, SPARSITYimages, FLHimages, PULSEimages);
+        im_cell = cat(1, CRFim_cell, GPCim_cell, SPARSITYim_cell, FLHim_cell, PULSEim_cell);
         
         % Set durations
         durations = [ ...
@@ -648,7 +602,7 @@ for ii = 1:size(stimulus.im_cell,1)
     subplot(6,6,ii)
     plot(binCenters, Mn, 'LineWidth', 2)
     title(stimulus.categories{ii});
-    set(gca, 'XLim', [0 5], 'YLim', [0 10^5.5]);
+    set(gca, 'XLim', [0 5], 'YLim', [0 10^6]);
     [y,x] = max(Mn);
     peaks(ii) = binCenters(x);
     %axis tight

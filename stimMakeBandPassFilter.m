@@ -1,4 +1,4 @@
-function bandpassFilter   = stimMakeBandPassFilter(stimParams, peakSFcpd, sfAtHalfMax)
+function bandpassFilter   = stimMakeBandPassFilter(stimParams, peakSFcpd)
 % Make bandpass filter for generating BAIR visual stimuli
 %
 % Filter properties are based on Kay et al, 2013:

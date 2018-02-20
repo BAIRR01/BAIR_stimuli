@@ -35,7 +35,7 @@ peakSFcpd       = 3;          % peak sf of all stimuli (and therefore peak of ba
 sfAtHalfMax     = [1.4 4.7];  % spatial frequencies where filter falls off to half-height
 
 stimParams = stimInitialize(experimentSpecs, whichSite, stimDiameterDeg);
-stimParams.bpFilter = stimMakeBandPassFilter(stimParams, peakSFcpd, sfAtHalfMax);
+stimParams.bpFilter = stimMakeBandPassFilter(stimParams, peakSFcpd);
 
 switch experimentType
     case 'SPATIOTEMPORAL'
