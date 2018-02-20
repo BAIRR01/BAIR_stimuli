@@ -1,4 +1,4 @@
-function BAIR_RUNME(n, stimPrefix, specs, subjID)
+function BAIR_RUNME(runNumber, stimPrefix, siteSpecs, subjID)
 % BAIR_RUNME(n, stimPrefix, specs, subjID)
 %
 % Run BAIR experiments (Do not call this function directly. It gets called
@@ -7,14 +7,14 @@ function BAIR_RUNME(n, stimPrefix, specs, subjID)
 %   Run time per experiment = XX seconds
 %
 % INPUTS
-%   n:              run number
+%   runNumber       run number
 %   stimPrefix      prefix for the stimulus files containing images
 %                      should be 
 %                       - spatiotemporal
 %                       - task
 %                       - hrfchecker
 %                       etc
-%   specs           one-row table generated from the function bairExperimentSpecs
+%   siteSpecs           one-row table generated from the function bairExperimentSpecs
 %   subjID          alphanumeric subject ID 
 %
 %   Example
@@ -25,51 +25,52 @@ function BAIR_RUNME(n, stimPrefix, specs, subjID)
 %    subjID     = 'wl001';
 %    BAIR_RUNME(runnum, stimPrefix, siteSpecs, subjID);
 
-
-%% 
-
-if notDefined('n'), n = 1; end
+if notDefined('runNumber'), runNumber = 1; end
 if notDefined('stimPrefix')
     help(mfilename)
     error('stimPrefix is a required input');
 end
-if notDefined('specs')
+if notDefined('siteSpecs')
     help(mfilename)
-    error('specs is a required input');
+    error('siteSpecs is a required input');
+end
+
+% params = retCreateDefaultGUIParams();
+
+% Set parameters for this experiment
+params.experiment       = stimPrefix;
+params.subjID           = subjID;
+params.loadMatrix       = sprintf('%s_%s_%d.mat', stimPrefix, siteSpecs.sites{1}, runNumber);
+params.modality         = siteSpecs.modalities{1};
+params.site             = siteSpecs.sites{1};
+params.calibration      = siteSpecs.displays{1};
+params.triggerKey       = siteSpecs.trigger{1};
+params.useSerialPort    = siteSpecs.serialport{1};
+
+% Additional parameters copied from retCreateDefaultGUIParams: do we need
+% all of these?
+params.prescanDuration  = 0;
+params.startScan        = 0;
+params.repetitions      = 1;
+params.stimSize        = 'max';
+params.countdown       = 0;
+params.startScan       = 0;
+params.trigger         = 'Scanner triggers computer';
+params.savestimparams  = 1;
+params.repetitions     = 1;
+params.runPriority     = 7;
+
+% Specify task for subject
+if contains(stimPrefix, 'task') 
+    params.fixation = '4 color dot';
+else
+    params.fixation = 'disk';
 end
 
 % debug mode?
-% PsychDebugWindowConfiguration
-Screen('Preference', 'SkipSyncTests', 1);
-
-% Calibration
-cal = specs.displays{1};
-
-% Site
-site = specs.Row{1};
-
-% Modality
-modality = specs.modalities{1};
-% Default parameters
-params = retCreateDefaultGUIParams;
-
-
-% Set parameters for this experiment
-params.modality         = modality;
-params.site             = site;
-params.prescanDuration  = 0;
-params.calibration      = cal;
-params.startScan        = 0;
-params.repetitions      = 1;
-params.triggerKey       = '5';
-params.loadMatrix       = sprintf('%s_%s_%d.mat', stimPrefix, site, n);
-params.skipSyncTests    = 0;
-params.fixation         = 'disk';
-params.subjID           = subjID;
-
-if contains(stimPrefix, 'task'), params.fixation = '4 color dot';end
+params.skipSyncTests = 1;
 
 % Go!
-ret(params);
+doExperiment(params);
 
 end

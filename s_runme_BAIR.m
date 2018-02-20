@@ -11,8 +11,8 @@ siteSpecs = experimentSpecs(whichSite,:);
 % Prompt for patient ID
 prompt = {'Enter subject ID'};
 defaults = {'Test099'};
-[answer, ok] = inputdlg(prompt, 'Subject Number', 1, defaults);
-if ~ok, return; end
+[answer] = inputdlg(prompt, 'Subject Number', 1, defaults);
+if isempty(answer), return; end
 
 subjID = answer{1,:};
 
@@ -30,8 +30,8 @@ switch siteSpecs.Row{1}
 end
 
 % Do it!
-for n = 1:numberOfRuns
-    BAIR_RUNME(n, lower(experimentType), siteSpecs, subjID)    
+for runNumber = 1:numberOfRuns
+    BAIR_RUNME(runNumber, lower(experimentType), siteSpecs, subjID)    
 end
 
 
