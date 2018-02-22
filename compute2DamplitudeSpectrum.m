@@ -14,12 +14,10 @@ frequencies = sqrt(FsX.^2+FsY.^2);
 im = im - mean(im(:));
 
 % Window
-%im = im .* window2(sz(1), sz(2),'hann');
-
+% im = im .* window2(sz(1), sz(2),'hann');
 
 % Fourier transform
 amplitudes  = fftshift(abs(fft2(im)));
-
 
 [~,edges,bin] = histcounts(frequencies(:));
 binnedFrequencies = (edges(1:end-1)+edges(2:end))/2;

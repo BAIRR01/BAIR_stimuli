@@ -1,16 +1,18 @@
 function output = createFilteredStimulus(stimParams, unfilteredImage, imageProcessingParams)
 
 % CREATE FILTERED STIMULUS
-%   stimParams - defined using stimInitialize.m; should contain a the
+%   stimParams - defined using stimInitialize.m; should contain the
 %       convolutional bandpass filter to use, in space domain
 %       (stimParams.bpfilter)
 %   unfilteredImage - The image to be bandpass filtered
 %   imageProcessingParams - a struct that determines various settings for
-%   resizing, masking and contrast boosting the image (see
-%   StimMakeSpatiotemporalExperiment.m for explanations)
+%       resizing, masking and contrast boosting the image (see
+%       StimMakeSpatiotemporalExperiment.m for explanations)
 %
 %   Note: functions makes use of knkutils toolbox function
-%   'makecircleimage' (for applying a square mask)
+%    'makecircleimage' (for applying a square mask)
+%   Note: we currently do not perform the prewhitening step described in
+%    Kay 2013
 
 imageSizeInPixels = size(stimParams.stimulus.images);
 
@@ -21,20 +23,19 @@ I1 = imresize(I0, imageProcessingParams.imageScaleFactor * imageSizeInPixels);
 
 stimSizeInPixels = size(I1);
 
-% Paste into a background of imageSizeInPixels; use background color of top
-% row of unfiltered Image to reduce top edge created by the band-pass
-% filtering at next step
-I2 = padarray(I1,[(imageSizeInPixels(1)-size(I1,1))/2 (imageSizeInPixels(1)-size(I1,1))/2], mode(I1(1,:)));
+% Paste into a background of size imageSizeInPixels
+I2 = padarray(I1,[(imageSizeInPixels(1)-size(I1,1))/2 (imageSizeInPixels(1)-size(I1,1))/2], 0);
 
 % Apply band-pass filter
 I3 = imfilter(I2, stimParams.bpFilter);
 
-% Apply circular mask to get rid of edges and background noise
+% Apply mask to get rid of edges around stim and background noise
 maskRadius             = imageProcessingParams.maskScaleFactor*stimSizeInPixels(1)/2;
 squareMask             = makecircleimage(imageSizeInPixels(1),maskRadius,[],[], imageProcessingParams.maskSoftEdge*maskRadius,1) .* ...
                             makecircleimage(imageSizeInPixels(1),maskRadius,[],[], imageProcessingParams.maskSoftEdge*maskRadius,2);
 I4                     = bsxfun(@times,I3,squareMask);
 
+% TO DO: add possibility additionally apply a circular mask for the faces?
 %maskOrigin             = [(imageSizeInPixels(1)+1)./2 (imageSizeInPixels(1)+1)./2];
 %maskRadius             = 0.8*stimSizeInPixels(1)/2;
 %circularMask           = makecircleimage(imageSizeInPixels(1),maskRadius,[],[],1.1*maskRadius,0, [maskOrigin(1)+0.1*maskOrigin(1) maskOrigin(2)], [1 1.2]);
