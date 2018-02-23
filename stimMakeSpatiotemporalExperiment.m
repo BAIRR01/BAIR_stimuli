@@ -23,10 +23,15 @@ function stimMakeSpatiotemporalExperiment(stimParams, runNum)
 
 %% Make the images
 
-% determine if we're creating the master or loading & resizing for a specific display
-site = stimParams.experimentSpecs.Row{1};
+% Determine if we're creating the master or loading & resizing for a specific display
+site = stimParams.experimentSpecs.sites{1};
 imageSizeInPixels = size(stimParams.stimulus.images);
-      
+
+% This is the stimulus structure used by vistadisp
+stimulus.cmap         = stimParams.stimulus.cmap;
+stimulus.srcRect      = stimParams.stimulus.srcRect;
+stimulus.dstRect      = stimParams.stimulus.destRect;
+
 switch site
     case 'Master'
         
@@ -70,7 +75,8 @@ switch site
             };
         
         % Create CRF stimuli
-        
+        fprintf('[%s]: Creating Master stimuli at %d x %d pixels resolution: CRF.\n',mfilename,imageSizeInPixels(1),imageSizeInPixels(2));
+
         % From Kay et al, 2013 PLOS CB
 %         These stimuli were constructed by varying the contrast of the
 %         noise patterns used in SPACE. Ten different contrast levels were
@@ -87,7 +93,7 @@ switch site
         numberOfCategories = length(find(contains(categories, 'CRF')));
         numberOfImagesPerCat = 6;
         CRFimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
-        CRFim_cell = cell([numberOfCategories 1]);
+        CRFim_cell = cell([1 numberOfCategories]);
         
         % Category-specific settings
         contrastLevels = [0.0625 0.125 0.25 0.5 1]; % or should we use log/linear?
@@ -110,6 +116,7 @@ switch site
         end
 
         % Create SPARSITY 
+        fprintf('[%s]: Creating Master stimuli at %d x %d pixels resolution: SPARSITY.\n',mfilename,imageSizeInPixels(1),imageSizeInPixels(2));
 
         % From Kay et al, 2013 PLOS CB
 %         We generated noise patterns using cutoff frequencies of 2.8, 1.6,
@@ -124,7 +131,7 @@ switch site
         numberOfCategories = length(find(contains(categories, 'SPARSITY')));
         numberOfImagesPerCat = 6;
         SPARSITYimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
-        SPARSITYim_cell = cell([numberOfCategories 1]);
+        SPARSITYim_cell = cell([1 numberOfCategories]);
 
         % Category-specific settings
         contrastLevels = 1; % or should we use log/linear?
@@ -144,37 +151,9 @@ switch site
             SPARSITYim_cell{cc} = SPARSITYimages(:,:,(cc-1)*numberOfImagesPerCat+1);
         end
         
-        % Create TEMPORAL
-        
-        % First and second for double pulse should be same stimulus (TO DO
-        % check how this is determined in stim sequencing)
-        
-        % Preallocate arrays to store stimuli
-        numberOfCategories = length(find(contains(categories, 'PULSE')));
-        numberOfImagesPerCat = 6;
-        PULSEimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
-        PULSEim_cell = cell([numberOfCategories 1]);
-        
-        % Category-specific settings
-        contrastLevels = 1; % max contrast
-        densityLevels = 20; % middle density
-        
-        % Create the stimuli
-        for cc = 1:numberOfCategories
-            for ii = 1:numberOfImagesPerCat
-                imageForThisTrial = createPatternStimulus(stimParams, densityLevels, contrastLevels);
-
-                % Double to unsigned 8 bit integer, needed for vistadisp
-                image8Bit = uint8((imageForThisTrial+.5)*255);
-                imCount = ii+(cc-1)*numberOfImagesPerCat;
-                PULSEimages(:,:,imCount) = image8Bit;
-
-            end
-            PULSEim_cell{cc} = PULSEimages(:,:,(cc-1)*numberOfImagesPerCat+1);
-        end
-        
         % Create GRATING / PLAID / CIRCULAR
-        
+        fprintf('[%s]: Creating Master stimuli at %d x %d pixels resolution: GRATING PLAID CIRCULAR.\n',mfilename,imageSizeInPixels(1),imageSizeInPixels(2));
+
         % From Kay et al, 2013 PLOS CB
 
         % GRATING (4 stimuli). These stimuli consisted of horizontal
@@ -200,7 +179,7 @@ switch site
         numberOfCategories = length(find(contains(categories, {'GRATING', 'PLAID', 'CIRCULAR'})));
         numberOfImagesPerCat = 6;
         GPCimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
-        GPCim_cell = cell([numberOfCategories 1]);
+        GPCim_cell = cell([1 numberOfCategories]);
 
         % Category-specific settings
         cyclesPerDegree     = 3;     % cycles per degree
@@ -234,8 +213,9 @@ switch site
 %         figure;imshow(stimulus.images(:,:,37)); title('OLD');
 %         figure;imshow(stimulus.images(:,:,43)); title('OLD');
 
-        % Create FACES / HOUSES / LETTERS
-        
+        % Create FACES / LETTERS / HOUSES
+        fprintf('[%s]: Creating Master stimuli at %d x %d pixels resolution: FACES LETTERS HOUSES.\n',mfilename,imageSizeInPixels(1),imageSizeInPixels(2));
+
         % From Kay et al, 2013 PLOS CB
 %          Each image was whitened (to remove low-frequency bias) and then
 %          filtered with the custom band-pass filter (described
@@ -246,13 +226,15 @@ switch site
         numberOfCategories = length(find(contains(categories, {'FACES', 'LETTERS', 'HOUSES'})));
         numberOfImagesPerCat = 2;
         FLHimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
-        FLHim_cell = cell([numberOfCategories 1]);
+        FLHim_cell = cell([1 numberOfCategories]);
      
         % Load original, unfiltered face, house, letter stimuli 
         % CHANGE TO DOWNLOAD FROM WIKI
         load('/Volumes/server/Projects/BAIR/Stimuli/Kay2013_unfilteredstimuli/stim.mat');
         
         % Category-specific settings
+        imageProcessingParams.imageScaleFactor  = 0.4; % size of FHL stimuli relative to the pattern stimuli
+        imageProcessingParams.maskScaleFactor   = 0.85; % size of mask relative to filtered image
         imageProcessingParams.maskSoftEdge      = 1.1; % size of 'second radius' of mask (determines smoothness of mask edge)
         imageProcessingParams.contrastRange     = 1.5; % range to scale the contrast prior to 8Bit conversion (a range of 1 results in no clipping)
         imageIndex = [30 35; % FACES
@@ -269,26 +251,23 @@ switch site
                       31 25]; 
 
         % Create the stimuli
-        for cc = 1:numberOfCategories
-            % Select images from the right array; set set-specific
-            % parameters
-            if ismember(cc,1:4) % FACES
+        for cc = 1:numberOfCategories    
+            
+            % Select images from the right array
+            if ismember(cc,1:4) % FACES              
                 imageArray = faces;
-                % OPTION:ADD A CIRCULAR MASK FOR FACES TO REMOVE BG NOISE
-                imageProcessingParams.imageScaleFactor  = 0.4; % size of FHL stimuli relative to the pattern stimuli
-                imageProcessingParams.maskScaleFactor   = 0.85; % size of mask relative to filtered image
-
             elseif ismember(cc,5:8) % LETTERS
                 imageArray = letters;
-                %imageArray = imresize(imageArray,4); 
-                % OPTION:CROP AND THEN RESIZE LETTER ARRAY TO GET THICKER LINES
-                imageProcessingParams.imageScaleFactor  = 1; % size of FHL stimuli relative to the pattern stimuli
-                imageProcessingParams.maskScaleFactor   = 0.9; % size of mask relative to filtered image
-
+                % For LETTERS: Crop and resize letter array prior to
+                % filtering to get thicker lines
+                origSizeinPixels = size(letters);
+                cropOrigin = [(origSizeinPixels(1)+1)./2 (origSizeinPixels(1)+1)./2];
+                cropRadius = [-0.25*origSizeinPixels(1)/2 0.25*origSizeinPixels(1)/2]; % optimal crop radius determined empirically
+                cropIndex  = round(cropOrigin+cropRadius);
+                imageArray = imageArray(cropIndex(1):cropIndex(2), cropIndex(1):cropIndex(2),:);
+                imageArray = imresize(imageArray,origSizeinPixels([1 2]));               
             elseif ismember(cc,9:12) % HOUSES
-                imageArray = houses;
-                imageProcessingParams.imageScaleFactor  = 0.4; % size of FHL stimuli relative to the pattern stimuli
-                imageProcessingParams.maskScaleFactor   = 0.85; % size of mask relative to filtered image
+                imageArray = houses;           
             end
             
             for ii = 1:numberOfImagesPerCat
@@ -314,9 +293,39 @@ switch site
 %             pli = pli+1;
 %         end
 
-        % Concatenate all category types
+        % Create TEMPORAL
+        fprintf('[%s]: Creating Master stimuli at %d x %d pixels resolution: TEMPORAL.\n',mfilename,imageSizeInPixels(1),imageSizeInPixels(2));
+
+        % First and second for double pulse should be same stimulus (TO DO
+        % check how this is determined in stim sequencing)
+        
+        % Preallocate arrays to store stimuli
+        numberOfCategories = length(find(contains(categories, 'PULSE')));
+        numberOfImagesPerCat = 6;
+        PULSEimages = uint8(zeros([imageSizeInPixels numberOfCategories * numberOfImagesPerCat]));
+        PULSEim_cell = cell([1 numberOfCategories]);
+        
+        % Category-specific settings
+        contrastLevels = 1; % max contrast
+        densityLevels = 20; % middle density
+        
+        % Create the stimuli
+        for cc = 1:numberOfCategories
+            for ii = 1:numberOfImagesPerCat
+                imageForThisTrial = createPatternStimulus(stimParams, densityLevels, contrastLevels);
+
+                % Double to unsigned 8 bit integer, needed for vistadisp
+                image8Bit = uint8((imageForThisTrial+.5)*255);
+                imCount = ii+(cc-1)*numberOfImagesPerCat;
+                PULSEimages(:,:,imCount) = image8Bit;
+
+            end
+            PULSEim_cell{cc} = PULSEimages(:,:,(cc-1)*numberOfImagesPerCat+1);
+        end
+
+        % Concatenate all categories
         images = cat(3, CRFimages, GPCimages, SPARSITYimages, FLHimages, PULSEimages);
-        im_cell = cat(1, CRFim_cell, GPCim_cell, SPARSITYim_cell, FLHim_cell, PULSEim_cell);
+        im_cell = cat(2, CRFim_cell, GPCim_cell, SPARSITYim_cell, FLHim_cell, PULSEim_cell);
         
         % Set durations
         durations = [ ...
@@ -335,6 +344,14 @@ switch site
         images(:,:,end+1) = mode(images(:));
         BLANK = size(images,3);
         
+        % Put everything into stimulus struct
+        stimulus.categories   = categories;
+        stimulus.im_cell      = im_cell;
+        stimulus.images       = images;
+
+        stimulus.duration     = durations;
+        stimulus.ISI          = ISI;
+        
     otherwise    
         
         % Resize the Master stimuli to the required stimulus size for this
@@ -342,16 +359,16 @@ switch site
         fprintf('[%s]: Loading Master stimuli for: %s\n', mfilename, site);
 
         % Load the Master stimuli
-        master_stimulus = loadBAIRStimulus('spatiotemporal', 'Master', runNum);
+        stimulus = loadBAIRStimulus('spatiotemporal', 'Master', runNum);
         
         % Resize         
         fprintf('[%s]: Resizing Master stimuli for: %s\n', mfilename,  site);
         imageSizeInPixels = size(stimParams.stimulus.images);
-        images = imresize(master_stimulus.images, imageSizeInPixels );
+        images = imresize(stimulus.images, imageSizeInPixels );
         
         im_cell = cell(num_cats);
         for ii = 1:num_cats
-            im_cell{ii} = imresize(master_stimulus.im_cell{ii}, imageSizeInPixels);
+            im_cell{ii} = imresize(stimulus.im_cell{ii}, imageSizeInPixels);
         end
         
         % Soft circular mask (1 pixel of blurring per 250 pixels in the image)
@@ -362,10 +379,9 @@ switch site
         imagesMasked          = bsxfun(@times,imagesDouble,circularMask);
         images                = uint8((imagesMasked+.5)*255);
         
-        % copy these from master 
-        categories = master_stimulus.categories;
-        durations = master_stimulus.duration;
-        ISI = master_stimulus.ISI;
+        % Overwrite Master stimuli with resized images
+        stimulus.im_cell      = im_cell;
+        stimulus.images       = images;    
 end
 
 % Experiment timing 
@@ -384,29 +400,18 @@ switch(lower(stimParams.modality))
         error('Unknown modality')
 end
 
-num_cats = length(categories);
+num_cats = length(stimulus.categories);
 ITIs = linspace(ITI_min,ITI_max,num_cats);
 
-% This is the stimulus structure used by vistadisp
-stimulus.cmap         = stimParams.stimulus.cmap;
-stimulus.srcRect      = stimParams.stimulus.srcRect;
-stimulus.dstRect      = stimParams.stimulus.destRect;
-
-stimulus.im_cell      = im_cell;
-stimulus.images       = images;
-
-stimulus.categories   = categories;
-stimulus.duration     = durations;
-
-stimulus.ISI          = ISI;
 stimulus.ITI          = ITIs;
 stimulus.prescan      = prescan; % seconds
 stimulus.postscan     = postscan; % seconds
 
-% make individual trial sequences
-%   randomize stimulus order
+% TO DO: make individual trial sequences
+%   * randomize image exemplars across runs? (cf Dora comments)
+%   * chunk categories within separate runs for fMRI?
 
-% TO DO: UPDATE THIS according to new stim generation
+% OLD:
 tmp = cumsum(cellfun(@length, whichIm));
 whichIm_Idx = [[0 tmp(1:end-1)]+1; tmp];
 
@@ -479,7 +484,7 @@ stimulus.seqtiming = seqtiming;
 
 % triggers
 trigSeq  = zeros(size(stimulus.seq));
-diodeSeq = zeros(size(stimulus.seq));
+diodeSeq = zeros(size(stimulus.seq)); % don't need this anymore?
 
 for ii = 1:length(stimulus.onsets)
     [~, idx] = min(abs(stimulus.seqtiming-stimulus.onsets(ii)));
@@ -507,33 +512,32 @@ return
 
 %% DEBUG 
 
-% %% Plot individual stimuli for a specific category ('images')
-% whichCat = 'FLH'; %pick: CRF, GPC, SPARSITY, FLH, or PULSE;
-% 
-% images = eval([whichCat 'images']);
-% 
-% figure;hold on
-% for ii = 1:size(images,3)
-%     subplot(ceil(sqrt(size(images,3))),ceil(sqrt(size(images,3))),ii);
-%     imshow(images(:,:,ii));
-% end
+%% Plot individual stimuli for a specific category ('images')
+whichCat = 'FLH'; %pick: CRF, GPC, SPARSITY, FLH, or PULSE;
 
-% Plot exemplars for all categories ('im_cell')
+images = eval([whichCat 'images']);
+
+figure;hold on
+for ii = 1:size(images,3)
+    subplot(ceil(sqrt(size(images,3))),ceil(sqrt(size(images,3))),ii);
+    imshow(images(:,:,ii));
+end
+
+%% Plot exemplars for all categories ('im_cell')
 
 figure('Name', 'NEW STIM');hold on
-for ii = 1:length(stimulus.im_cell)
-    subplot(6,6,ii);
+for ii = 1:24%length(stimulus.im_cell)
+    subplot(4,6,ii);
     imshow(stimulus.im_cell{ii}(:,:,1));
     title(stimulus.categories{ii});
 end
 
 % Compute power spectra for all categories ('im_cell')
-
 D = loadDisplayParams('HiResDefault');
 
 figure('Name', 'NEW STIM SF');hold on
 peaks = [];
-for ii = 1:length(stimulus.im_cell)
+for ii = 1:24%length(stimulus.im_cell)
     
     im = stimulus.im_cell{ii};
     [frequencies, amplitudes, binnedFrequencies, binnedAmplitudes] = ...
@@ -542,25 +546,29 @@ for ii = 1:length(stimulus.im_cell)
     peaks(ii) = binnedFrequencies(x);
     
     % Plot spectrum per category
-    subplot(6,6,ii);
-    plot(binnedFrequencies, binnedAmplitudes/max(binnedAmplitudes));
+    subplot(4,6,ii);
+    plot(binnedFrequencies, binnedAmplitudes/max(binnedAmplitudes), 'LineWidth', 2);
     xlabel('Cycles per degree')
-    xlim([0 10])
-    set(gca, 'XGrid', 'on', 'XTick', 0:1.5:50)
+    xlim([0 7.5])
+    set(gca, 'XGrid', 'on', 'XTick', 0:1.5:7.5)
     title(stimulus.categories{ii});
 end
 
 % Plot distribution of peaks
-figure('Name', 'NEW STIM SF PEAKS'); hist(peaks); xlabel('max spatial frequency'); ylabel('number of images')
+figure('Name', 'NEW STIM SF PEAKS'); 
+subplot(1,2,1);histogram(peaks); xlabel('max spatial frequency'); ylabel('number of images')
+xlim([0 4]);
+subplot(1,2,2);plot(peaks, 'o-'); ylabel('category index'); ylabel('max spatial frequency'); 
+xlim([0 25]);
 
 % Compute luminance histograms
 
 figure ('Name', 'NEW STIM LUM');hold on
-for ii = 1:length(stimulus.im_cell)
+for ii = 1:24%length(stimulus.im_cell)
     
     im = stimulus.im_cell{ii};
     % Plot histogram per category
-    subplot(6,6,ii);
+    subplot(4,6,ii);
     histogram(im(im~=mode(im(:)))); title('(mode excluded from hist)');
     
     xlabel('Pixel values')
@@ -568,7 +576,7 @@ for ii = 1:length(stimulus.im_cell)
     title(stimulus.categories{ii});
 end
 
-% DO THE SAME FOR THE ORIGINAL KAY STIMULI
+%% DO THE SAME FOR THE ORIGINAL KAY STIMULI
 
 % Pattern stimuli from Kay et al 2013
 load('/Volumes/server/Projects/BAIR/Stimuli/Kay2013_stimuli/stimuli.mat');
@@ -689,13 +697,13 @@ whichIm = {...
             };
 
 knk_im_cell = [];
-for ii = 1:length(knk_idx)
+for ii = 1:24%length(knk_idx)
     knk_im_cell{ii} = images{knk_idx(ii)}(:,:,whichIm{ii}(1));
 end
 
 figure('Name', 'OLD STIM');hold on
-for ii = 1:length(knk_im_cell)
-    subplot(6,6,ii);
+for ii = 1:24%length(knk_im_cell)
+    subplot(4,6,ii);
     imshow(knk_im_cell{ii}(:,:,1));
     title(stimulus.categories{ii});
 end
@@ -705,7 +713,7 @@ D = loadDisplayParams('cni_lcd_mock');
 
 figure('Name', 'OLD STIM SF');hold on
 peaks = [];
-for ii = 1:length(knk_im_cell)
+for ii = 1:24%length(knk_im_cell)
     
     im = knk_im_cell{ii}(:,:,1);
     [frequencies, amplitudes, binnedFrequencies, binnedAmplitudes] = ...
@@ -714,24 +722,28 @@ for ii = 1:length(knk_im_cell)
     peaks(ii) = binnedFrequencies(x);
     
     % Plot spectrum per category
-    subplot(6,6,ii);
-    plot(binnedFrequencies, binnedAmplitudes/max(binnedAmplitudes));
+    subplot(4,6,ii);
+    plot(binnedFrequencies, binnedAmplitudes/max(binnedAmplitudes), 'LineWidth', 2);
     xlabel('Cycles per degree')
-    xlim([0 10])
-    set(gca, 'XGrid', 'on', 'XTick', 0:1.5:50)
+    xlim([0 7.5])
+    set(gca, 'XGrid', 'on', 'XTick', 0:1.5:7.5)
     title(stimulus.categories{ii});
 end
 
 % Plot distribution of peaks
-figure('Name', 'OLD STIM SF PEAKS'); hist(peaks); xlabel('max spatial frequency'); ylabel('number of images')
+figure('Name', 'OLD STIM SF PEAKS'); 
+subplot(1,2,1);histogram(peaks); xlabel('max spatial frequency'); ylabel('number of images')
+xlim([0 4]);
+subplot(1,2,2);plot(peaks, 'o-'); ylabel('category index'); ylabel('max spatial frequency'); 
+xlim([0 25]);
 
 % Compute luminance histograms
 figure('Name', 'OLD STIM LUM');hold on
-for ii = 1:length(knk_im_cell)
+for ii = 1:24%length(knk_im_cell)
     
     im = knk_im_cell{ii};
     % Plot histogram per category
-    subplot(6,6,ii);
+    subplot(4,6,ii);
     histogram(im(im~=mode(im(:)))); title('(mode excluded from hist)');
     
     xlabel('Pixel values')

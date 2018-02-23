@@ -9,18 +9,20 @@ function output = createFilteredStimulus(stimParams, unfilteredImage, imageProce
 %       resizing, masking and contrast boosting the image (see
 %       StimMakeSpatiotemporalExperiment.m for explanations)
 %
-%   Note: functions makes use of knkutils toolbox function
-%    'makecircleimage' (for applying a square mask)
-%   Note: we currently do not perform the prewhitening step described in
-%    Kay 2013
+%   Note: functions makes use of the following knkutils toolbox functions:
+%        - 'constructwhiteningfilter' (for whitening)
+%        - 'imagefilter' (for whitening)
+%        - 'makecircleimage' (for applying a square mask)
 
 imageSizeInPixels = size(stimParams.stimulus.images);
+unfilteredImageSizeInPixels = size(unfilteredImage,1);
 
-I0 = unfilteredImage; 
+% Whiten
+flt = constructwhiteningfilter(unfilteredImageSizeInPixels);
+I0 = imagefilter(unfilteredImage,flt); 
 
 % Resize to a certain percentage of imageSizeInPixels
 I1 = imresize(I0, imageProcessingParams.imageScaleFactor * imageSizeInPixels); 
-
 stimSizeInPixels = size(I1);
 
 % Paste into a background of size imageSizeInPixels
@@ -49,7 +51,7 @@ return
 
 %% DEBUG
 
-% use a more robust range for contrast boosting?
+% Use a more robust range for contrast boosting?
 % scaleFactor = range(prctile(I4(I4~=0), [2 98]));
 
 % Plot the results of each processing step
@@ -60,28 +62,32 @@ I5 = output;
 I6 = uint8((I5+.5)*255);
 
 figure;
-subplot(3,4,1);imshow(I0);axis on; title('original');
-subplot(3,4,2);histogram(I0);
+subplot(4,4,1);imshow(unfilteredImage);axis on; title('original');
+subplot(4,4,2);histogram(unfilteredImage);
 set(gca, 'XLim', [0 1], 'YLim', [0 3*10^4]);
 
-subplot(3,4,3);imshow(I2);axis on; title('resize & fit in master display size');
-subplot(3,4,4);histogram(I2);
+subplot(4,4,3);imshow(I0);axis on; title('whitened');
+subplot(4,4,4);histogram(I0);
+set(gca, 'XLim', [0 1], 'YLim', [0 3*10^4]);
+
+subplot(4,4,5);imshow(I2);axis on; title('resize & fit in master display size');
+subplot(4,4,6);histogram(I2);
 set(gca, 'XLim', [0 1], 'YLim', [0 2*10^4]);
 
-subplot(3,4,5);imshow(I3);axis on; title('bp filter');
-subplot(3,4,6);histogram(I3);
+subplot(4,4,7);imshow(I3);axis on; title('bp filter');
+subplot(4,4,8);histogram(I3);
 set(gca, 'XLim', [-5 5], 'YLim', [0 2*10^4]);
 
-subplot(3,4,7);imshow(I4);axis on; title('circular mask');
-subplot(3,4,8);histogram(I4);
+subplot(4,4,9);imshow(I4);axis on; title('mask');
+subplot(4,4,10);histogram(I4);
 set(gca, 'XLim', [-5 5], 'YLim', [0 2*10^4]);
 
-subplot(3,4,9);imshow(I5);axis on;title('scale (to prevent too much clipping)');
-subplot(3,4,10);histogram(I5(I5~=mode(I5(:)))); title('(mode excluded from hist)');
+subplot(4,4,11);imshow(I5);axis on;title('scale (to prevent too much clipping)');
+subplot(4,4,12);histogram(I5(I5~=mode(I5(:)))); title('(mode excluded from hist)');
 set(gca, 'XLim', [-1 1])% 'YLim', [0 0.1*10^4]);
 
-subplot(3,4,11);imshow(I6);axis on;title('8bit');
-subplot(3,4,12);histogram(I6(I6~=mode(I6(:)))); title('(mode excluded from hist)');
+subplot(4,4,13);imshow(I6);axis on;title('8bit');
+subplot(4,4,14);histogram(I6(I6~=mode(I6(:)))); title('(mode excluded from hist)');
 set(gca, 'XLim', [0 255]); %'YLim',[0 0.1*10^4]);
 
 

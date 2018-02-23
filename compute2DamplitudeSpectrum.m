@@ -2,7 +2,8 @@ function [frequencies, amplitudes, binnedFrequencies, binnedAmplitudes] = ...
     compute2DamplitudeSpectrum(im, displayParams)
 
 % enforce double precision
-im = double(im);
+%im = double(im);
+im = (double(im)./255)-0.5;
 
 sz = size(im);
 stimSz = 2*pix2angle(displayParams,sz(1)/2);
@@ -13,8 +14,9 @@ frequencies = sqrt(FsX.^2+FsY.^2);
 % subtract the mean
 im = im - mean(im(:));
 
-% Window
+% Use a window?
 % im = im .* window2(sz(1), sz(2),'hann');
+% im = im .* window2(sz(1), sz(2), @hann);
 
 % Fourier transform
 amplitudes  = fftshift(abs(fft2(im)));

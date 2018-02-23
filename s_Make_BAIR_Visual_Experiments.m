@@ -10,11 +10,8 @@
 %        VISUAL: 36 unique stimuli, shown once each per scan (0.5 s except for temporal stimuli),
 %                with mean ISI of 4.5 s, range 3-6 s; orientation (3; 1 grating, 1 plaid, 1 circular);
 %                contrast (5; noise patterns); spacing: (5: noise patterns, 1 overlaps with contrast);
-%                objects (12: 3 faces, 3 scenes, 3 objects, 3 bodies);
+%                objects (12: 4 faces, 4 letters, 4 houses);
 %                temporal (12; 6 durations; 6 ISIs);
-%
-% QUESTION do we add triggerKey to the ExperimentSpecs or to the display
-% file?
 
 % Prompt for ExperimentSpecs
 [experimentSpecs, whichSite, ok] = bairExperimentSpecs('prompt', true);
