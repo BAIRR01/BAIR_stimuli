@@ -26,6 +26,7 @@ function BAIR_RUNME(runNumber, stimPrefix, siteSpecs, subjID)
 %    BAIR_RUNME(runnum, stimPrefix, siteSpecs, subjID);
 
 if notDefined('runNumber'), runNumber = 1; end
+
 if notDefined('stimPrefix')
     help(mfilename)
     error('stimPrefix is a required input');
@@ -34,8 +35,6 @@ if notDefined('siteSpecs')
     help(mfilename)
     error('siteSpecs is a required input');
 end
-
-% params = retCreateDefaultGUIParams();
 
 % Set parameters for this experiment
 params.experiment       = stimPrefix;
@@ -46,16 +45,12 @@ params.site             = siteSpecs.sites{1};
 params.calibration      = siteSpecs.displays{1};
 params.triggerKey       = siteSpecs.trigger{1};
 params.useSerialPort    = siteSpecs.serialport{1};
+params.useEyeTracker    = siteSpecs.eyetracker{1};
 
 % Additional parameters 
 params.prescanDuration  = 0;
 params.startScan        = 0;
 params.stimSize        = 'max';
-%params.countdown       = 0;
-%params.startScan       = 0;
-%params.trigger         = 'Scanner triggers computer';
-%params.savestimparams  = 1;
-%params.repetitions     = 1;
 params.runPriority     = 7;
 
 % Specify task for subject

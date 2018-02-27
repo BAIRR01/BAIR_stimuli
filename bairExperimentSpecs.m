@@ -13,14 +13,15 @@ p.parse(varargin{:});
 prompt = p.Results.prompt;
 
 % These are the available displays
-sites       = {'Master'; 'NYU-3T'; 'NYU-MEG'; 'NYU-ECOG'; 'UMC-3T'; 'UMC-7T'; 'UMC-ECOG'};
-displays    = {'HiResDefault'; 'CBI_Propixx'; 'meg_lcd'; 'SoMMacBook'; 'UMC_3TLCD'; 'UMC_7TDLP'; 'default'};
-modalities  = {'fMRI'; 'fMRI'; 'MEG'; 'ECoG'; 'fMRI'; 'fMRI'; 'ECoG'};
-radii       = {8.3; 12.4; 11; 11.8; 8.3; 6.4287; 11.8};
-trigger     = {''; '5'; '5'; '5'; 49; 49; '5'};
-serialport  = {false; false; false; false; true; true; true};
-
-experimentSpecs = table(displays, modalities, radii, trigger, serialport, sites, 'RowNames', sites);
+sites       = {'NYU-3T'; 'NYU-MEG'; 'NYU-ECOG'; 'UMC-3T'; 'UMC-7T'; 'UMC-ECOG';'Master'};
+displays    = {'CBI_Propixx'; 'meg_lcd'; 'SoMMacBook'; 'UMC_3TLCD'; 'UMC_7TDLP'; 'default'; 'HiResDefault'};
+modalities  = {'fMRI'; 'MEG'; 'ECoG'; 'fMRI'; 'fMRI'; 'ECoG'; 'none'};
+radii       = {12.4; 11; 11.8; 8.3; 6.4287; 11.8; 8.3};
+trigger     = {'5'; '5'; '5'; 49; 49; '5'; ''};
+serialport  = {false; false; false; true; true; true; false};
+eyetracker  = {false; true; false; false; false; false; false};
+    
+experimentSpecs = table(displays, modalities, radii, trigger, serialport, eyetracker, sites, 'RowNames', sites);
 
 % If requested, ask the user to select a display
 if prompt
