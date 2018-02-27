@@ -21,6 +21,7 @@ stimWidth  = stimParams.stimulus.srcRect(3)-stimParams.stimulus.srcRect(1);
 stimHeight = stimParams.stimulus.srcRect(4)-stimParams.stimulus.srcRect(2);
 
 % Create a random seed
+rng('shuffle');
 im = randn(stimHeight, stimWidth);
 im = im./(max(im(:) - min(im(:)))) + 0.5;
 

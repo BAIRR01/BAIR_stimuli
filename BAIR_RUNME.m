@@ -47,17 +47,15 @@ params.calibration      = siteSpecs.displays{1};
 params.triggerKey       = siteSpecs.trigger{1};
 params.useSerialPort    = siteSpecs.serialport{1};
 
-% Additional parameters copied from retCreateDefaultGUIParams: do we need
-% all of these?
+% Additional parameters 
 params.prescanDuration  = 0;
 params.startScan        = 0;
-params.repetitions      = 1;
 params.stimSize        = 'max';
-params.countdown       = 0;
-params.startScan       = 0;
-params.trigger         = 'Scanner triggers computer';
-params.savestimparams  = 1;
-params.repetitions     = 1;
+%params.countdown       = 0;
+%params.startScan       = 0;
+%params.trigger         = 'Scanner triggers computer';
+%params.savestimparams  = 1;
+%params.repetitions     = 1;
 params.runPriority     = 7;
 
 % Specify task for subject
@@ -67,7 +65,7 @@ else
     params.fixation = 'disk';
 end
 
-% debug mode?
+% Debug mode?
 params.skipSyncTests = 1;
 
 % Go!

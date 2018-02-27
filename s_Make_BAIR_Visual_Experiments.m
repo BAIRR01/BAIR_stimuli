@@ -35,10 +35,11 @@ stimParams = stimInitialize(experimentSpecs, whichSite, stimDiameterDeg);
 stimParams.bpFilter = stimMakeBandPassFilter(stimParams, peakSFcpd);
 
 switch experimentType
-    case 'SPATIOTEMPORAL'
+    case {'SPATIALPATTERN' 'SPATIALOBJECT' 'TEMPORALPATTERN'}
         % Make SOC experiment
+        stimPrefix = experimentType;
         for runNum = 1:numberOfRuns
-            stimMakeSpatiotemporalExperiment(stimParams, runNum);
+            stimMakeSpatiotemporalExperiment(stimParams, runNum, stimPrefix);
         end
         
     case {'HRFPATTERN'  'HRFPATTERNINVERTED'  'HRFCHECKER'  'HRFCHECKERINVERTED'}
