@@ -72,6 +72,7 @@ switch site
                 % Pre-allocate arrays to store images
                 images = uint8(zeros([imageSizeInPixels length(categories) * numberOfImagesPerCat]));
                 im_cell = cell([1 length(categories)]);
+                catindex = zeros(1, length(categories) * numberOfImagesPerCat);
                 imCount = 1;
 
                 % Create CRF stimuli
@@ -103,6 +104,7 @@ switch site
                         image8Bit = uint8((imageForThisTrial+.5)*255);
                         images(:,:,imCount) = image8Bit;
                         im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
+                        catindex(imCount) = categoryIndex(cc);
                         imCount = imCount + 1;
                     end
                 end
@@ -154,6 +156,7 @@ switch site
                         image8Bit = uint8((imageForThisTrial+.5)*255);
                         images(:,:,imCount) = image8Bit;
                         im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
+                        catindex(imCount) = categoryIndex(cc);
                         imCount = imCount + 1;
                     end
                 end
@@ -187,6 +190,7 @@ switch site
                         image8Bit = uint8((imageForThisTrial+.5)*255);
                         images(:,:,imCount) = image8Bit;
                         im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
+                        catindex(imCount) = categoryIndex(cc);
                         imCount = imCount + 1;
                     end
                 end
@@ -213,6 +217,7 @@ switch site
                 % Pre-allocate arrays to store images
                 images = uint8(zeros([imageSizeInPixels length(categories) * numberOfImagesPerCat]));
                 im_cell = cell([1 length(categories)]);
+                catindex = zeros(1, length(categories) * numberOfImagesPerCat);
                 imCount = 1;
 
                 % Create FACES / LETTERS / HOUSES
@@ -289,6 +294,7 @@ switch site
                         image8Bit = uint8((imageForThisTrial+.5)*255);
                         images(:,:,imCount) = image8Bit;
                         im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
+                        catindex(imCount) = categoryIndex(cc);
                         imCount = imCount + 1;
                     end
                 end
@@ -326,6 +332,7 @@ switch site
                 % Pre-allocate arrays to store images
                 images = uint8(zeros([imageSizeInPixels length(categories) * numberOfImagesPerCat]));
                 im_cell = cell([1 length(categories)]);
+                catindex = zeros(1, length(categories) * numberOfImagesPerCat);
                 imCount = 1;
 
                 % Create TEMPORAL stimuli
@@ -350,6 +357,7 @@ switch site
                         image8Bit = uint8((imageForThisTrial+.5)*255);
                         images(:,:,imCount) = image8Bit;
                         im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
+                        catindex(imCount) = categoryIndex(cc);
                         imCount = imCount + 1;
                     end
                 end
@@ -400,16 +408,17 @@ switch site
 
         % Put everything into stimulus struct
         stimulus.categories   = categories;
-        stimulus.im_cell      = im_cell;
         stimulus.images       = images;
+        stimulus.im_cell      = im_cell;
+        stimulus.catindex     = catindex;
 
         stimulus.duration     = durations;
         stimulus.ISI          = ISI;
-        stimulus.cat          = stim_seq;
+        stimulus.trialindex   = stim_seq;
         
         % Update durations for temporal stimuli
         for ii = 1:numberOfStimuli
-            idx = stim_seq(ii);
+            idx = stimulus.trialindex(ii);
         
             if stimulus.ISI(idx)>0
                 stimulus.trial(ii).seqtiming = [...
@@ -423,7 +432,10 @@ switch site
             end
         end
       
-        otherwise    
+        % Generate a save name       
+        fname = sprintf('%s_%s_%d.mat', lower(stimulusType), site, runID);
+        
+    otherwise    
 
             % Resize the Master stimuli to the required stimulus size for this
                     % modality and display
@@ -537,7 +549,7 @@ switch site
 
             for ii = 1:length(stimulus.onsets)
                 [~, idx] = min(abs(stimulus.seqtiming-stimulus.onsets(ii)));
-                trigSeq(idx) = stimulus.cat(ii);
+                trigSeq(idx) = stimulus.trialindex(ii);
                 diodeSeq(idx) = 1;
             end
 
@@ -550,10 +562,24 @@ switch site
    
             stimulus.modality = stimParams.modality;
             stimulus.site     = site;
+            
+            % Generate a save name
+            fname = sprintf('%s_%s_%d.mat', lower(stimulusType), site, runID);
+            
+            % Add table with elements to write to tsv file for BIDS
+            onset       = stimulus.onsets';
+            duration    = stimulus.duration(stimulus.trialindex)';
+            ISI         = stimulus.ISI(stimulus.trialindex)';
+            trial_type  = stimulus.catindex(stimulus.trialindex)'; 
+            trial_name  = stimulus.categories(trial_type)';
+            stim_file   = repmat(fname, numberOfStimuli ,1);
+            stim_file_index = stimulus.trialindex';
+
+            stimulus.tsv = table(onset, duration, ISI, trial_type, trial_name, stim_file, stim_file_index);
+
 end
 
 % save 
-fname = sprintf('%s_%s_%d.mat', lower(stimulusType), site, runID);
 fprintf('[%s]: Saving Master stimuli as: %s\n', mfilename, fname);
 
 save(fullfile(vistadispRootPath, 'StimFiles',  fname), 'stimulus', '-v7.3')

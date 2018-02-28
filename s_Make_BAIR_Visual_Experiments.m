@@ -38,7 +38,7 @@ switch experimentType
     case {'SPATIALPATTERN' 'SPATIALOBJECT' 'TEMPORALPATTERN'}
         % Make SOC experiment
         stimPrefix = experimentType;
-        for runNum = 1:numberOfRuns
+        for runNum = [1 2] %numberOfRuns
             stimMakeSpatiotemporalExperiment(stimParams, runNum, stimPrefix);
         end
         
