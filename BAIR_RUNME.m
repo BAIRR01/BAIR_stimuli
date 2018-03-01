@@ -1,5 +1,5 @@
-function BAIR_RUNME(runNumber, stimPrefix, siteSpecs, subjID)
-% BAIR_RUNME(n, stimPrefix, specs, subjID)
+function BAIR_RUNME(stimPrefix, runID, siteSpecs, subjID)
+% BAIR_RUNME(stimPrefix, runNumber, specs, subjID)
 %
 % Run BAIR experiments (Do not call this function directly. It gets called
 % from the wrapper function, s_runme_BAIR)
@@ -7,14 +7,15 @@ function BAIR_RUNME(runNumber, stimPrefix, siteSpecs, subjID)
 %   Run time per experiment = XX seconds
 %
 % INPUTS
-%   runNumber       run number
 %   stimPrefix      prefix for the stimulus files containing images
 %                      should be 
 %                       - spatiotemporal
-%                       - task
-%                       - hrfchecker
+%                       - prf
+%                       - spatialpattern
+%                       - temporalpattern
 %                       etc
-%   siteSpecs           one-row table generated from the function bairExperimentSpecs
+%   runID           run number
+%   siteSpecs       one-row table generated from the function bairExperimentSpecs
 %   subjID          alphanumeric subject ID 
 %
 %   Example
@@ -25,12 +26,11 @@ function BAIR_RUNME(runNumber, stimPrefix, siteSpecs, subjID)
 %    subjID     = 'wl001';
 %    BAIR_RUNME(runnum, stimPrefix, siteSpecs, subjID);
 
-if notDefined('runNumber'), runNumber = 1; end
-
 if notDefined('stimPrefix')
     help(mfilename)
     error('stimPrefix is a required input');
 end
+if notDefined('runNumber'), runID = 1; end
 if notDefined('siteSpecs')
     help(mfilename)
     error('siteSpecs is a required input');
@@ -39,7 +39,8 @@ end
 % Set parameters for this experiment
 params.experiment       = stimPrefix;
 params.subjID           = subjID;
-params.loadMatrix       = sprintf('%s_%s_%d.mat', stimPrefix, siteSpecs.sites{1}, runNumber);
+params.runID            = runID;
+params.loadMatrix       = sprintf('%s_%s_%d.mat', stimPrefix, siteSpecs.sites{1}, runID);
 params.modality         = siteSpecs.modalities{1};
 params.site             = siteSpecs.sites{1};
 params.calibration      = siteSpecs.displays{1};

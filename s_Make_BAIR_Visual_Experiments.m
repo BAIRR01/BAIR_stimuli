@@ -18,7 +18,7 @@
 if ~ok, return; end
 
 % Which experiment to make?
-[experimentType, numberOfRuns] = bairWhichExperiment();
+[experimentType] = bairWhichExperiment();
 
 % Generate stimulus template
 
@@ -36,43 +36,52 @@ stimParams.bpFilter = stimMakeBandPassFilter(stimParams, peakSFcpd);
 
 switch experimentType
     case {'SPATIALPATTERN' 'SPATIALOBJECT' 'TEMPORALPATTERN'}
-        % Make SOC experiment
+        % Make SPATIOTEMPORAL experiment
         stimPrefix = experimentType;
-        for runNum = [1 2] %numberOfRuns
+        numberOfRuns = 2; 
+        % For SPATIOTEMPORAL, we have 2 unique runs with fixed stimulus
+        % orders that will be identical for other modalities. Timing (ISI)
+        % is jittered between modalities, and so is the fixation sequence
+        for runNum = 1:numberOfRuns
             stimMakeSpatiotemporalExperiment(stimParams, runNum, stimPrefix);
         end
         
     case {'HRFPATTERN'  'HRFPATTERNINVERTED'  'HRFCHECKER'  'HRFCHECKERINVERTED'}
-        % Make HRF experiment
+        % Make HRF experiment        
+        stimPrefix = strrep(lower(experimentType), 'hrf', '');
+       
         %   Timing should be specified with values that are integer multiples of
         %   the default refresh rate of 60 Hz (ie 16.66666 ms). And the stimulus
         %   duration should be an even multiple of this value since we may use
         %   paired stimuli for the hRF experiment (a contrast pattern immediately
         %   followed by its contrast-reversed pattern).
-        stimulusDuration  = 0.200; % seconds.
-        dwellTimePerImage = 0.050; % temporal resolution, in s, at which the image sequence is specified
+        % stimDurationSeconds  = 0.200; % seconds.
+        % dwellTimePerImage    = 0.050; % temporal resolution, in s, at which the image sequence is specified
+        stimDurationSeconds    = 0.170; % seconds.
+        dwellTimePerImage      = 0.170; % temporal resolution, in s, at which the image sequence is specified
+
+         % For HRF, we have ONE unique run; order and timing is fixed
+        % across all modalities, but the fixation sequence is created anew
+        numberOfRuns = 1; 
+        for runNum = numberOfRuns
+            stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, dwellTimePerImage, stimPrefix);                      
+        end
+       
+    case 'PRF'
+        stimulusDuration  = 0.200; % seconds
+        isi               = 0.300; % seconds
+        dwellTimePerImage = 0.100; % temporal resolution, in s, at which the image sequence is specified
         
-        stimPrefix = strrep(lower(experimentType), 'hrf', '');
-        for runNum = 1:numberOfRuns
-            stimMakeHRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage,  stimPrefix);                      
+        numberOfRuns = 1;     % are we going to create multiple runs?
+        for runNum = 1:numberOfRuns            
+            % Make PRF experiment
+            stimMakePRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage, isi);
         end
         
     case 'TASK'
         for runNum = 1:numberOfRuns
-            
             % MAKE TASK EXPERIMENT
             stimMakeTaskExperiment(stimParams, runNum);
-        end
-        
-    case 'PRF'
-        stimulusDuration  = 0.200; % seconds.
-        isi               = 0.300; % seconds
-        dwellTimePerImage = 0.100; % temporal resolution, in s, at which the image sequence is specified
-        
-        for runNum = 1:numberOfRuns
-            
-            % Make PRF experiment
-            stimMakePRFExperiment(stimParams, runNum, stimulusDuration,dwellTimePerImage, isi);
-        end
+        end    
 end
 

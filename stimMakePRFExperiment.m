@@ -58,26 +58,11 @@ for ii = 1:numberOfImages
     stimulus.seq(idx) = stimOrder;
 end
 
-
-
-% Create the fixation dot color change sequence
-stimulus.fixSeq       = ones(size(stimulus.seqtiming));
-
-this_frame = 0;
+% Add fixation sequence
 minDurationInSeconds = 1;
 maxDurationInSeconds = 5;
-
-minDurationInImageNumber = round(minDurationInSeconds / dwellTimePerImage);
-maxDurationInImageNumber = round(maxDurationInSeconds / dwellTimePerImage);
-
-while true
-    % wait between minDurationInSeconds and maxDurationInSeconds before
-    % flipping the dot color
-    isi = randperm(maxDurationInImageNumber-minDurationInImageNumber,1)+minDurationInImageNumber-1;
-    this_frame = this_frame + isi;
-    if this_frame > length(stimulus.fixSeq), break; end
-    stimulus.fixSeq(this_frame:end) = mod(stimulus.fixSeq(this_frame-1),2)+1;
-end
+fixSeq = createFixationSequence(stimulus, dwellTimePerImage, minDurationInSeconds, maxDurationInSeconds);
+stimulus.fixSeq = fixSeq;
 
 % add triggers for non-fMRI modalities
 switch lower(stimParams.modality)
@@ -88,7 +73,7 @@ switch lower(stimParams.modality)
 end
 
 % create stimulus.mat filename
-fname = sprintf('prf_%s_%d', stimParams.site, runNum);
+fname = sprintf('prf_%s_%d.mat', stimParams.site, runNum);
 
 % add table with elements to write to tsv file for BIDS
 onset       = stimulus.seqtiming((0:numberOfImages-1)*chunkSize+1)';
@@ -101,7 +86,6 @@ stim_file_index = (1:numberOfImages)';
 stimulus.tsv = table(onset, duration, trial_type, trial_name, stim_file, stim_file_index);
 
 % save
-
 stimulus.display  = stimParams.display;
 stimulus.modality = stimParams.modality;
 stimulus.site     = stimParams.site;

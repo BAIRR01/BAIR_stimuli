@@ -70,7 +70,7 @@ switch site
                 numberOfImagesPerCat = 3;
                 
                 % Pre-allocate arrays to store images
-                images = uint8(zeros([imageSizeInPixels length(categories) * numberOfImagesPerCat]));
+                images = zeros([imageSizeInPixels length(categories) * numberOfImagesPerCat], 'uint8');
                 im_cell = cell([1 length(categories)]);
                 catindex = zeros(1, length(categories) * numberOfImagesPerCat);
                 imCount = 1;
@@ -215,7 +215,7 @@ switch site
                 numberOfImagesPerCat = 12;
 
                 % Pre-allocate arrays to store images
-                images = uint8(zeros([imageSizeInPixels length(categories) * numberOfImagesPerCat]));
+                images = zeros([imageSizeInPixels length(categories) * numberOfImagesPerCat], 'uint8');
                 im_cell = cell([1 length(categories)]);
                 catindex = zeros(1, length(categories) * numberOfImagesPerCat);
                 imCount = 1;
@@ -330,7 +330,7 @@ switch site
                 numberOfImagesPerCat = 3;
                 
                 % Pre-allocate arrays to store images
-                images = uint8(zeros([imageSizeInPixels length(categories) * numberOfImagesPerCat]));
+                images = zeros([imageSizeInPixels length(categories) * numberOfImagesPerCat], 'uint8');
                 im_cell = cell([1 length(categories)]);
                 catindex = zeros(1, length(categories) * numberOfImagesPerCat);
                 imCount = 1;
@@ -388,12 +388,12 @@ switch site
                 taskID = 12; 
         end
         
-        % DEBUG: plot generated images
-        figure;hold on
-        for ii = 1:size(images,3)
-            subplot(ceil(sqrt(size(images,3))),ceil(sqrt(size(images,3))),ii);
-            imshow(images(:,:,ii));
-        end
+%         % DEBUG: plot generated images
+%         figure;hold on
+%         for ii = 1:size(images,3)
+%             subplot(ceil(sqrt(size(images,3))),ceil(sqrt(size(images,3))),ii);
+%             imshow(images(:,:,ii));
+%         end
 
         % Make individual trial sequences
         numberOfStimuli = size(images,3);
@@ -466,28 +466,27 @@ switch site
             stimulus.im_cell      = im_cell;
             stimulus.images       = images;   
             
-            % DEBUG: plot generated images
-            figure;hold on
-            for ii = 1:size(images,3)-1
-                subplot(ceil(sqrt(size(images,3)-1)),ceil(sqrt(size(images,3)-1)),ii);
-                imshow(images(:,:,ii));
-            end
+%             % DEBUG: plot generated images
+%             figure;hold on
+%             for ii = 1:size(images,3)-1
+%                 subplot(ceil(sqrt(size(images,3)-1)),ceil(sqrt(size(images,3)-1)),ii);
+%                 imshow(images(:,:,ii));
+%             end
             
-            % Experiment timing 
-            
+            % Experiment timing            
             fprintf('[%s]: Calculating stimulus timing for: %s\n', mfilename,  site);
 
             switch(lower(stimParams.modality))
                 case 'fmri'
                     ITI_min  = 3;
                     ITI_max  = 6;
-                    prescan  = 9; % seconds
-                    postscan = 9; % seconds
+                    prescan  = 12; % seconds
+                    postscan = 12; % seconds
                 case {'ecog' 'eeg' 'meg'}
                     ITI_min  = 1.25;
                     ITI_max  = 1.75;
-                    prescan  = 2; % seconds
-                    postscan = 2; % seconds
+                    prescan  = 3; % seconds
+                    postscan = 3; % seconds
                 otherwise
                     error('Unknown modality')
             end
@@ -567,9 +566,9 @@ switch site
             fname = sprintf('%s_%s_%d.mat', lower(stimulusType), site, runID);
             
             % Add table with elements to write to tsv file for BIDS
-            onset       = stimulus.onsets';
-            duration    = stimulus.duration(stimulus.trialindex)';
-            ISI         = stimulus.ISI(stimulus.trialindex)';
+            onset       = round(stimulus.onsets,3)';
+            duration    = round(stimulus.duration(stimulus.trialindex),3)';
+            ISI         = round(stimulus.ISI(stimulus.trialindex),3)';
             trial_type  = stimulus.catindex(stimulus.trialindex)'; 
             trial_name  = stimulus.categories(trial_type)';
             stim_file   = repmat(fname, numberOfStimuli ,1);
