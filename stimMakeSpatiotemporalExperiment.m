@@ -43,6 +43,7 @@ stimulus.cmap         = stimParams.stimulus.cmap;
 stimulus.srcRect      = stimParams.stimulus.srcRect;
 stimulus.dstRect      = stimParams.stimulus.destRect;
 stimulus.display      = stimParams.display;
+frameRate             = stimParams.display.frameRate;
 
 switch site
     case 'Master'
@@ -363,7 +364,7 @@ switch site
                 end
                 
                 % Set durations and ISIs           
-                tempIndex = [1 2 4 8 16 32]/60;
+                tempIndex = [1 2 4 8 16 32]/frameRate;
                 
                 durations = [];
                 % One pulse durations:
@@ -372,7 +373,7 @@ switch site
                 end
                 
                 % Append two pulse durations:
-                durations = [durations ones(1,length(tempIndex)*numberOfImagesPerCat)*8/60];
+                durations = [durations ones(1,length(tempIndex)*numberOfImagesPerCat)*8/frameRate];
                 
                 % One pulse ISI:
                 ISI = zeros(1,18);
@@ -493,7 +494,7 @@ switch site
 
             % Generate ITIs
             numberOfStimuli = size(stimulus.images,3)-1;
-            ITIs = linspace(ITI_min,ITI_max,numberOfStimuli);
+            ITIs = linspace(ITI_min,ITI_max,numberOfStimuli-1);
 
             stimulus.ITI          = ITIs;
             stimulus.prescan      = prescan; % seconds
@@ -501,11 +502,11 @@ switch site
 
             % Generate random ITI order
             rng('shuffle'); 
-            iti_seq = randperm(numberOfStimuli);
+            iti_seq = randperm(numberOfStimuli-1);
 
             % Compute onsets based on modality-specific ITIs
             stimulus.onsets = cumsum([stimulus.prescan stimulus.ITI(iti_seq)]);
-            stimulus.onsets = stimulus.onsets(1:end-1);
+            stimulus.onsets = stimulus.onsets;
 
             BLANK = size(stimulus.images,3);
             stimulus.seq       = BLANK; % initialize with blank at time 0
@@ -527,7 +528,7 @@ switch site
             stimulus.seqtiming(end+1) = stimulus.seqtiming(end) + stimulus.postscan;
 
             % Interpolate to 60 frames / second
-            seqtiming = 0:1/60:stimulus.seqtiming(end);
+            seqtiming = 0:1/frameRate:stimulus.seqtiming(end);
             seq = zeros(size(seqtiming));
 
             for ii = length(stimulus.seqtiming):-1:2
@@ -536,6 +537,13 @@ switch site
             end
             seq(end) = stimulus.seq(end);
 
+            
+            % Add fixation sequence
+            minDurationInSeconds = 1;
+            maxDurationInSeconds = 5;
+            fixSeq = createFixationSequence(stimulus, 1/frameRate, minDurationInSeconds, maxDurationInSeconds);
+            stimulus.fixSeq = fixSeq;
+            
             % Put full and sparse timing sequences in struct
             stimulus.seqtiming_sparse = stimulus.seqtiming;
             stimulus.seq_sparse = stimulus.seq;
@@ -544,21 +552,23 @@ switch site
 
             % Triggers
             trigSeq  = zeros(size(stimulus.seq));
-            diodeSeq = zeros(size(stimulus.seq)); 
 
             for ii = 1:length(stimulus.onsets)
                 [~, idx] = min(abs(stimulus.seqtiming-stimulus.onsets(ii)));
                 trigSeq(idx) = stimulus.trialindex(ii);
-                diodeSeq(idx) = 1;
             end
 
             switch lower(stimParams.modality)
                 case 'fmri'
                 otherwise
                     stimulus.trigSeq = trigSeq;
-                    stimulus.diodeSeq = diodeSeq;
             end
    
+            
+            % sparsify
+            maxUpdateInterval = 0.25;
+            stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
+
             stimulus.modality = stimParams.modality;
             stimulus.site     = site;
             
@@ -577,6 +587,8 @@ switch site
             stimulus.tsv = table(onset, duration, ISI, trial_type, trial_name, stim_file, stim_file_index);
 
 end
+
+
 
 % save 
 fprintf('[%s]: Saving Master stimuli as: %s\n', mfilename, fname);

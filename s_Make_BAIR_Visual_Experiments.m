@@ -55,16 +55,15 @@ switch experimentType
         %   duration should be an even multiple of this value since we may use
         %   paired stimuli for the hRF experiment (a contrast pattern immediately
         %   followed by its contrast-reversed pattern).
-        % stimDurationSeconds  = 0.200; % seconds.
-        % dwellTimePerImage    = 0.050; % temporal resolution, in s, at which the image sequence is specified
-        stimDurationSeconds    = 0.170; % seconds.
-        dwellTimePerImage      = 0.170; % temporal resolution, in s, at which the image sequence is specified
-
-         % For HRF, we have ONE unique run; order and timing is fixed
-        % across all modalities, but the fixation sequence is created anew
+        
+        stimDurationSeconds    = 0.200; % seconds.
+        onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR
+        
+         % For HRF, we have ONE unique run; order, timing and fixation
+         % sequence is the same across all sites
         numberOfRuns = 1; 
         for runNum = numberOfRuns
-            stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, dwellTimePerImage, stimPrefix);                      
+            stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, stimPrefix);                      
         end
        
     case 'PRF'

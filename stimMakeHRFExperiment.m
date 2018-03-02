@@ -1,5 +1,5 @@
-function stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, dwellTimePerImage, stimulusType)
-%stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, dwellTimePerImage, stimulusType)
+function stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, stimulusType)
+%stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, stimulusType)
 %
 %  Stimuli are presented for stimDurationSeconds, with an exponentially
 %  distributed interstimulus interval (mean ~9s, range 3-24s).
@@ -14,6 +14,7 @@ function stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, dwellTim
 
 % Determine if we're creating the master or loading resizing for a specific display
 site = stimParams.experimentSpecs.Row{1};
+frameRate = stimParams.display.frameRate;
 
 switch site
     case 'Master'
@@ -77,11 +78,11 @@ switch site
 
         % Specify event timing, with an exponential distribution of ISIs
         [onsets, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun, preScanPeriod, ...
-            minimumISIinSeconds, maximumISIinSeconds, dwellTimePerImage, stimParams.display.frameRate);
+            minimumISIinSeconds, maximumISIinSeconds, onsetTimeMultiple, frameRate);
         
         % Define total length of stimulation sequence at frame rate resolution
         %stimulus.seqtiming    = 0:dwellTimePerImage:300;
-        stimulus.seqtiming    = 0:dwellTimePerImage:onsets(numberOfEventsPerRun)+stimDurationSeconds+postScanPeriod;
+        stimulus.seqtiming    = 0:1/frameRate:onsets(numberOfEventsPerRun)+stimDurationSeconds+postScanPeriod;
         stimulus.seq          = zeros(size(stimulus.seqtiming))+blankImageIndex;
 
         % Randomize the assignment of image to trial
@@ -91,7 +92,7 @@ switch site
         % Specify the image sequence within each stimulus, which depends on the
         % stimulus duration and the dwell time per image, as well as whether or not
         % we include a contrast reversal
-        imagesPerTrial = round(stimDurationSeconds/dwellTimePerImage);
+        imagesPerTrial = round(stimDurationSeconds*frameRate);
         sequencePerTrial = zeros(1,imagesPerTrial);
 
         switch lower(stimulusType)
@@ -126,7 +127,14 @@ switch site
         stim_file_index = reshape(imageIndex, [numberOfEventsPerRun 1]);
         
         stimulus.tsv = table(onset, duration, trial_type, trial_name, stim_file, stim_file_index);
-      
+
+        
+        % Add fixation sequence
+        minDurationInSeconds = 1;
+        maxDurationInSeconds = 5;
+        fixSeq = createFixationSequence(stimulus, 1/frameRate, minDurationInSeconds, maxDurationInSeconds);
+        stimulus.fixSeq = fixSeq;
+
     otherwise        
         % Resize the Master stimuli to the required stimulus size for this
                 % modality and display
@@ -161,12 +169,6 @@ switch site
         stimulus.tsv.stim_file =  repmat(fname, length(stimulus.tsv.stim_file), 1);
 end
 
-% Add fixation sequence
-minDurationInSeconds = 1;
-maxDurationInSeconds = 5;
-fixSeq = createFixationSequence(stimulus, dwellTimePerImage, minDurationInSeconds, maxDurationInSeconds);
-stimulus.fixSeq = fixSeq;
-
 % Add triggers for non-fMRI modalities
 switch lower(stimParams.modality)
     case 'fmri' 
@@ -174,6 +176,10 @@ switch lower(stimParams.modality)
     otherwise
         stimulus.trigSeq  = double(stimulus.seq~=blankImageIndex);
 end
+
+% sparsify
+maxUpdateInterval = 0.25;
+stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
 
 % Save
 stimulus.display  = stimParams.display;
@@ -184,7 +190,7 @@ save(fullfile(vistadispRootPath, 'StimFiles',  fname), 'stimulus')
 
 end
 
-function [onsets, indices] = getExponentialOnsets(numStimuli, preScanPeriod, minISI, maxISI, temporalResolution, frameRate)
+function [onsets, indices] = getExponentialOnsets(numStimuli, preScanPeriod, minISI, maxISI, onsetTimeMultiple, frameRate)
 
 % Draw numStimuli ISIs from an exponential distribution from [minISI maxISI]
 x = linspace(0,1,numStimuli-1) * (1-exp(-minISI)) + exp(-minISI);
@@ -200,17 +206,17 @@ ISIs = ISIs*(maxISI-minISI)+minISI;
 % ylabel('ITI (s)'); xlabel('Trial')
 
 % Round off the ISIs to multiples of temporalResolution
-ISIs = round(ISIs/temporalResolution)*temporalResolution;
+ISIs = round(ISIs/onsetTimeMultiple)*onsetTimeMultiple;
 
 % Compute the cumulative sum of ISIs to get the onset times
-prescan  = round(preScanPeriod/temporalResolution)*temporalResolution;
+prescan  = round(preScanPeriod/onsetTimeMultiple)*onsetTimeMultiple;
 onsets   = cumsum([prescan ISIs(randperm(numStimuli-1))]); 
 
 % Match the stimulus presentation to the frame rate
 onsets   = round(onsets*frameRate)/frameRate;
 
 % Derive indices into the stimulus sequence (defined at temporalResolution)
-indices  = round(onsets/temporalResolution)+1;
+indices  = round(onsets*frameRate)+1;
 
 % % Debug
 % figure(2), clf; set(gcf, 'Color', 'w')
