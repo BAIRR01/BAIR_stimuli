@@ -1,4 +1,6 @@
-function stimMakePRFExperiment(stimParams, runNum, stimulusDuration,dwellTimePerImage, isi)
+function stimMakePRFExperiment(stimParams, runNum, stimulusDuration, isi)
+
+frameRate = stimParams.display.frameRate;
 
 % Load aperture images
 barApertures = stimMakePRFApertures(stimParams);
@@ -12,11 +14,14 @@ imagesPerPosition = round(1 / (stimulusDuration + isi));
 % Total number of images
 numberOfImages = imagesPerPosition * size(barApertures,3);
 
+% Total time
+totalTime = numberOfImages * (stimulusDuration + isi);
+
 % First image is a blank
 blankImageIndex  = 1;
-
-% Total time points
-numberOfTimePoints = 1/dwellTimePerImage * size(barApertures,3);
+% 
+% % Total time points
+% numberOfTimePoints = 1/dwellTimePerImage * size(barApertures,3);
 
 % Image size
 imageSizeInPixels = size(stimParams.stimulus.images);
@@ -43,13 +48,13 @@ stimulus.cmap       = stimParams.stimulus.cmap;
 stimulus.srcRect    = stimParams.stimulus.srcRect;
 stimulus.dstRect    = stimParams.stimulus.destRect;
 stimulus.images     = images;
-stimulus.seqtiming  = (0:numberOfTimePoints-1)*dwellTimePerImage;
+stimulus.seqtiming  = 0:1/frameRate:totalTime;
 stimulus.seq        = zeros(size(stimulus.seqtiming))+blankImageIndex;
 stimulus.fixSeq     = ones(size(stimulus.seqtiming));
 
 
-numIms =    round(stimulusDuration/dwellTimePerImage);
-numBlanks = round(isi/dwellTimePerImage);
+numIms =    round(stimulusDuration*frameRate);
+numBlanks = round(isi*frameRate);
 chunkSize = numIms + numBlanks;
 
 for ii = 1:numberOfImages
@@ -61,22 +66,27 @@ end
 % Add fixation sequence
 minDurationInSeconds = 1;
 maxDurationInSeconds = 5;
-fixSeq = createFixationSequence(stimulus, dwellTimePerImage, minDurationInSeconds, maxDurationInSeconds);
+fixSeq = createFixationSequence(stimulus, 1/frameRate, minDurationInSeconds, maxDurationInSeconds);
 stimulus.fixSeq = fixSeq;
+
+maxUpdateInterval = 0.25;
+stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
 
 % add triggers for non-fMRI modalities
 switch lower(stimParams.modality)
     case 'fmri' 
     otherwise
         stimulus.trigSeq  = double(stimulus.seq~=blankImageIndex);
-        stimulus.diodeSeq = stimulus.trigSeq;
 end
 
 % create stimulus.mat filename
 fname = sprintf('prf_%s_%d.mat', stimParams.site, runNum);
 
+
 % add table with elements to write to tsv file for BIDS
-onset       = stimulus.seqtiming((0:numberOfImages-1)*chunkSize+1)';
+[~, Ai] = unique(stimulus.seq);
+
+onset       = stimulus.seqtiming(Ai)';
 duration    = ones(numberOfImages,1) * stimulusDuration;
 trial_type  = ceil((1:numberOfImages)/imagesPerPosition)';
 trial_name  = num2str(trial_type);

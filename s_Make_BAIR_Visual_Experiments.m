@@ -67,14 +67,13 @@ switch experimentType
         end
        
     case 'PRF'
-        stimulusDuration  = 0.200; % seconds
-        isi               = 0.300; % seconds
-        dwellTimePerImage = 0.100; % temporal resolution, in s, at which the image sequence is specified
+        stimulusDuration  = 0.500; % seconds
+        isi               = 0.350; % seconds
         
-        numberOfRuns = 1;     % are we going to create multiple runs?
+        numberOfRuns = 2;     % are we going to create multiple runs?
         for runNum = 1:numberOfRuns            
             % Make PRF experiment
-            stimMakePRFExperiment(stimParams, runNum, stimulusDuration, dwellTimePerImage, isi);
+            stimMakePRFExperiment(stimParams, runNum, stimulusDuration, isi);
         end
         
     case 'TASK'
