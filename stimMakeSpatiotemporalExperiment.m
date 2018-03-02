@@ -526,8 +526,12 @@ switch site
             end
             stimulus.seq(end+1) = BLANK;
             stimulus.seqtiming(end+1) = stimulus.seqtiming(end) + stimulus.postscan;
-
-            % Interpolate to 60 frames / second
+            
+            % Put stimulus timing sequences in struct
+            stimulus.seqtiming_sparse = stimulus.seqtiming;
+            stimulus.seq_sparse = stimulus.seq;
+            
+            % Interpolate to frame Rate
             seqtiming = 0:1/frameRate:stimulus.seqtiming(end);
             seq = zeros(size(seqtiming));
 
@@ -536,36 +540,32 @@ switch site
                 seq(idx) = stimulus.seq(ii-1);
             end
             seq(end) = stimulus.seq(end);
-
+           
+            % Put interpolated timing sequences in struct
+            stimulus.seq = seq;
+            stimulus.seqtiming = seqtiming;
             
             % Add fixation sequence
             minDurationInSeconds = 1;
             maxDurationInSeconds = 5;
             fixSeq = createFixationSequence(stimulus, 1/frameRate, minDurationInSeconds, maxDurationInSeconds);
             stimulus.fixSeq = fixSeq;
-            
-            % Put full and sparse timing sequences in struct
-            stimulus.seqtiming_sparse = stimulus.seqtiming;
-            stimulus.seq_sparse = stimulus.seq;
-            stimulus.seq = seq;
-            stimulus.seqtiming = seqtiming;
-
-            % Triggers
-            trigSeq  = zeros(size(stimulus.seq));
-
-            for ii = 1:length(stimulus.onsets)
-                [~, idx] = min(abs(stimulus.seqtiming-stimulus.onsets(ii)));
-                trigSeq(idx) = stimulus.trialindex(ii);
-            end
-
+       
+            % Add triggers for non-fMRI modalities
             switch lower(stimParams.modality)
                 case 'fmri'
                 otherwise
+                    
+                    trigSeq  = zeros(size(stimulus.seq));
+
+                    for ii = 1:length(stimulus.onsets)
+                        [~, idx] = min(abs(stimulus.seqtiming-stimulus.onsets(ii)));
+                        trigSeq(idx) = stimulus.trialindex(ii);
+                    end
                     stimulus.trigSeq = trigSeq;
             end
    
-            
-            % sparsify
+            % Sparsify the stimulus sequence
             maxUpdateInterval = 0.25;
             stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
 
@@ -588,40 +588,9 @@ switch site
 
 end
 
-
-
 % save 
-fprintf('[%s]: Saving Master stimuli as: %s\n', mfilename, fname);
+fprintf('[%s]: Saving stimuli in: %s\n', mfilename, fullfile(vistadispRootPath, 'StimFiles',  fname));
 
 save(fullfile(vistadispRootPath, 'StimFiles',  fname), 'stimulus', '-v7.3')
 
 return
-
-
-% OLD:
-tmp = cumsum(cellfun(@length, whichIm));
-whichIm_Idx = [[0 tmp(1:end-1)]+1; tmp];
-
-stim_seq = randperm(num_cats);
-for ii = 1:num_cats
-    idx = stim_seq(ii);
-
-    % choose exemplar based on run number
-    possible_exemplars = whichIm_Idx(1,idx):whichIm_Idx(2,idx);
-    n = length(possible_exemplars);
-    this_exemplar = mod(runNum, n);
-
-    thisim = whichIm_Idx(1,idx)+this_exemplar;
-
-    if stimulus.ISI(idx)>0
-        stimulus.trial(ii).seqtiming = [...
-            [0 stimulus.duration(idx)] ... pulse one
-            [0 stimulus.duration(idx)] + stimulus.ISI(idx) + stimulus.duration(idx)... ... pulse two
-            ];
-        stimulus.trial(ii).seq = [thisim BLANK thisim BLANK];
-    else
-        stimulus.trial(ii).seqtiming = [0 stimulus.duration(idx)];
-        stimulus.trial(ii).seq = [thisim BLANK];
-    end
-
-end

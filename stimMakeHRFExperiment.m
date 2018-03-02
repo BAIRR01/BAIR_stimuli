@@ -186,6 +186,8 @@ stimulus.display  = stimParams.display;
 stimulus.modality = stimParams.modality;
 stimulus.site     = site;
 
+fprintf('[%s]: Saving stimuli in: %s\n', mfilename, fullfile(vistadispRootPath, 'StimFiles',  fname));
+
 save(fullfile(vistadispRootPath, 'StimFiles',  fname), 'stimulus')
 
 end
