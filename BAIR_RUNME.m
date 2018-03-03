@@ -40,7 +40,7 @@ end
 params.experiment       = stimPrefix;
 params.subjID           = subjID;
 params.runID            = runID;
-params.loadMatrix       = sprintf('%s_%s_%d.mat', stimPrefix, siteSpecs.sites{1}, runID);
+params.loadMatrix       = sprintf('%s_%s_%d.mat', siteSpecs.sites{1}, stimPrefix, runID);
 params.modality         = siteSpecs.modalities{1};
 params.site             = siteSpecs.sites{1};
 params.calibration      = siteSpecs.displays{1};

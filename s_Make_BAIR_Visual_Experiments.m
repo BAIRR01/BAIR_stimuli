@@ -38,11 +38,12 @@ switch experimentType
     case {'SPATIALPATTERN' 'SPATIALOBJECT' 'TEMPORALPATTERN'}
         % Make SPATIOTEMPORAL experiment
         stimPrefix = experimentType;
-        numberOfRuns = 2; 
-        % For SPATIOTEMPORAL, we have 2 unique runs with fixed stimulus
-        % orders that will be identical for other modalities. Timing (ISI)
-        % is jittered between modalities, and so is the fixation sequence
-        for runNum = 1:numberOfRuns
+        numberOfRuns = 1; 
+        % For SPATIOTEMPORAL, we have 2 unique Master runs with fixed
+        % stimulus orders that will be identical for other modalities.
+        % Timing (ISI) is different between modalities; the fixation
+        % sequence is generated anew for each new experiment (run)
+        for runNum = 1:4%numberOfRuns
             stimMakeSpatiotemporalExperiment(stimParams, runNum, stimPrefix);
         end
         

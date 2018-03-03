@@ -116,7 +116,7 @@ switch site
         end
         
         % Create stim_file name
-        fname = sprintf('hrf%s_%s_%d.mat', stimulusType, site, runNum);
+        fname = sprintf('%s_hrf%s_%d.mat', site, stimulusType, runNum);
 
         % Add table with elements to write to tsv file for BIDS
         onset       = reshape(round(onsets,3), [numberOfEventsPerRun 1]);
@@ -127,8 +127,7 @@ switch site
         stim_file_index = reshape(imageIndex, [numberOfEventsPerRun 1]);
         
         stimulus.tsv = table(onset, duration, trial_type, trial_name, stim_file, stim_file_index);
-
-        
+   
         % Add fixation sequence
         minDurationInSeconds = 1;
         maxDurationInSeconds = 5;
@@ -163,9 +162,10 @@ switch site
         stimulus.cmap         = stimParams.stimulus.cmap;
         stimulus.srcRect      = stimParams.stimulus.srcRect;
         stimulus.dstRect      = stimParams.stimulus.destRect;
+        stimulus.display      = stimParams.display;
         
         % Create stim_file name and overwrite relevant column in tsv file
-        fname = sprintf('hrf%s_%s_%d.mat', stimulusType, site, runNum);
+        fname = sprintf('%s_hrf%s_%d.mat', site, stimulusType, runNum);
         stimulus.tsv.stim_file =  repmat(fname, length(stimulus.tsv.stim_file), 1);
 end
 
@@ -182,7 +182,6 @@ maxUpdateInterval = 0.25;
 stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
 
 % Save
-stimulus.display  = stimParams.display;
 stimulus.modality = stimParams.modality;
 stimulus.site     = site;
 

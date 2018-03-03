@@ -12,9 +12,13 @@ defaults = {'test'};
 if isempty(answer), return; end
 subjID = answer{1,:};
 
-% Which experiment to run?
-[experimentType] = bairWhichExperiment();
-[runID] = bairWhichRun();
+% % Which experiment to run?
+% [experimentType] = bairWhichExperiment();
+% [runID] = bairWhichRun();
+
+% Which experiments to run?
+fname = 'experimentsToRun';
+T = readtable(fullfile(vistadispRootPath, sprintf('%s.txt', fname)));
 
 % Site-specific stuff
 switch siteSpecs.Row{1}
@@ -29,10 +33,13 @@ switch siteSpecs.Row{1}
         % for now, do nothing
 end
 
-% Do it!
-%for runNumber = 1:numberOfRuns
+% Run these experiments!
+numberOfExperiments = height(T);
+for ii = 1:numberOfExperiments
+    experimentType = T.Var1{ii};
+    runID = T.Var2(ii);
     BAIR_RUNME(lower(experimentType), runID, siteSpecs, subjID)    
-%end
+end
 
 
 

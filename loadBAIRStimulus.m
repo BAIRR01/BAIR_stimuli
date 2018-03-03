@@ -14,7 +14,7 @@ function [master_stimulus] = loadBAIRStimulus(stimulusType, site, runNum)
 % if ~exist(writePth, 'file'), websave(writePth,readPth); end
 % im = load(writePth);
 
-fname = sprintf('%s_%s_%d', stimulusType, site, runNum);
+fname = sprintf('%s_%s_%d', site, stimulusType, runNum);
 load(fullfile(vistadispRootPath, 'StimFiles',  fname), 'stimulus')
 
 master_stimulus= stimulus;
