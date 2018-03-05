@@ -17,8 +17,10 @@ numberOfImages = imagesPerPosition * size(barApertures,3);
 % Total time
 totalTime = numberOfImages * (stimulusDuration + isi);
 
-% First image is a blank
-blankImageIndex  = 1;
+% Find a blank from the image sequence. This will be reused later.
+flattenedApertures = reshape(barApertures, [], size(barApertures,3));
+isblank = sum(flattenedApertures,1)==0;
+blankImageIndex  = find(isblank,1);
 % 
 % % Total time points
 % numberOfTimePoints = 1/dwellTimePerImage * size(barApertures,3);
@@ -27,9 +29,9 @@ blankImageIndex  = 1;
 imageSizeInPixels = size(stimParams.stimulus.images);
 
 % Recast to double centered at background color
-barCarriers = double(barCarriers);
-backgroundColor = mode(barCarriers(:));
-barCarriers = barCarriers  - backgroundColor;
+barCarriers         = double(barCarriers);
+backgroundColor     = mode(barCarriers(:));
+barCarriers         = barCarriers  - backgroundColor;
 
 % Make the images by mulitplying the carriers and the apertures
 images = zeros(imageSizeInPixels(1), imageSizeInPixels(2), numberOfImages, 'double');
@@ -80,7 +82,7 @@ switch lower(stimParams.modality)
 end
 
 % create stimulus.mat filename
-fname = sprintf('prf_%s_%d.mat', stimParams.site, runNum);
+fname = sprintf('%s_prf_%d.mat', stimParams.site, runNum);
 
 
 % add table with elements to write to tsv file for BIDS

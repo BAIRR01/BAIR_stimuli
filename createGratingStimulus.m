@@ -12,7 +12,7 @@ function output = createGratingStimulus(stimParams, cyclesPerDegree, gratingOrie
 stimWidth  = stimParams.stimulus.srcRect(3)-stimParams.stimulus.srcRect(1);
 stimHeight = stimParams.stimulus.srcRect(4)-stimParams.stimulus.srcRect(2);
 
-imSizeInDeg = stimParams.experimentSpecs.radii{1} * 2;
+imSizeInDeg = stimParams.experimentSpecs.radii * 2;
 cpi = cyclesPerDegree * imSizeInDeg;
 
 % Create a grating: superimpose number of orientations in

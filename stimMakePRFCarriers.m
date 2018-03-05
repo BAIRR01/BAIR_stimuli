@@ -5,7 +5,7 @@ imageSizeInPixels = size(stimParams.stimulus.images);
 site = stimParams.experimentSpecs.Row{1};
 
 files = dir(fullfile(vistadispRootPath, 'StimFiles', ...
-    sprintf('hrfpattern_%s*', site)));
+    sprintf('%s_hrfpattern*', site)));
 
 for ii = 1:length(files)
     load(fullfile(files(ii).folder, files(ii).name), 'stimulus');
@@ -15,5 +15,7 @@ for ii = 1:length(files)
 end
 
 barCarriers = imresize(images, imageSizeInPixels, 'nearest');
+barCarriers = cat(3, barCarriers, flip(barCarriers,1));
+barCarriers = cat(3, barCarriers, flip(barCarriers,2));
 
 return

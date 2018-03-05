@@ -1,5 +1,5 @@
-function BAIR_RUNME(stimPrefix, runID, siteSpecs, subjID)
-% BAIR_RUNME(stimPrefix, runNumber, specs, subjID)
+function quitProg = BAIR_RUNME(stimPrefix, runID, siteSpecs, subjID)
+% quitProg = BAIR_RUNME(stimPrefix, runNumber, specs, subjID)
 %
 % Run BAIR experiments (Do not call this function directly. It gets called
 % from the wrapper function, s_runme_BAIR)
@@ -45,8 +45,9 @@ params.modality         = siteSpecs.modalities{1};
 params.site             = siteSpecs.sites{1};
 params.calibration      = siteSpecs.displays{1};
 params.triggerKey       = siteSpecs.trigger{1};
-params.useSerialPort    = siteSpecs.serialport{1};
-params.useEyeTracker    = siteSpecs.eyetracker{1};
+params.useSerialPort    = siteSpecs.serialport;
+params.useEyeTracker    = siteSpecs.eyetracker;
+params.shiftDestRect    = siteSpecs.displaypos;
 
 % Additional parameters 
 params.prescanDuration  = 0;
@@ -59,12 +60,13 @@ if contains(stimPrefix, 'task')
     params.fixation = '4 color dot';
 else
     params.fixation = 'disk';
+    params.fixation = 'cross';
 end
 
 % Debug mode?
 params.skipSyncTests = 1;
 
 % Go!
-doExperiment(params);
+quitProg = doExperiment(params);
 
 end

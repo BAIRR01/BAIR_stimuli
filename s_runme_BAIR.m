@@ -12,16 +12,30 @@ defaults = {'test'};
 if isempty(answer), return; end
 subjID = answer{1,:};
 
-% % Which experiment to run?
-% [experimentType] = bairWhichExperiment();
-% [runID] = bairWhichRun();
-
 % Which experiments to run?
-fname = 'experimentsToRun';
-T = readtable(fullfile(vistadispRootPath, sprintf('%s.txt', fname)));
+filespec = fullfile(vistadispRootPath, 'RunMe', '*.txt');
+[fname, pathname] = uigetfile(filespec, 'Select a text file with the experiment list');
+
+T = readtable(fullfile(pathname, fname));
+experimentType      = T.Var1;
+runID               = T.Var2;
+numberOfExperiments = height(T);
+
+% Check that the experiment files exist
+stimPath = fullfile(vistadispRootPath, 'StimFiles');
+for ii = 1:numberOfExperiments
+    fname = sprintf('%s_%s_%d.mat', siteSpecs.sites{1}, experimentType{ii}, runID(ii));
+    
+    if ~exist(fullfile(stimPath, fname), 'file')
+        error('Requested experiment file %s not found in expected location:\n%s', fname, stimPath);        
+    end
+
+end
+
+fprintf('All experiment files ready to go.\n');
 
 % Site-specific stuff
-switch siteSpecs.Row{1}
+switch siteSpecs.sites{1}
     case 'NYU-ECOG'
         % calibrate display
         NYU_ECOG_Cal();        
@@ -34,15 +48,7 @@ switch siteSpecs.Row{1}
 end
 
 % Run these experiments!
-numberOfExperiments = height(T);
 for ii = 1:numberOfExperiments
-    experimentType = T.Var1{ii};
-    runID = T.Var2(ii);
-    BAIR_RUNME(lower(experimentType), runID, siteSpecs, subjID)    
+    quitProg = BAIR_RUNME(lower(experimentType{ii}), runID(ii), siteSpecs, subjID);
+    if quitProg, break; end
 end
-
-
-
-
-
-
