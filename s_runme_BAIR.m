@@ -13,26 +13,7 @@ if isempty(answer), return; end
 subjID = answer{1,:};
 
 % Which experiments to run?
-filespec = fullfile(vistadispRootPath, 'RunMe', '*.txt');
-[fname, pathname] = uigetfile(filespec, 'Select a text file with the experiment list');
-
-T = readtable(fullfile(pathname, fname));
-experimentType      = T.Var1;
-runID               = T.Var2;
-numberOfExperiments = height(T);
-
-% Check that the experiment files exist
-stimPath = fullfile(vistadispRootPath, 'StimFiles');
-for ii = 1:numberOfExperiments
-    fname = sprintf('%s_%s_%d.mat', siteSpecs.sites{1}, experimentType{ii}, runID(ii));
-    
-    if ~exist(fullfile(stimPath, fname), 'file')
-        error('Requested experiment file %s not found in expected location:\n%s', fname, stimPath);        
-    end
-
-end
-
-fprintf('All experiment files ready to go.\n');
+[numberOfExperiments, experimentTypes, runIDs] = bairWhichExperimentList(siteSpecs.sites{1});
 
 % Site-specific stuff
 switch siteSpecs.sites{1}
@@ -49,6 +30,6 @@ end
 
 % Run these experiments!
 for ii = 1:numberOfExperiments
-    quitProg = BAIR_RUNME(lower(experimentType{ii}), runID(ii), siteSpecs, subjID);
+    quitProg = BAIR_RUNME(lower(experimentTypes{ii}), runIDs(ii), siteSpecs, subjID);
     if quitProg, break; end
 end

@@ -30,11 +30,11 @@ if notDefined('stimPrefix')
     help(mfilename)
     error('stimPrefix is a required input');
 end
-if notDefined('runNumber'), runID = 1; end
 if notDefined('siteSpecs')
     help(mfilename)
     error('siteSpecs is a required input');
 end
+if notDefined('runID'), runID = 1; end
 
 % Set parameters for this experiment
 params.experiment       = stimPrefix;
@@ -59,7 +59,7 @@ params.runPriority     = 7;
 if contains(stimPrefix, 'task') 
     params.fixation = '4 color dot';
 else
-    params.fixation = 'disk';
+    %params.fixation = 'disk';
     params.fixation = 'cross';
 end
 

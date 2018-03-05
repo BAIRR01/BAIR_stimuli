@@ -509,7 +509,7 @@ switch site
                 postscan = prescan; % seconds
                 
                 % Jitter ITIs
-                ITIs     = linspace(ITI_min,ITI_max,numberOfStimuli-1);                
+                ITIs = linspace(ITI_min,ITI_max,numberOfStimuli-1);                
                 
                 % Round off to onsetMultiple
                 ITIs = round(ITIs/onsetTimeMultiple)*onsetTimeMultiple;
@@ -522,11 +522,11 @@ switch site
                 
                 % Jitter ITIs
                 ITIs = linspace(ITI_min,ITI_max,numberOfStimuli-1);
+                
             otherwise
                 error('Unknown modality')
         end
-
-        
+     
         stimulus.ITI          = ITIs;
         stimulus.prescan      = prescan; % seconds
         stimulus.postscan     = postscan; % seconds
@@ -536,41 +536,45 @@ switch site
         iti_seq = randperm(numberOfStimuli-1);
 
         % Compute onsets based on modality-specific ITIs
-        stimulus.onsets = cumsum([stimulus.prescan stimulus.ITI(iti_seq)]);
-        stimulus.onsets = stimulus.onsets;
+        onsets = cumsum([stimulus.prescan stimulus.ITI(iti_seq)]);
 
+        % Match the stimulus presentation to the frame rate
+        onsets = round(onsets*frameRate)/frameRate;
+        stimulus.onsets = onsets;
+     
+        % Put trials together for whole sequence in 'sparse' format: add
+        % blank at beginning and end, add offsets
         BLANK = size(stimulus.images,3);
-        stimulus.seq       = BLANK; % initialize with blank at time 0
-        stimulus.seqtiming = 0;     % initialize with blank at time 0
+        seq       = BLANK; % initialize with blank at time 0
+        seqtiming = 0;     % initialize with blank at time 0
 
-        % Put trials together for whole sequence
         trigSeq = 0; % initialize trigger sequence with 0
         for ii = 1:numberOfStimuli
             this_trial_seq = stimulus.trial(ii).seq;
-            this_trial_seqtiming = stimulus.trial(ii).seqtiming + stimulus.onsets(ii);
-            stimulus.seq = [stimulus.seq this_trial_seq];
-            stimulus.seqtiming = [stimulus.seqtiming this_trial_seqtiming];
+            this_trial_seqtiming = stimulus.trial(ii).seqtiming + onsets(ii);
+            seq = [seq this_trial_seq];
+            seqtiming = [seqtiming this_trial_seqtiming];
 
             this_trial_trig_seq = zeros(size(this_trial_seq));
             this_trial_trig_seq(1) = 1;
-            trigSeq   = [trigSeq this_trial_trig_seq];
         end
-        stimulus.seq(end+1) = BLANK;
-        stimulus.seqtiming(end+1) = stimulus.seqtiming(end) + stimulus.postscan;
+        % Add blank at the end
+        seq(end+1) = BLANK;
+        seqtiming(end+1) = seqtiming(end);
        
         % Put stimulus timing sequences in struct
-        stimulus.seqtiming_sparse = stimulus.seqtiming;
-        stimulus.seq_sparse = stimulus.seq;
+        stimulus.seq_sparse = seq;
+        stimulus.seqtiming_sparse = seqtiming;
 
-        % Interpolate to frame Rate
-        seqtiming = 0:1/frameRate:stimulus.seqtiming(end);
-        seq = zeros(size(seqtiming));
+        % Interpolate to frame Rate and add post-scan stimulus period
+        seqtiming = 0:1/frameRate:stimulus.seqtiming_sparse(end)+max(stimulus.duration)+stimulus.postscan;
+        seq = zeros(size(seqtiming))+BLANK;
 
-        for ii = length(stimulus.seqtiming):-1:2
-            idx = seqtiming < stimulus.seqtiming(ii);
-            seq(idx) = stimulus.seq(ii-1);
+        for ii = length(stimulus.seqtiming_sparse):-1:2
+            idx = seqtiming < stimulus.seqtiming_sparse(ii);
+            seq(idx) = stimulus.seq_sparse(ii-1);
         end
-        seq(end) = stimulus.seq(end);
+        seq(end) = stimulus.seq_sparse(end);
 
         % Put interpolated timing sequences in struct
         stimulus.seq = seq;
@@ -588,7 +592,6 @@ switch site
             otherwise
 
                 trigSeq  = zeros(size(stimulus.seq));
-
                 for ii = 1:length(stimulus.onsets)
                     [~, idx] = min(abs(stimulus.seqtiming-stimulus.onsets(ii)));
                     trigSeq(idx) = stimulus.trialindex(ii);

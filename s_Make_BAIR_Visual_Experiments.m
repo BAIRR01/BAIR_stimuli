@@ -37,17 +37,14 @@ stimParams.bpFilter = stimMakeBandPassFilter(stimParams, peakSFcpd);
 switch experimentType
     case {'SPATIALPATTERN' 'SPATIALOBJECT' 'TEMPORALPATTERN'}
         % Make SPATIOTEMPORAL experiment
-        
         stimPrefix = experimentType;
-        
-
 
         % For SPATIOTEMPORAL, we have 2 unique Master runs with fixed
         % stimulus orders that will be identical for other modalities.
         % Timing (ISI) is different between modalities; the fixation
         % sequence is generated anew for each new experiment (run)     
-        numberOfRuns = 2;        
-        onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR
+        numberOfRuns           = 2;        
+        onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR (fMRI experiments only)
         
         for runNum = 1:numberOfRuns
             stimMakeSpatiotemporalExperiment(stimParams, runNum, stimPrefix, onsetTimeMultiple, TR);

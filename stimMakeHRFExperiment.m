@@ -1,4 +1,4 @@
-function stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, stimulusType)
+function stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, stimulusType, TR)
 %stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, stimulusType)
 %
 %  Stimuli are presented for stimDurationSeconds, with an exponentially
@@ -21,7 +21,7 @@ switch site
 
         % Experiment specs      
         numberOfEventsPerRun  = 32;
-        preScanPeriod         = round(30/.850)*.850;
+        preScanPeriod         = round(30/TR)*TR;
         postScanPeriod        = preScanPeriod;
         minimumISIinSeconds   = 3;
         maximumISIinSeconds   = 24;
