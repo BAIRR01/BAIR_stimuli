@@ -361,7 +361,7 @@ switch site
                 end
                 
                 % Set durations and ISIs           
-                tempIndex = [1 2 4 8 16 32]/frameRate;
+                tempIndex = [1 2 4 8 16 32]/stimParams.display.frameRate;
                 
                 durations = [];
                 % One pulse durations:
@@ -370,7 +370,7 @@ switch site
                 end
                 
                 % Append two pulse durations:
-                durations = [durations ones(1,length(tempIndex)*numberOfImagesPerCat)*8/frameRate];
+                durations = [durations ones(1,length(tempIndex)*numberOfImagesPerCat)*8/stimParams.display.frameRate];
                 
                 % One pulse ISI:
                 ISI = zeros(1,18);
