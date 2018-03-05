@@ -1,4 +1,4 @@
-function stimMakeSpatiotemporalExperiment(stimParams, runNumber, stimulusType)
+function stimMakeSpatiotemporalExperiment(stimParams, runNumber, stimulusType, onsetTimeMultiple, TR)
 
 %% SPATIO TEMPORAL
 % For visual experiments, we use band-pass, gray-scale images, spanning
@@ -498,25 +498,35 @@ switch site
         % Experiment timing            
         fprintf('[%s]: Calculating stimulus timing for: %s\n', mfilename,  site);
 
+        % Generate ITIs
+        numberOfStimuli = size(stimulus.images,3)-1;
+
         switch(lower(stimParams.modality))
             case 'fmri'
                 ITI_min  = 3;
                 ITI_max  = 6;
-                prescan  = 12; % seconds
-                postscan = 12; % seconds
+                prescan  = round(12/TR)*TR; % seconds
+                postscan = prescan; % seconds
+                
+                % Jitter ITIs
+                ITIs     = linspace(ITI_min,ITI_max,numberOfStimuli-1);                
+                
+                % Round off to onsetMultiple
+                ITIs = round(ITIs/onsetTimeMultiple)*onsetTimeMultiple;
+                
             case {'ecog' 'eeg' 'meg'}
                 ITI_min  = 1.25;
                 ITI_max  = 1.75;
                 prescan  = 3; % seconds
                 postscan = 3; % seconds
+                
+                % Jitter ITIs
+                ITIs = linspace(ITI_min,ITI_max,numberOfStimuli-1);
             otherwise
                 error('Unknown modality')
         end
 
-        % Generate ITIs
-        numberOfStimuli = size(stimulus.images,3)-1;
-        ITIs = linspace(ITI_min,ITI_max,numberOfStimuli-1);
-
+        
         stimulus.ITI          = ITIs;
         stimulus.prescan      = prescan; % seconds
         stimulus.postscan     = postscan; % seconds
@@ -547,7 +557,7 @@ switch site
         end
         stimulus.seq(end+1) = BLANK;
         stimulus.seqtiming(end+1) = stimulus.seqtiming(end) + stimulus.postscan;
-
+       
         % Put stimulus timing sequences in struct
         stimulus.seqtiming_sparse = stimulus.seqtiming;
         stimulus.seq_sparse = stimulus.seq;

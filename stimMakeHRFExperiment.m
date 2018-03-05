@@ -21,8 +21,8 @@ switch site
 
         % Experiment specs      
         numberOfEventsPerRun  = 32;
-        preScanPeriod         = 30;
-        postScanPeriod        = 30;
+        preScanPeriod         = round(30/.850)*.850;
+        postScanPeriod        = preScanPeriod;
         minimumISIinSeconds   = 3;
         maximumISIinSeconds   = 24;
        

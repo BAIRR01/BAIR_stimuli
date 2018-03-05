@@ -1,4 +1,4 @@
-function stimMakePRFExperiment(stimParams, runNum, stimulusDuration, isi)
+function stimMakePRFExperiment(stimParams, runNum, stimulusDuration, isi, TR)
 
 frameRate = stimParams.display.frameRate;
 
@@ -9,7 +9,7 @@ barApertures = stimMakePRFApertures(stimParams);
 barCarriers   = stimMakePRFCarriers(stimParams);
 
 % How many images shown for each aperture?
-imagesPerPosition = round(1 / (stimulusDuration + isi));
+imagesPerPosition = round(TR / (stimulusDuration + isi));
 
 % Total number of images
 numberOfImages = imagesPerPosition * size(barApertures,3);

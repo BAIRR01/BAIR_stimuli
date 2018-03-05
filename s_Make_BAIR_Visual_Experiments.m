@@ -26,6 +26,7 @@ if ~ok, return; end
 %       which is the smallest FOV among NYU-3T, UMC-3T, NYU-ECoG, UMC-ECoG,
 %       NYU-MEG
 
+TR              = 0.850;      % ms
 stimDiameterDeg = 16.6;       % degrees
 peakSFcpd       = 3;          % peak sf of all stimuli (and therefore peak of bandpass filter to make stimuli)
 sfAtHalfMax     = [1.4 4.7];  % spatial frequencies where filter falls off to half-height
@@ -39,13 +40,17 @@ switch experimentType
         
         stimPrefix = experimentType;
         
+
+
         % For SPATIOTEMPORAL, we have 2 unique Master runs with fixed
         % stimulus orders that will be identical for other modalities.
         % Timing (ISI) is different between modalities; the fixation
         % sequence is generated anew for each new experiment (run)     
         numberOfRuns = 2;        
+        onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR
+        
         for runNum = 1:numberOfRuns
-            stimMakeSpatiotemporalExperiment(stimParams, runNum, stimPrefix);
+            stimMakeSpatiotemporalExperiment(stimParams, runNum, stimPrefix, onsetTimeMultiple, TR);
         end
         
     case {'HRFPATTERN'  'HRFPATTERNINVERTED'  'HRFCHECKER'  'HRFCHECKERINVERTED'}
@@ -65,7 +70,7 @@ switch experimentType
         % sequence is the same across all sites
         numberOfRuns = 1; 
         for runNum = numberOfRuns
-            stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, stimPrefix);                      
+            stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, stimPrefix, TR);                      
         end
        
     case 'PRF'
@@ -80,13 +85,13 @@ switch experimentType
         numberOfRuns = 2;  
         for runNum = 1:numberOfRuns            
             % Make PRF experiment
-            stimMakePRFExperiment(stimParams, runNum, stimulusDuration, isi);
+            stimMakePRFExperiment(stimParams, runNum, stimulusDuration, isi, TR);
         end
         
     case 'TASK'
         for runNum = 1:numberOfRuns
             % MAKE TASK EXPERIMENT
-            stimMakeTaskExperiment(stimParams, runNum);
+            stimMakeTaskExperiment(stimParams, runNum, TR);
         end    
 end
 
