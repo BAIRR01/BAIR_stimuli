@@ -21,7 +21,7 @@ switch site
 
         % Experiment specs      
         if strcmpi(stimulusType, 'patternbreathingchallenge')
-            numberOfEventsPerRun  = 78;
+            numberOfEventsPerRun  = 71;
         else
             numberOfEventsPerRun  = 32;
         end
