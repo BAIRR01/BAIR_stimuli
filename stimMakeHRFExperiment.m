@@ -20,7 +20,12 @@ switch site
     case 'Master'
 
         % Experiment specs      
-        numberOfEventsPerRun  = 32;
+        if strcmpi(stimulusType, 'patternbreathingchallenge')
+            numberOfEventsPerRun  = 78;
+        else
+            numberOfEventsPerRun  = 32;
+        end
+        
         preScanPeriod         = round(30/TR)*TR;
         postScanPeriod        = preScanPeriod;
         minimumISIinSeconds   = 3;
@@ -96,12 +101,12 @@ switch site
         sequencePerTrial = zeros(1,imagesPerTrial);
 
         switch lower(stimulusType)
-            case {'pattern' 'checker'}
+            case {'patterninverted' 'checkerinverted'}
+                % paired images per trial, ie an image and its contrast reversal
+                contrastReversal = true;
+            otherwise
                 % single image pre trial
                 contrastReversal = false;
-            case {'patterninverted' 'checkerinverted'}
-                 % paired images per trial, ie an image and its contrast reversal
-                contrastReversal = true;
         end
 
         % Add the contrast reversed stimuli to the sequence

@@ -17,7 +17,7 @@
 if ~ok, return; end
 
 % Which experiment to make?
-[experimentType] = bairWhichExperiment();
+experimentType = bairWhichExperiment();
 
 % Generate stimulus template
 
@@ -50,7 +50,7 @@ switch experimentType
             stimMakeSpatiotemporalExperiment(stimParams, runNum, stimPrefix, onsetTimeMultiple, TR);
         end
         
-    case {'HRFPATTERN'  'HRFPATTERNINVERTED'  'HRFCHECKER'  'HRFCHECKERINVERTED'}
+    case {'HRFPATTERN'  'HRFPATTERNINVERTED'  'HRFCHECKER'  'HRFCHECKERINVERTED' 'HRFPATTERNBREATHINGCHALLENGE'}
         % Make HRF experiment        
         stimPrefix = strrep(lower(experimentType), 'hrf', '');
        
