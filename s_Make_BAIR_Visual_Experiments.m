@@ -13,11 +13,12 @@
 %                objects (12: 4 faces, 4 letters, 4 houses); temporal (12; 6 durations; 6 ISIs);
 
 % Prompt for ExperimentSpecs
-[experimentSpecs, whichSite, ok] = bairExperimentSpecs('prompt', true);
-if ~ok, return; end
+[experimentSpecs, whichSite, selectionMade] = bairExperimentSpecs('prompt', true);
+if ~selectionMade, return; end
 
 % Which experiment to make?
-experimentType = bairWhichExperiment();
+[experimentType, selectionMade] = bairWhichExperiment();
+if ~selectionMade, return; end
 
 % Generate stimulus template
 

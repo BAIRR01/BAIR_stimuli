@@ -1,5 +1,5 @@
-function quitProg = BAIR_RUNME(stimPrefix, runID, siteSpecs, subjID)
-% quitProg = BAIR_RUNME(stimPrefix, runNumber, specs, subjID)
+function quitProg = BAIR_RUNME(stimPrefix, runID, siteSpecs, subjID, sessionID)
+% quitProg = BAIR_RUNME(stimPrefix, runNumber, specs, subjID, sessionID)
 %
 % Run BAIR experiments (Do not call this function directly. It gets called
 % from the wrapper function, s_runme_BAIR)
@@ -35,11 +35,13 @@ if notDefined('siteSpecs')
     error('siteSpecs is a required input');
 end
 if notDefined('runID'), runID = 1; end
+if notDefined('sessionID'), sessionID = '01'; end
 
 % Set parameters for this experiment
 params.experiment       = stimPrefix;
 params.subjID           = subjID;
 params.runID            = runID;
+params.sessionID        = sessionID;
 params.loadMatrix       = sprintf('%s_%s_%d.mat', siteSpecs.sites{1}, stimPrefix, runID);
 params.modality         = siteSpecs.modalities{1};
 params.site             = siteSpecs.sites{1};

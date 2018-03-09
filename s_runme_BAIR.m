@@ -1,35 +1,21 @@
 
 % Which site?
-[experimentSpecs, whichSite, ok] = bairExperimentSpecs('prompt', true);
-if ~ok, return; end
+[experimentSpecs, whichSite, selectionMade] = bairExperimentSpecs('prompt', true);
+if ~selectionMade, return; end
 
-siteSpecs = experimentSpecs(whichSite,:);
-
-% Prompt for patient ID
-prompt = {'Enter subject ID'};
-defaults = {'test'};
-[answer] = inputdlg(prompt, 'Subject Number', 1, defaults);
-if isempty(answer), return; end
-subjID = answer{1,:};
+% Which subject and session?
+[subjID, sessionID, ssDefined] = bairWhichSubjectandSession();
+if ~ssDefined, return; end
 
 % Which experiments to run?
-[numberOfExperiments, experimentTypes, runIDs] = bairWhichExperimentList(siteSpecs.sites{1});
+[numberOfExperiments, experimentTypes, runIDs, fileSelected] = bairWhichExperimentList(experimentSpecs.sites{whichSite});
+if ~fileSelected, return; end
 
 % Site-specific stuff
-switch siteSpecs.sites{1}
-    case 'NYU-ECOG'
-        % calibrate display
-        NYU_ECOG_Cal();        
-        % Check paths
-        if isempty(which('PsychtoolboxVersion'))
-            error('Please add Psychtoolbox to path before running')
-        end
-    otherwise
-        % for now, do nothing
-end
+checkforSiteSpecificRequest(experimentSpecs,whichSite);
 
 % Run these experiments!
 for ii = 1:numberOfExperiments
-    quitProg = BAIR_RUNME(lower(experimentTypes{ii}), runIDs(ii), siteSpecs, subjID);
+    quitProg = BAIR_RUNME(lower(experimentTypes{ii}), runIDs(ii), experimentSpecs(whichSite,:), subjID, sessionID);
     if quitProg, break; end
 end

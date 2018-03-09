@@ -179,6 +179,7 @@ switch lower(stimParams.modality)
     case 'fmri' 
         % no trigger sequence needed
     otherwise
+        blankImageIndex = mode(stimulus.seq);
         stimulus.trigSeq  = double(stimulus.seq~=blankImageIndex);
 end
 
