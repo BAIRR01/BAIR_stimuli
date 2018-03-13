@@ -179,8 +179,12 @@ switch lower(stimParams.modality)
     case 'fmri' 
         % no trigger sequence needed
     otherwise
-        blankImageIndex = mode(stimulus.seq);
-        stimulus.trigSeq  = double(stimulus.seq~=blankImageIndex);
+        blankImageIndex    = mode(stimulus.seq);
+        % Write binary trigger sequence:
+        %stimulus.trigSeq  = double(stimulus.seq~=blankImageIndex);
+        % Write image identity into trigger sequence:
+        stimulus.trigSeq   = stimulus.seq;
+        stimulus.trigSeq(stimulus.seq == blankImageIndex) = 0;
 end
 
 % sparsify

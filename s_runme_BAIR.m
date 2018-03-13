@@ -11,7 +11,7 @@ if ~ssDefined, return; end
 [numberOfExperiments, experimentTypes, runIDs, fileSelected] = bairWhichExperimentList(experimentSpecs.sites{whichSite});
 if ~fileSelected, return; end
 
-% Site-specific stuff
+% Site-specific stuff to do before starting experiment?
 checkforSiteSpecificRequest(experimentSpecs,whichSite);
 
 % Run these experiments!

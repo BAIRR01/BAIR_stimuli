@@ -78,7 +78,11 @@ stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
 switch lower(stimParams.modality)
     case 'fmri' 
     otherwise
+        % Write binary trigger sequence:
         stimulus.trigSeq  = double(stimulus.seq~=blankImageIndex);
+        % Write image identity into trigger sequence:
+        stimulus.trigSeq  = stimulus.seq;
+        stimulus.trigSeq(stimulus.seq == blankImageIndex) = 0;
 end
 
 % create stimulus.mat filename

@@ -54,8 +54,13 @@ params.shiftDestRect    = siteSpecs.displaypos;
 % Additional parameters 
 params.prescanDuration  = 0;
 params.startScan        = 0;
-params.stimSize        = 'max';
-params.runPriority     = 7;
+
+% Set priority (depends on operating system)
+if ispc
+    params.runPriority  = 2;
+elseif ismac
+    params.runPriority  = 7;
+end
 
 % Specify task for subject
 if contains(stimPrefix, 'task') 

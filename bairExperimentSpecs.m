@@ -13,7 +13,7 @@ prompt = p.Results.prompt;
 
 % These are the available displays
 sites       = {'NYU3T'; 'NYUMEG'; 'NYUECOG'; 'UMC3T'; 'UMC7T'; 'UMCECOG'; 'Master'};
-displays    = {'CBI_Propixx'; 'meg_lcd'; 'SoMMacBook'; 'UMC_3TLCD'; 'UMC_7TDLP'; 'default'; 'HiResDefault'};
+displays    = {'CBI_Propixx'; 'meg_lcd'; 'SoMMacBook'; 'UMC_3TLCD'; 'UMC_7TDLP'; 'UMC_EMU'; 'HiResDefault'};
 modalities  = {'fMRI'; 'MEG'; 'ECoG'; 'fMRI'; 'fMRI'; 'ECoG'; 'none'};
 radii       = [12.4; 11; 11.8; 8.3; 6.4287; 11.8; 8.3];
 trigger     = {'5'; '5'; '5'; 49; 49; '5'; ''};
