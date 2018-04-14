@@ -86,7 +86,8 @@ switch experimentType
             stimMakePRFExperiment(stimParams, runNum, stimulusDuration, isi, TR);
         end
         
-    case 'TASK'
+    case 'DOTTASK'
+        numberOfRuns = 2;
         for runNum = 1:numberOfRuns
             % MAKE TASK EXPERIMENT
             stimMakeTaskExperiment(stimParams, runNum, TR);
