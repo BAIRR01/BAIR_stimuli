@@ -20,7 +20,7 @@ switch site
     case 'Master'
 
         % Experiment specs      
-        if strcmpi(stimulusType, 'patternbreathingchallenge')
+        if strcmpi(stimulusType, 'HRFPATTERNBREATHINGCHALLENGE')
             numberOfEventsPerRun  = 71;
         else
             numberOfEventsPerRun  = 32;
@@ -79,21 +79,34 @@ switch site
         stimulus.cmap         = stimParams.stimulus.cmap;
         stimulus.srcRect      = stimParams.stimulus.srcRect;
         stimulus.dstRect      = stimParams.stimulus.destRect;
+        stimulus.display      = stimParams.display;
+        stimulus.categories   = {upper(stimulusType)};
         stimulus.images       = images;
-
-        % Specify event timing, with an exponential distribution of ISIs
+        
+        % Add a category label to be able to combine stimuli across runs
+        stimulus.cat          = ones(1,numberOfEventsPerRun);
+        stimulus.duration     = ones(1,numberOfEventsPerRun)*stimDurationSeconds;
+        
+            % Specify event timing, with an exponential distribution of ISIs
         [onsets, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun, preScanPeriod, ...
             minimumISIinSeconds, maximumISIinSeconds, onsetTimeMultiple, frameRate);
+        stimulus.onsets       = onsets;
         
         % Define total length of stimulation sequence at frame rate resolution
-        %stimulus.seqtiming    = 0:dwellTimePerImage:300;
         stimulus.seqtiming    = 0:1/frameRate:onsets(numberOfEventsPerRun)+stimDurationSeconds+postScanPeriod;
         stimulus.seq          = zeros(size(stimulus.seqtiming))+blankImageIndex;
-
+        
+        % Add fixation sequence
+        minDurationInSeconds = 1;
+        maxDurationInSeconds = 5;
+        fixSeq = createFixationSequence(stimulus, 1/frameRate, minDurationInSeconds, maxDurationInSeconds);
+        stimulus.fixSeq = fixSeq;
+        
         % Randomize the assignment of image to trial
-        imageIndex = randperm(numberOfEventsPerRun);
-        stimulus.seq(onsetIndices) = imageIndex;
-
+        trialIndex = randperm(numberOfEventsPerRun);
+        stimulus.trialindex = trialIndex;
+        stimulus.seq(onsetIndices) = trialIndex;
+        
         % Specify the image sequence within each stimulus, which depends on the
         % stimulus duration and the dwell time per image, as well as whether or not
         % we include a contrast reversal
@@ -101,7 +114,7 @@ switch site
         sequencePerTrial = zeros(1,imagesPerTrial);
 
         switch lower(stimulusType)
-            case {'patterninverted' 'checkerinverted'}
+            case {'hrfpatterninverted' 'hrfcheckerinverted'}
                 % paired images per trial, ie an image and its contrast reversal
                 contrastReversal = true;
             otherwise
@@ -117,35 +130,19 @@ switch site
         % Add the stimulus sequence index
         for ii = 1:numberOfEventsPerRun
             indices = onsetIndices(ii) + (0:imagesPerTrial-1);
-            stimulus.seq(indices) = sequencePerTrial + imageIndex(ii);
+            stimulus.seq(indices) = sequencePerTrial + trialIndex(ii);
         end
+    
+         % Generate a save name 
+        fname = sprintf('%s_%s_%d.mat', site, lower(stimulusType), runNum);
         
-        % Create stim_file name
-        fname = sprintf('%s_hrf%s_%d.mat', site, stimulusType, runNum);
-
-        % Add table with elements to write to tsv file for BIDS
-        onset       = reshape(round(onsets,3), [numberOfEventsPerRun 1]);
-        duration    = ones(numberOfEventsPerRun,1) * stimDurationSeconds;
-        trial_type  = ones(numberOfEventsPerRun,1);
-        trial_name  = repmat(stimulusType, numberOfEventsPerRun,1);
-        stim_file   = repmat(fname, numberOfEventsPerRun,1);
-        stim_file_index = reshape(imageIndex, [numberOfEventsPerRun 1]);
-        
-        stimulus.tsv = table(onset, duration, trial_type, trial_name, stim_file, stim_file_index);
-   
-        % Add fixation sequence
-        minDurationInSeconds = 1;
-        maxDurationInSeconds = 5;
-        fixSeq = createFixationSequence(stimulus, 1/frameRate, minDurationInSeconds, maxDurationInSeconds);
-        stimulus.fixSeq = fixSeq;
-
     otherwise        
         % Resize the Master stimuli to the required stimulus size for this
                 % modality and display
         fprintf('[%s]: Loading Master stimuli for: %s\n', mfilename, site);
 
         % Load the Master stimuli
-        stimulus = loadBAIRStimulus(['hrf' stimulusType], 'Master', runNum);
+        stimulus = loadBAIRStimulus(lower(stimulusType), 'Master', runNum);
         
         % The desired new ImageSize
         imageSizeInPixels = size(stimParams.stimulus.images);
@@ -168,31 +165,53 @@ switch site
         stimulus.srcRect      = stimParams.stimulus.srcRect;
         stimulus.dstRect      = stimParams.stimulus.destRect;
         stimulus.display      = stimParams.display;
+
+        % Add triggers for non-fMRI modalities
+        switch lower(stimParams.modality)
+            case 'fmri'
+                % no trigger sequence needed
+            otherwise
+                
+                % Create an empty trigger sequence
+                trigSeq            = zeros(size(stimulus.seq));
+                blankImageIndex    = mode(stimulus.seq);
+                % Write image identity into trigger sequence:
+                stimulus.trigSeq   = stimulus.seq;
+                stimulus.trigSeq(stimulus.seq == blankImageIndex) = 0;
+                % Find the onsets of the stimuli in the sequence
+                [~,onsetIndices] = intersect(round(stimulus.seqtiming,4),round(stimulus.onsets,4));
+                assert(length(onsetIndices) == length(stimulus.onsets));
+                % use the CATEGORICAL labels as trigger codes
+                trigSeq(onsetIndices) = stimulus.cat(stimulus.seq(onsetIndices));
+                % add task ONSET and OFFSET trigger
+                trigSeq(1)   = 256;
+                trigSeq(end) = 256;
+                stimulus.trigSeq = trigSeq;
+        end
         
-        % Create stim_file name and overwrite relevant column in tsv file
-        fname = sprintf('%s_hrf%s_%d.mat', site, stimulusType, runNum);
-        stimulus.tsv.stim_file =  repmat(fname, length(stimulus.tsv.stim_file), 1);
+        % Sparsify
+        maxUpdateInterval = 0.25;
+        stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
+        
+        % Generate a save name 
+        fname = sprintf('%s_%s_%d.mat', site, lower(stimulusType), runNum);
+        
+        % Add table with elements to write to tsv file for BIDS
+        onset       = reshape(round(stimulus.onsets,3), [length(stimulus.onsets) 1]);
+        duration    = ones(length(stimulus.onsets),1) * stimDurationSeconds;
+        trial_type  = ones(length(stimulus.onsets),1);
+        trial_name  = repmat(upper(stimulusType), length(stimulus.onsets),1);
+        stim_file   = repmat(fname, length(stimulus.onsets),1);
+        stim_file_index = reshape(stimulus.trialindex, [length(stimulus.onsets) 1]);
+        
+        stimulus.tsv = table(onset, duration, trial_type, trial_name, stim_file, stim_file_index);
+  
+        % add modality
+        stimulus.modality = stimParams.modality;    
+       
 end
-
-% Add triggers for non-fMRI modalities
-switch lower(stimParams.modality)
-    case 'fmri' 
-        % no trigger sequence needed
-    otherwise
-        blankImageIndex    = mode(stimulus.seq);
-        % Write binary trigger sequence:
-        %stimulus.trigSeq  = double(stimulus.seq~=blankImageIndex);
-        % Write image identity into trigger sequence:
-        stimulus.trigSeq   = stimulus.seq;
-        stimulus.trigSeq(stimulus.seq == blankImageIndex) = 0;
-end
-
-% sparsify
-maxUpdateInterval = 0.25;
-stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
 
 % Save
-stimulus.modality = stimParams.modality;
 stimulus.site     = site;
 
 fprintf('[%s]: Saving stimuli in: %s\n', mfilename, fullfile(vistadispRootPath, 'StimFiles',  fname));

@@ -38,22 +38,20 @@ stimParams.bpFilter = stimMakeBandPassFilter(stimParams, peakSFcpd);
 switch experimentType
     case {'SPATIALPATTERN' 'SPATIALOBJECT' 'TEMPORALPATTERN'}
         % Make SPATIOTEMPORAL experiment
-        stimPrefix = experimentType;
 
-        % For SPATIOTEMPORAL, we have 2 unique Master runs with fixed
-        % stimulus orders that will be identical for other modalities.
-        % Timing (ISI) is different between modalities; the fixation
-        % sequence is generated anew for each new experiment (run)     
+        % We have 2 unique Master runs with fixed stimulus orders that will
+        % be identical for other modalities. Timing (ISI) is different
+        % between modalities; the fixation sequence is generated anew for
+        % each new experiment (run)
         numberOfRuns           = 2;        
         onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR (fMRI experiments only)
         
         for runNum = 1:numberOfRuns
-            stimMakeSpatiotemporalExperiment(stimParams, runNum, stimPrefix, onsetTimeMultiple, TR);
+            stimMakeSpatiotemporalExperiment(stimParams, runNum, experimentType, onsetTimeMultiple, TR);
         end
         
     case {'HRFPATTERN'  'HRFPATTERNINVERTED'  'HRFCHECKER'  'HRFCHECKERINVERTED' 'HRFPATTERNBREATHINGCHALLENGE'}
         % Make HRF experiment        
-        stimPrefix = strrep(lower(experimentType), 'hrf', '');
        
         %   Timing should be specified with values that are integer multiples of
         %   the default refresh rate of 60 Hz (ie 16.66666 ms). And the stimulus
@@ -68,7 +66,7 @@ switch experimentType
         % sequence is the same across all sites
         numberOfRuns = 1; 
         for runNum = numberOfRuns
-            stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, stimPrefix, TR);                      
+            stimMakeHRFExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, experimentType, TR);                      
         end
        
     case 'PRF'

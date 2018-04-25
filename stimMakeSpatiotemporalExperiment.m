@@ -75,8 +75,9 @@ switch site
                     'SPARSITY-3' ...
                     'SPARSITY-4' ...
                     };
-            
-                numberOfImagesPerCat = 3;
+                
+                categoryNumberToAdd  = 106; % to make sure we have UNIQUE category number across all BAIR tasks
+                numberOfImagesPerCat = 3; 
                 
                 % Pre-allocate arrays to store images
                 images = zeros([imageSizeInPixels length(categories) * numberOfImagesPerCat], 'uint8');
@@ -113,7 +114,7 @@ switch site
                         image8Bit = uint8((imageForThisTrial+.5)*255);
                         images(:,:,imCount) = image8Bit;
                         im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
-                        catindex(imCount) = categoryIndex(cc);
+                        catindex(imCount) = categoryIndex(cc)+categoryNumberToAdd;
                         imCount = imCount + 1;
                     end
                 end
@@ -165,7 +166,7 @@ switch site
                         image8Bit = uint8((imageForThisTrial+.5)*255);
                         images(:,:,imCount) = image8Bit;
                         im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
-                        catindex(imCount) = categoryIndex(cc);
+                        catindex(imCount) = categoryIndex(cc)+categoryNumberToAdd;
                         imCount = imCount + 1;
                     end
                 end
@@ -199,7 +200,7 @@ switch site
                         image8Bit = uint8((imageForThisTrial+.5)*255);
                         images(:,:,imCount) = image8Bit;
                         im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
-                        catindex(imCount) = categoryIndex(cc);
+                        catindex(imCount) = categoryIndex(cc)+categoryNumberToAdd;
                         imCount = imCount + 1;
                     end
                 end
@@ -220,7 +221,8 @@ switch site
                     'LETTERS' ...
                     'HOUSES' ...
                     };
-            
+                
+                categoryNumberToAdd  = 130; % to make sure we have UNIQUE category number across all BAIR tasks
                 numberOfImagesPerCat = 12;
 
                 % Pre-allocate arrays to store images
@@ -240,12 +242,14 @@ switch site
 
                 % Download original, unfiltered face, house, letter stimuli
                 fprintf('[%s]: Loading original, unfiltered stimuli...\n',mfilename);
-
-                readPth  = 'https://wikis.nyu.edu/download/attachments/85394548/Kay2013unfilteredstim.mat?api=v2';
+                
                 stimDir  = fullfile(BAIRRootPath, 'stimuli');
                 fname    = 'Kay2013unfilteredstim.mat';
                 writePth = fullfile(stimDir, fname);
-                websave(writePth,readPth);
+                if ~exist(writePth, 'file')
+                    readPth  = 'https://wikis.nyu.edu/download/attachments/85394548/Kay2013unfilteredstim.mat?api=v2';
+                    websave(writePth,readPth);
+                end
                 load(writePth);
 
                 % Category-specific settings
@@ -292,7 +296,7 @@ switch site
                         image8Bit = uint8((imageForThisTrial+.5)*255);
                         images(:,:,imCount) = image8Bit;
                         im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
-                        catindex(imCount) = categoryIndex(cc);
+                        catindex(imCount) = categoryIndex(cc)+categoryNumberToAdd;
                         imCount = imCount + 1;
                     end
                 end
@@ -325,6 +329,7 @@ switch site
                     'TWOPULSE-6' ...
                     };
                 
+                categoryNumberToAdd  = 118; % to make sure we have UNIQUE category number across all BAIR tasks
                 numberOfImagesPerCat = 3;
                 
                 % Pre-allocate arrays to store images
@@ -355,7 +360,7 @@ switch site
                         image8Bit = uint8((imageForThisTrial+.5)*255);
                         images(:,:,imCount) = image8Bit;
                         im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
-                        catindex(imCount) = categoryIndex(cc);
+                        catindex(imCount) = categoryIndex(cc)+categoryNumberToAdd;
                         imCount = imCount + 1;
                     end
                 end
@@ -415,7 +420,7 @@ switch site
         stimulus.categories   = categories;
         stimulus.images       = images;
         stimulus.im_cell      = im_cell;
-        stimulus.catindex     = catindex;
+        stimulus.cat          = catindex;
 
         stimulus.duration     = durations;
         stimulus.ISI          = ISI;
@@ -545,33 +550,28 @@ switch site
         % Put trials together for whole sequence in 'sparse' format: add
         % blank at beginning and end, add offsets
         BLANK = size(stimulus.images,3);
-        seq       = BLANK; % initialize with blank at time 0
-        seqtiming = 0;     % initialize with blank at time 0
-
-        trigSeq = 0; % initialize trigger sequence with 0
+        seq_sparse       = BLANK; % initialize with blank at time 0
+        seqtiming_sparse = 0;     % initialize with blank at time 0
         for ii = 1:numberOfStimuli
             this_trial_seq = stimulus.trial(ii).seq;
             this_trial_seqtiming = stimulus.trial(ii).seqtiming + onsets(ii);
-            seq = [seq this_trial_seq];
-            seqtiming = [seqtiming this_trial_seqtiming];
-
-            this_trial_trig_seq = zeros(size(this_trial_seq));
-            this_trial_trig_seq(1) = 1;
-        end
-        % Add blank at the end
-        seq(end+1) = BLANK;
-        seqtiming(end+1) = seqtiming(end);
+            seq_sparse = [seq_sparse this_trial_seq];
+            seqtiming_sparse = [seqtiming_sparse this_trial_seqtiming];
+        end    
+        seq_sparse(end+1)       = BLANK;
+        seqtiming_sparse(end+1) = seqtiming_sparse(end);
        
-        % Put stimulus timing sequences in struct
-        stimulus.seq_sparse = seq;
-        stimulus.seqtiming_sparse = seqtiming;
+        % Put sparse stimulus timing sequences in struct
+        stimulus.seq_sparse = seq_sparse;
+        stimulus.seqtiming_sparse = seqtiming_sparse;
 
-        % Interpolate to frame Rate and add post-scan stimulus period
-        seqtiming = 0:1/frameRate:stimulus.seqtiming_sparse(end)+max(stimulus.duration)+stimulus.postscan;
+        % Generate whole sequence at frame Rate resolution 
+        % Add post-scan stimulus period
+        %seqtiming = 0:1/frameRate:seqtiming_sparse(end)+max(stimulus.duration)+stimulus.postscan;
+        seqtiming = 0:1/frameRate:seqtiming_sparse(end)+stimulus.postscan;
         seq = zeros(size(seqtiming))+BLANK;
-
         for ii = length(stimulus.seqtiming_sparse):-1:2
-            idx = seqtiming < stimulus.seqtiming_sparse(ii);
+            idx = round(seqtiming,4) < round(stimulus.seqtiming_sparse(ii),4);
             seq(idx) = stimulus.seq_sparse(ii-1);
         end
         seq(end) = stimulus.seq_sparse(end);
@@ -589,13 +589,18 @@ switch site
         % Add triggers for non-fMRI modalities
         switch lower(stimParams.modality)
             case 'fmri'
+                % no triggers for fMRI
             otherwise
-
+                % create an empty trigger sequence
                 trigSeq  = zeros(size(stimulus.seq));
-                for ii = 1:length(stimulus.onsets)
-                    [~, idx] = min(abs(stimulus.seqtiming-stimulus.onsets(ii)));
-                    trigSeq(idx) = stimulus.trialindex(ii);
-                end
+                % find the onsets of the stimuli in the sequence
+                [~,onsetIndices] = intersect(round(stimulus.seqtiming,4),round(stimulus.onsets,4));
+                assert(length(onsetIndices) == length(stimulus.onsets));
+                % use the CATEGORICAL labels as trigger codes
+                trigSeq(onsetIndices) = stimulus.cat(stimulus.seq(onsetIndices));
+                % add task ONSET and OFFSET trigger
+                trigSeq(1)   = 256;
+                trigSeq(end) = 256;
                 stimulus.trigSeq = trigSeq;
         end
 
@@ -604,7 +609,6 @@ switch site
         stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
 
         stimulus.modality = stimParams.modality;
-        stimulus.site     = site;
 
         % Generate a save name
         fname = sprintf('%s_%s_%d.mat', site, lower(stimulusType), runNumber);
@@ -613,14 +617,16 @@ switch site
         onset       = round(stimulus.onsets,3)';
         duration    = round(stimulus.duration(stimulus.trialindex),3)';
         ISI         = round(stimulus.ISI(stimulus.trialindex),3)';
-        trial_type  = stimulus.catindex(stimulus.trialindex)'; 
-        trial_name  = stimulus.categories(trial_type)';
+        trial_type  = stimulus.cat(stimulus.trialindex)'; 
+        trial_name  = stimulus.categories(trial_type - min(stimulus.cat)+1)';
         stim_file   = repmat(fname, numberOfStimuli ,1);
         stim_file_index = stimulus.trialindex';
 
         stimulus.tsv = table(onset, duration, ISI, trial_type, trial_name, stim_file, stim_file_index);
 
 end
+
+stimulus.site     = site;
 
 % save 
 fprintf('[%s]: Saving stimuli in: %s\n', mfilename, fullfile(vistadispRootPath, 'StimFiles',  fname));
