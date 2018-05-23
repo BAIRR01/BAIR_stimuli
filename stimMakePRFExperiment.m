@@ -119,7 +119,7 @@ end
 switch(lower(stimParams.modality))
     case 'fmri'
         stimulus.prescan  = round(12/TR)*TR; % seconds
-        stimulus.postscan = prescan; % seconds
+        stimulus.postscan = stimulus.prescan; % seconds
     case {'ecog' 'eeg' 'meg'}      
         stimulus.prescan  = 3; % seconds
         stimulus.postscan = 3; % seconds 
