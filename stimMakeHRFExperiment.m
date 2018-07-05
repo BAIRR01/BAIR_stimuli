@@ -17,7 +17,7 @@ site = stimParams.experimentSpecs.Row{1};
 frameRate = stimParams.display.frameRate;
 
 switch site
-    case 'Master'
+    case 'master'
 
         % Experiment specs      
         if strcmpi(stimulusType, 'HRFPATTERNBREATHINGCHALLENGE')
@@ -137,18 +137,18 @@ switch site
         fname = sprintf('%s_%s_%d.mat', site, lower(stimulusType), runNum);
         
     otherwise        
-        % Resize the Master stimuli to the required stimulus size for this
+        % Resize the master stimuli to the required stimulus size for this
                 % modality and display
-        fprintf('[%s]: Loading Master stimuli for: %s\n', mfilename, site);
+        fprintf('[%s]: Loading master stimuli for: %s\n', mfilename, site);
 
-        % Load the Master stimuli
-        stimulus = loadBAIRStimulus(lower(stimulusType), 'Master', runNum);
+        % Load the master stimuli
+        stimulus = loadBAIRStimulus(lower(stimulusType), 'master', runNum);
         
         % The desired new ImageSize
         imageSizeInPixels = size(stimParams.stimulus.images);
         
         % Resize         
-        fprintf('[%s]: Resizing Master stimuli for: %s\n', mfilename,  site);
+        fprintf('[%s]: Resizing master stimuli for: %s\n', mfilename,  site);
         images = imresize(stimulus.images, imageSizeInPixels);
         
         % Soft circular mask (1 pixel of blurring per 250 pixels in the image)
