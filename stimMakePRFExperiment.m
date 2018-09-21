@@ -30,6 +30,8 @@ barCarriers         = double(barCarriers);
 backgroundColor     = mode(barCarriers(:));
 barCarriers         = barCarriers  - backgroundColor;
 
+fprintf('[%s]: Generating prf stimuli for: %s\n', mfilename,  stimParams.site);
+
 % Make the images by multistimplying the carriers and the apertures
 images = zeros(imageSizeInPixels(1), imageSizeInPixels(2), numberOfImages, 'double');
 for ii = 1:numberOfImages
@@ -188,6 +190,8 @@ stimulus.categories = stimulus.categories(~cellfun('isempty',stimulus.categories
 stimulus.display  = stimParams.display;
 stimulus.modality = stimParams.modality;
 stimulus.site     = stimParams.site;
+
+fprintf('[%s]: Saving stimuli in: %s\n', mfilename, fullfile(vistadispRootPath, 'StimFiles',  fname));
 
 save(fullfile(vistadispRootPath, 'StimFiles',  fname), 'stimulus')
 

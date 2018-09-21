@@ -7,6 +7,8 @@ site = stimParams.experimentSpecs.Row{1};
 files = dir(fullfile(vistadispRootPath, 'StimFiles', ...
     sprintf('%s_hrfpattern*', site)));
 
+fprintf('[%s]: Loading hrf stimuli (to be converted to prf stimuli) for: %s\n', mfilename, site);
+
 for ii = 1:length(files)
     load(fullfile(files(ii).folder, files(ii).name), 'stimulus');
     n = size(stimulus.images,3);
