@@ -1,4 +1,4 @@
-function quitProg = BAIR_RUNME(stimPrefix, runID, siteSpecs, subjID, sessionID)
+function quitProg = BAIR_RUNME(stimPrefix, runID, siteSpecs, subjID, sessionID, sensoryDomain)
 % quitProg = BAIR_RUNME(stimPrefix, runNumber, specs, subjID, sessionID)
 %
 % Run BAIR experiments (Do not call this function directly. It gets called
@@ -17,18 +17,27 @@ function quitProg = BAIR_RUNME(stimPrefix, runID, siteSpecs, subjID, sessionID)
 %   runID           run number
 %   siteSpecs       one-row table generated from the function bairExperimentSpecs
 %   subjID          alphanumeric subject ID 
+%   sensoryDomain   should be one of the following sensory modalities
+%                         - visual
+%                         - tactile
+%                         - motor
 %
 %   Example
 %    experimentSpecs = bairExperimentSpecs;
-%    siteSpecs = experimentSpecs(2,:);
-%    runnum = 1;
-%    stimPrefix = 'hrfchecker';
-%    subjID     = 'wl001';
-%    BAIR_RUNME(runnum, stimPrefix, siteSpecs, subjID);
+%    siteSpecs       = experimentSpecs(2,:);
+%    runnum          = 1;
+%    stimPrefix      = 'hrfchecker';
+%    subjID          = 'wl001';
+%    sensoryDomain   = 'visual'
+%    BAIR_RUNME(runnum, stimPrefix, siteSpecs, subjID,[], sensoryDomain);
 
 if notDefined('stimPrefix')
     help(mfilename)
     error('stimPrefix is a required input');
+end
+if notDefined('sensoryDomain')
+    help(mfilename)
+    error('sensoryDomain is a required input');
 end
 if notDefined('siteSpecs')
     help(mfilename)
@@ -50,6 +59,7 @@ params.triggerKey       = siteSpecs.trigger{1};
 params.useSerialPort    = siteSpecs.serialport;
 params.useEyeTracker    = siteSpecs.eyetracker;
 params.shiftDestRect    = siteSpecs.displaypos;
+params.sensoryDomain    = sensoryDomain;
 
 % Additional parameters 
 params.prescanDuration  = 0;
@@ -68,6 +78,9 @@ if contains(stimPrefix, 'task')
 else
     %params.fixation = 'disk';
     params.fixation = 'cross';
+end
+if contains(sensoryDomain,'motor','IgnoreCase',true)
+    params.glovePointer = initializeDataGlove;
 end
 
 % Debug mode?
