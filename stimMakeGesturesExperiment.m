@@ -5,7 +5,7 @@ function stimMakeGesturesExperiment(stimParams,  runNum, TR, stimDurationSeconds
 %
 
 % Set a path to find .txt and .jpg files for now
-stimPath = fullfile(sensorimotorRootPath , 'motor','UMCU-Stimuli');
+resourcePath = fullfile(BAIRRootPath , 'motorStimuliResources');
 
 % contains for each bitmap, the fMRI pulse count on which it should be shown
 onsets = load('picture_onset_sequence.txt');
@@ -50,7 +50,7 @@ stimulus.categories = { 'D', 'F', 'V', 'Y'};
 % stimulus.fixSeq     = ones(size(stimulus.seqtiming));
 
 % first, find all the bitmaps
-bitmapPth = fullfile(stimPath, 'bitmaps');
+bitmapPth = fullfile(resourcePath, 'bitmaps');
 files = dir([bitmapPth '/*jpg']);
 
 switch experimentType

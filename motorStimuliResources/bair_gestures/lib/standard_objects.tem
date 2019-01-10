@@ -1,0 +1,116 @@
+
+#$lib_bitmap_pool_size = 500;
+#$lib_text_pool_size = 500;
+
+picture {} lib_pic_blank;
+
+picture { default_code = "+"; text {caption="+"; font_size=30;}; x=0; y=-75;} lib_pic_fixation;
+
+# a trial for display during loading of the experiment
+
+IF '$language == 1';
+   $lib_str_loading_the_experiment = "Wacht a.u.b. op het laden van het experiment.";
+ENDIF;
+IF '$language == 2';
+   $lib_str_loading_the_experiment = "Loading the experiment, please wait.";
+ENDIF;
+
+trial {
+
+	picture { text { caption = $lib_str_loading_the_experiment; }; x=0; y=-75; };
+
+} lib_tr_loading;
+
+# a trial for display when the experiment is over
+
+IF '$language == 1';
+   $lib_str_experiment_done = "Einde";
+ENDIF;
+IF '$language == 2';
+   $lib_str_experiment_done = "Thank you.";
+ENDIF;
+
+trial {
+	all_responses = true;
+   trial_type = first_response;
+   trial_duration = forever;
+
+	picture { text { caption = $lib_str_experiment_done; } lib_txt_end;  x=0; y=-75; };
+	code = "end display";
+	duration = next_picture;
+
+} lib_tr_end_display;
+
+
+# fmri things
+
+picture {
+	text { caption = "(waiting for scanner trigger)"; } lib_txt_wait_for_scanner_trigger;
+	x=0; y=-75;
+} lib_pic_wait_for_scanner_trigger;
+
+trial {
+	picture lib_pic_wait_for_scanner_trigger;
+} lib_tr_wait_for_scanner_trigger;
+
+trial {
+	picture lib_pic_fixation;
+	code = "<fixation awaiting first scanner pulse>";
+} lib_tr_fixation_awaiting_first_scanner_pulse;
+
+trial {
+	all_responses = true;
+   trial_type = first_response;
+   trial_duration = forever;
+   #terminator_button = 1;
+	picture { 
+		text { caption="(Instruction)"; } lib_txt_instruction;
+		x=0; y=-75;
+	};
+	code = "instruction";
+	duration = response;
+} lib_tr_instruction;
+
+# an empty trial just to be used for logging non-trial specific codes. 
+# Use this instead of the function 'scenario_logfile.add_event_entry', because this gives strange timing 
+# information when called before a trial is run at time 0.
+trial {
+	nothing {};
+	#code
+} lib_tr_nothing;
+
+/*
+IF '$atr_1_event_size >= 1';
+	array {
+		LOOP $i $atr_1_event_size;
+		trial {
+			nothing {};
+		};
+		ENDLOOP;
+	} lib_atr_1_event;
+ENDIF;
+
+array {
+	LOOP $i $nothing_trial_pool_size;
+	trial {
+		nothing {};
+		#code
+	};
+	ENDLOOP;
+} lib_atr_nothing;
+*/
+
+/*
+# pools of stimuli objects to be managed in PCL
+array {
+	LOOP $i $lib_text_pool_size;    
+		text { preload=false; caption = "(no caption)"; };
+	ENDLOOP;
+} lib_atxt;
+
+array {
+	LOOP $i $lib_bitmap_pool_size;    
+		bitmap { preload=false; };
+	ENDLOOP;
+} lib_abmp;
+*/

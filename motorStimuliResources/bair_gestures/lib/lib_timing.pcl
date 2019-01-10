@@ -1,0 +1,293 @@
+bool lib_use_mri_emulator_for_non_scanning = false;
+
+sub bool lib_fmri_mode 
+begin
+	#return lib_scanning == SCANNING_FMRI || lib_scanning == SCANNING_FMRI_EMULATION;
+	return lib_mri;
+end;
+
+
+bool lib_start_planned_in_pulses; # true=pulses, false=clocktime
+int lib_planned_start_pulses;
+double lib_planned_start_clocktime;
+
+# either pulses or clocktime
+sub lib_set_start_time(
+	bool pulses_not_clocktime, int planned_start_pulses, double planned_start_clocktime)
+begin
+	lib_start_planned_in_pulses = pulses_not_clocktime;
+	lib_planned_start_pulses = planned_start_pulses;
+	lib_planned_start_clocktime = planned_start_clocktime;
+end;
+
+sub lib_wait_pulse(int count)
+begin
+	if pulse_manager.main_pulse_count() > count then
+		lib_error_exit("lib_wait_pulse(" + string(count) + "): " + 
+			"pulse " + string(count) + " has already passed.\nCheck scan_period setting.");
+	end;
+	loop until pulse_manager.main_pulse_count() == count begin end;
+	lib_set_start_time(true, count, -2.0);		
+end;
+
+sub int lib_wait_next_pulse
+begin
+	lib_debug("lib_wait_next_pulse()");
+	int initial_pulse_count = pulse_manager.main_pulse_count();
+	int pulse;
+	loop until false
+	begin
+		pulse = pulse_manager.main_pulse_count();
+		if pulse > initial_pulse_count then
+			break;
+		end;
+	end;
+	lib_set_start_time(true, pulse, -2.0);		
+	return pulse;
+end;
+
+sub int lib_start_at_next_pulse
+begin
+	int pulse = pulse_manager.main_pulse_count() + 1;
+	lib_set_start_time(true, pulse, -2.0);		
+	return pulse;
+end;
+
+sub double lib_start_from_now
+begin
+	double now = lib_time();
+	lib_set_start_time(false, -2, now);		
+	return now;
+end;
+
+/*
+sub lib_wait_until_start_time
+begin
+	if lib_start_planned_in_pulses then
+		lib_planned_start_time_in_pulses
+	else
+	
+	end;
+end;
+*/
+/*
+sub lib_sleep(bool pulses_not_clocktime, int pulses, double clocktime) 
+begin
+	lib_start_planned_in_pulses = pulses_not_clocktime;
+	lib_planned_start_pulses = planned_start_pulses;
+	lib_planned_start_clocktime = planned_start_clocktime;
+end;
+*/
+
+sub lib_set_default_start_time
+begin
+	if lib_fmri_mode() then
+		lib_start_at_next_pulse();
+	else
+		lib_start_from_now();
+	end;
+end;
+
+array <string> lib_scanner_wait_message[2] = {
+	"(wacht nu tot het begint)",
+	"(please wait for the start)"
+};	
+
+sub lib_await_scanner_with_message(array<string,1>& message)
+begin
+	text t = lib_txt_wait_for_scanner_trigger;
+	string caption = message[lib_language] + "\n\n" + lib_scanner_wait_message[lib_language];
+	lib_update_caption(t, caption);
+	lib_tr_wait_for_scanner_trigger.present();
+	lib_wait_next_pulse();	
+end;
+
+sub lib_await_scanner_with_default_message
+begin
+	text t = lib_txt_wait_for_scanner_trigger;
+	lib_set_caption_by_language(t, lib_scanner_wait_message);
+	lib_tr_wait_for_scanner_trigger.present();
+	lib_wait_next_pulse();
+end;
+
+sub lib_default_start(array<string,1>& message)
+begin
+	if lib_fmri_mode() then
+		lib_await_scanner_with_message(message);
+	else
+		lib_present_instruction(message);	
+		if lib_use_mri_emulator_for_non_scanning then
+			lib_debug("using lib_use_mri_emulator_for_non_scanning");
+			#logfile.add_event_entry("<fixation awaiting first scanner pulse>");
+			#lib_pic_fixation.present();
+			#lib_tr_fixation_awaiting_first_scanner_pulse.present();
+			lib_pic_blank.present();
+			lib_wait_next_pulse();	
+		else
+			lib_start_from_now();
+		end;
+	end;
+end;
+
+sub double lib_present_trial__(
+	trial tr, 
+	bool duration_planned_in_pulses, 
+	int planned_duration_pulses, 
+	double planned_duration_clocktime,
+	bool set_duration)
+begin
+	lib_debug("\n\n<lib_present_trial__(" +
+		"\n\tduration_planned_in_pulses =" + string(duration_planned_in_pulses) + 
+		"\n\tplanned_duration_pulses=" + string(planned_duration_pulses) + 
+		"\n\tplanned_duration_clocktime=" + string(planned_duration_clocktime) + ")" + 
+		"\n\tlib_start_planned_in_pulses = " + string(lib_start_planned_in_pulses) + 
+		"\n\tlib_planned_start_pulses = " + string(lib_planned_start_pulses) + 
+		"\n\tlib_planned_start_clocktime = " + string(lib_planned_start_clocktime) + " />");
+	
+	lib_debug("\n<pulse_count = " + string(pulse_manager.main_pulse_count()) + " />");
+
+	# Set up timing for the trial.
+	# This means determining the duration and possibly a delayed start if ahead of schedule.
+
+	# set timing parameters for the trial to realize the planned parameters
+	# as well as possible. 
+	
+	double duration_param;
+
+	if duration_planned_in_pulses then
+		if lib_start_planned_in_pulses then
+			planned_duration_clocktime = double(planned_duration_pulses) * lib_scan_period;
+		else
+			# clock start.
+			# the required clock duration will be the time left in the current, possibly partial, scan-period, 
+			# plus the time of the other (full) scans.
+		
+			## wait until the start-time, we might be too early
+			wait_until(int(lib_planned_start_clocktime));
+
+			## we need a correct lib_planned_start_pulses later.
+			int last_pulse = pulse_manager.main_pulse_count();
+			lib_planned_start_pulses = last_pulse; 
+		
+			## calc planned clock-duration
+			double last_pulse_time = 
+				double(pulse_manager.main_pulse_time(last_pulse));
+			
+			double time_left_in_current_scan = 
+				last_pulse_time + lib_scan_period - lib_time();
+				
+			planned_duration_clocktime = 
+				time_left_in_current_scan + double(planned_duration_pulses - 1) * lib_scan_period;
+		end;
+	end;
+
+	double time = lib_time();
+	
+	if lib_start_planned_in_pulses then
+		lib_debug("\n<start_planned_in_pulses />");
+		# correct for being earlier or later than the start-time.
+		
+		# if early (pulse not arrived yet)
+		if pulse_manager.main_pulse_count() < lib_planned_start_pulses then
+			lib_debug("\n<pulse_manager.main_pulse_count() < g_lib_planned_start_pulses/>");
+			# wait for the pulse by setting the trial mri_pulses sync parameter.
+			tr.set_mri_pulse(lib_planned_start_pulses);
+			duration_param = planned_duration_clocktime;
+		else 
+			# late or just-in-time.
+			lib_debug("\n<late or just-in-time/>");
+		
+			# get the clocktime of the arrival of the planned pulse.
+			int start_pulse_clocktime = pulse_manager.main_pulse_time(lib_planned_start_pulses);
+
+			# correct for delay by truncating duration
+			double duration_correction = double(start_pulse_clocktime) - time;
+			lib_debug("\n<duration_correction = " + string(duration_correction) + " />");
+			duration_param = planned_duration_clocktime + duration_correction;
+		end;
+	else
+		# start planned in clocktime
+		lib_debug("\n<start_planned_in_clocktime />");
+	
+		# calc deviation of start-time
+		double deviation = lib_planned_start_clocktime - time;
+		if deviation > 0.0 then
+			# early, set start-time parameter
+			tr.set_start_time(int(lib_planned_start_clocktime));
+			duration_param = planned_duration_clocktime;
+		else 
+			# in-time or late, correct duration for deviation of start-time
+			lib_debug("\n<duration_correction = " + string(deviation) + " />");
+			duration_param = planned_duration_clocktime + deviation;		
+		end;
+	end;
+
+	
+	if set_duration then
+		# set duration param
+		lib_debug("<result_duration_param = " + string(duration_param) + "/>");
+		int duration_param_as_int = int(round(duration_param, 0));
+		lib_debug("<result_duration_param_as_int = " + string(duration_param_as_int) + "/>");
+		if duration_param_as_int >= 0 then
+			tr.set_duration(duration_param_as_int);
+		end;
+	end;
+
+	# the presentation
+	tr.present();
+
+	# advance the timer.
+	# set new planned start-time to planned end-time of this trial.
+	# This is the sum of this trial's planned start-time and it's planned duration.
+	
+	if duration_planned_in_pulses then
+		# calculate the new lib_planned_start_pulses
+		lib_planned_start_pulses = lib_planned_start_pulses + planned_duration_pulses;
+	else
+		# calculate the new lib_planned_start_clocktime
+		if lib_start_planned_in_pulses then
+			lib_planned_start_clocktime = 
+				double(pulse_manager.main_pulse_time(lib_planned_start_pulses));
+		end;
+		lib_planned_start_clocktime = lib_planned_start_clocktime + planned_duration_clocktime;
+	end;
+	# set the new start synchronisation method to the synchronisation method of
+	# this trial's end.
+	lib_start_planned_in_pulses = duration_planned_in_pulses;
+
+	lib_debug("</lib_present_trial__>");
+	
+	return duration_param;
+end;
+
+# presents a trial with a duration expressed in clocktime.
+sub double lib_present_trial_with_clock_duration(trial tr, double duration_in_clocktime, bool set_duration)
+begin
+	lib_debug("\n<lib_present_trial_with_clock_duration(duration_in_clocktime = " + string(duration_in_clocktime) + ")>");
+
+	double duration_param = 
+	lib_present_trial__(tr, false, -2, duration_in_clocktime, set_duration);
+	
+	lib_debug("\n</lib_present_trial_with_clock_duration()>");
+	
+	return duration_param;
+end;
+
+# presents a trial with a duration expressed as fMRI pulses counted since start of the trial.
+sub double lib_present_trial_with_duration_in_pulses(trial tr, int duration_pulses, bool set_duration)
+begin
+	lib_debug("\n<lib_present_trial_with_duration_in_pulses(duration_pulses=" + string(duration_pulses) + ")>");
+
+	double duration_param =
+		lib_present_trial__(tr, true, duration_pulses, -2.0, set_duration);
+	
+	lib_debug("\n</lib_present_trial_with_duration_in_pulses()>");
+	
+	return duration_param;
+end;
+
+sub lib_initialize_lib_timing
+begin
+	lib_use_mri_emulator_for_non_scanning = 
+		lib_get_required_sdl_boolean_variable("use_mri_emulator_for_non_scanning");
+end;

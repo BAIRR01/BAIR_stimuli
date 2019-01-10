@@ -1,6 +1,6 @@
 function stimMakeFingermappingExperiment(stimParams,  runNum, TR, experimentType)
 
-path = fullfile(sensorimotorRootPath, 'motor/UMCU-Code/FingerMapIEMU/01_SeqRightHand');
+path = '/Users/winawerlab/MATLAB/toolboxes/BAIR_VTS_sensoryMotor/motor/UMCU-Code/FingerMapIEMU/01_SeqRightHand';
 
 %load timing from C++ code directory
 timing = load(fullfile(path, 'timing.dat'));

@@ -1,0 +1,173 @@
+# start - add in pcl for usage
+workspace wrk_dataglove = new workspace("DataGlove");
+wrk_dataglove.initialize(); # always use
+wrk_dataglove.run("set sampleinterval = 20"); # 20 ms is default, so 
+# this line can be commented out if sampleinterval is 20 ms
+wrk_dataglove.run("set logfile = " + logfile.filename()); # dataglove 
+# end - add in pcl for usage
+
+## the main library
+include_once "..\\lib\\lib.pcl";
+
+## debugging mode (writes debug output to terminal window)
+lib_debug_mode = true;
+
+# constants
+double THOUSAND = 1000.0;
+
+# parameters
+int g_picture_duration;
+int g_fixation_port_code;
+array <int> g_picture_onset_sequence[0];
+array <int> g_picture_port_code_sequence[0];
+
+# pools
+int bitmap_pool = lib_register_bitmap_pool(abmp_bitmaps);
+int trial_pool = lib_register_trial_pool(atr_trials);
+
+# other variables
+
+if port_output then
+	output_port port = output_port_manager.get_port(1);
+end;
+int g_num_trials;
+
+# subroutines
+
+sub set_event_port_codes(
+	stimulus_event event, int condition_port_code, int event_port_code_component)
+begin
+		int port_code = condition_port_code + event_port_code_component;
+		event.set_port_code(port_code);
+		event.set_event_code(string(port_code));
+		#term.print(string(port_code) + "\n");
+end;
+
+sub initialize
+begin
+	#set_random_seed(lib_get_required_sdl_integer_variable("random_seed"));
+	
+	# scheme_files_directory
+	string scheme_files_directory =
+		"..\\..\\schemes\\" + lib_get_nonempty_sdl_string_variable("scheme_files_directory");
+	
+	
+	# g_picture_duration
+	g_picture_duration = 
+		lib_get_required_sdl_integer_variable("picture_duration");
+
+	# g_fixation_port_code
+	g_fixation_port_code = 
+		lib_get_required_sdl_integer_variable("fixation_port_code");
+	
+	# bitmap_filename_sequence
+	array <string> bitmap_filename_sequence[0];
+	string bitmap_filename_sequence_filename = 
+		scheme_files_directory + "\\" + "bitmap_filename_sequence.txt";
+	lib_read_lines_from_file_to_string_array(
+		bitmap_filename_sequence_filename, bitmap_filename_sequence);
+
+	lib_debug("bitmap_filename_sequence: " + 
+		lib_string_array_to_string(bitmap_filename_sequence, "\n") + "\n" );
+
+	# g_picture_onset_sequence
+	string picture_onset_sequence_filename = 
+		scheme_files_directory + "\\" + "picture_onset_sequence.txt";
+	string newline = "\n";
+	lib_read_1d_integer_array_file(
+		picture_onset_sequence_filename, newline[1], g_picture_onset_sequence);
+
+	lib_debug("g_picture_onset_sequence: " + 
+		lib_int_array_to_string(g_picture_onset_sequence, ",") + "\n" );
+
+	# g_picture_port_code_sequence
+	string picture_port_code_sequence_filename = 
+		scheme_files_directory + "\\" + "picture_port_code_sequence.txt";
+	lib_read_1d_integer_array_file(
+		picture_port_code_sequence_filename, newline[1], g_picture_port_code_sequence);
+
+	lib_debug("g_picture_port_code_sequence: " + 
+		lib_int_array_to_string(g_picture_port_code_sequence, ",") + "\n" );
+	
+	# load bitmaps
+	g_num_trials = bitmap_filename_sequence.count();
+	loop int i = 1;
+	until i > g_num_trials begin
+
+		string bitmap_filename = bitmap_filename_sequence[i];
+		bitmap bitmap_ = lib_get_next_bitmap(bitmap_pool);
+		bitmap_.set_filename("bitmaps\\" + bitmap_filename);
+		bitmap_.load();
+
+		i = i + 1;
+	end;
+	
+end;
+
+sub wait_pulse(int count)
+begin
+	lib_wait_pulse(count);
+	# add for dataglove pulses
+	wrk_dataglove.set_variable("scan", 49);
+end;
+
+sub run
+begin
+
+	# instruction
+	#set_condition(g_instruction_port_code);
+	array<string> instructions[2] = {
+		"Leg je rechter hand naast je met de palm naar boven \n "};
+	lib_default_start(instructions);
+	int pulse_offset = lib_planned_start_pulses - 1;
+	# add for dataglove pulses
+	wrk_dataglove.set_variable("scan",49);
+	
+	# main-loop
+	loop 
+		int i = 1;
+	until i > g_num_trials begin
+		trial trial_ = lib_get_next_trial(trial_pool);
+		
+		stimulus_event picture_event = trial_.get_stimulus_event(1);
+		picture picture_ = picture(picture_event.get_stimulus());
+		bitmap bitmap_ = lib_bitmap_pools[trial_pool][i];
+		picture_.add_part(bitmap_, 0, 70);
+		
+		int picture_port_code = g_picture_port_code_sequence[i];
+		picture_event.set_port_code(picture_port_code);
+		picture_event.set_event_code(string(picture_port_code));
+
+		stimulus_event fixation_event = trial_.get_stimulus_event(2);
+		fixation_event.set_time(g_picture_duration);
+		fixation_event.set_port_code(g_fixation_port_code);
+		fixation_event.set_event_code(string(g_fixation_port_code));
+		
+		int onset = pulse_offset + g_picture_onset_sequence[i];
+		lib_debug("onset=" + string(onset) + "\n");
+		trial_.set_mri_pulse(onset);
+		wait_pulse(onset);
+		trial_.present();
+	
+		i = i + 1;
+	end;
+	
+	int end_pulse = pulse_offset + g_picture_onset_sequence[g_picture_onset_sequence.count()];
+	lib_wait_pulse(end_pulse);
+	# add for dataglove pulses
+	wrk_dataglove.set_variable("scan",49);
+	
+	# the end
+	
+	#set_condition(g_ended_port_code);
+	# start - add in pcl for usage
+	wrk_dataglove.shut_down();
+	# end - add in pcl for usage	
+	lib_tr_end_display.present();	
+
+end;
+
+# execution
+initialize();
+run();
+

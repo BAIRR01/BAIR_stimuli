@@ -1,0 +1,24 @@
+# This is the default set definition file
+# To specify your own, see the "Logfiles" tab
+
+picture: event_type == "Picture"
+sound:   event_type == "Sound"
+video:   event_type == "Video"
+nothing: event_type == "Nothing"
+
+stimulus: picture or sound or video or nothing
+stimulus_count = count( stimulus )
+
+response: event_type == "Response"
+response_count = count( response )
+
+pulses:       event_type == "Pulse"
+port_input:   event_type == "Port Input"
+text_input:   event_type == "Text Input"
+save_logfile: event_type == "Save Logfile"
+control:      event_type == "Pause" or event_type == "Resume" or event_type == "Quit"
+
+unc_over_1 : time_uncertainty > 1
+over1_count = count( unc_over_1 )
+unc_over_5 : time_uncertainty > 5
+over5_count = count( unc_over_5 )

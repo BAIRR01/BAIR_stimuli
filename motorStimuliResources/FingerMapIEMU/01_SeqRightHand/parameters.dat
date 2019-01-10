@@ -1,0 +1,27 @@
+0.
+50.
+1
+75
+6
+115200
+1
+81
+5.
+0
+1
+50
+
+%vertpos			; vertical position stimulus
+%camdis				; Distance of camera to stimulus
+%up				; 1 for the normal side up and -1 for upsidedown
+%Refreshrate			: Refreshrate of the monitor (Hz)
+%Serial Port Number		: Serial Port Number (Usually 1)
+%Baudrate			: Baudrate : AZU Button box baudrate == 9600
+%Full Screen Mode 		: 1=Fullscreen, 0=windowed
+%Number of blocks		: Number of blocks
+%Stimsize			: Size of visisible stimulus (arbitrary)
+%USB port 1			: USB port 1 data glove
+%USB port 2			: USB port 2 data glove
+%samplerate			: Samplerate data glove (ms)
+
+
