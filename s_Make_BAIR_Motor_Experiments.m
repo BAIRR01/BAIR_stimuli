@@ -46,7 +46,8 @@ switch experimentType
                
     case 'BOLDSAT'
         numberOfRuns = 1;
-        movementFrequencies = [.33, .8, 1.3, 1.8]; % Hz
+        movementFrequencies = [.33, .8, 1.3, 1.8]; % Hz 
+        % This range of freq was recommended by Nick R on Jan 4 2019
         
         for runNum = 1:numberOfRuns
             for ii = 1:length(movementFrequencies)

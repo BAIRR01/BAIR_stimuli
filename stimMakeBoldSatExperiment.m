@@ -3,21 +3,30 @@ function stimMakeBoldSatExperiment(stimParams, runNum, stimDurationSeconds, onse
 
 site = stimParams.experimentSpecs.sites{1};
 
-%  After the first 30 s rest, the circle turned green 54 times for 500 ms
-%  at intertrial intervals varying from 3 to 18 s, with an average of 8 s.
+%For 0.33Hz, each trial consisted of three visual cues (the red circle
+%turning green similar as in the first part, for 400 ms), presented at 3 s
+%intercue interval, instructing the subject to close and open their hand,
+%thus resulting in 0.33 Hz movement. In the second, third, and fourth
+%tasks, respectively, 4, 7, or 13 cues were given with 2, 1, and 0.5 s
+%intercue interval. Each trial was followed by a rest period until a total
+%trial duration of 19 s was reached. Each task consisted of 13?15 trials of
+%19 s.
 
-numberOfEventsPerRun  = 54;
 frameRate             = stimParams.display.frameRate;
-
 preScanPeriod         = round(30/TR)*TR;
 postScanPeriod        = preScanPeriod;
-minimumISIinSeconds   = 3;
-maximumISIinSeconds   = 18;
 
 % REPLACE THIS WITH INTERVALS BASED ON MOVEMENT RATE
+%numberOfEventsPerRun  = 54;
+%minimumISIinSeconds   = 3;
+%maximumISIinSeconds   = 18;
+
 % Generate onsets (same as for visual HRF experiment
 %[onsets, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun, preScanPeriod, ...
 %    minimumISIinSeconds, maximumISIinSeconds, onsetTimeMultiple, frameRate);
+
+numberOfEventsPerRun  = 15; 
+eventLength           = 19; % seconds
 
 % Define total length of experiment
 experimentLength = onsets(numberOfEventsPerRun)+stimDurationSeconds+postScanPeriod;
@@ -53,9 +62,11 @@ end
 
 stimulus.onsets = onsets;
 
-% Describe stimuli
+% Describe stimuli UPDATE TO REFLECT MOVEMENTRATE SO DATA CAN BE
+% CONCATENATED LATER (analogous to visual stimuli category coding)
 stimulus.cat        = [1 2];
 stimulus.categories = {'REST', 'CLENCH'};
+stimulus.rateinHz   = movementRate;
 
 % Add triggers for non-fMRI modalities
 switch lower(stimParams.modality)
@@ -66,39 +77,10 @@ switch lower(stimParams.modality)
         stimulus.trigSeq = stimulus.fixSeq-1; % no trigger should equal zero
 end
 
-% Sparsify stimulus sequence % ADAPT THIS FOR MOTOR??
+% Sparsification is OFF for motor because we need to sample data glove at
+% rate very close to stimulus frame rate 
 %maxUpdateInterval = 0.25;
 %stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
-
-% If we want to use different ISIs for ECOG, use switch like below:
-% switch(lower(stimParams.modality))
-%     case 'fmri'
-%         minISI   = 3; % seconds
-%         maxISI   = 18;  % seconds
-%         prescan  = round(30/TR)*TR; % seconds 
-%         postscan = prescan; 
-% 
-%         % Jitter ITIs
-%         ISIs = linspace(ISI_min,ISI_max,numStim-1);                
-% 
-%         % Round off to onsetMultiple
-%         %ISIs = round(ISIs/onsetTimeMultiple)*onsetTimeMultiple;
-%         % Round off to TR
-%         ISIs = round(ISIs/TR)*TR;
-%         
-%     case {'ecog' 'eeg' 'meg'}
-%         ITI_min  = 1.25;
-%         ITI_max  = 1.75;
-%         prescan  = 3; % seconds
-%         postscan = 3; % seconds
-% 
-%         % Jitter ITIs
-%         ITIs = linspace(ITI_min,ITI_max,numberOfStimuli-1);
-% 
-%     otherwise
-%         error('Unknown modality')
-% end
-
 
 % Create stim_file name
 fname = sprintf('%s_boldsat%dHz_%d.mat', movementRate, site, runNum);
