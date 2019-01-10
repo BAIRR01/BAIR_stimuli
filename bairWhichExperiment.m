@@ -3,7 +3,7 @@ function [experimentType, selectionMade] = bairWhichExperiment
 % Which experiment?
 experimentTypes = {'DOTTASK' 'PRF' 'SPATIALPATTERN' 'SPATIALOBJECT' ...
     'TEMPORALPATTERN' 'HRFPATTERN' 'HRFPATTERNBREATHINGCHALLENGE','TACTILE',...
-    'FINGERMAPPING', 'GESTURES', 'BOLDHAND', 'BOLDSAT' };
+    'FINGERMAPPINGLEFT','FINGERMAPPINGRIGHT' 'GESTURES', 'GESTURESTRAINING', 'BOLDHAND', 'BOLDSAT' };
 % 'HRFCHECKER'  'HRFPATTERNINVERTED' 'HRFCHECKERINVERTED' };
 [whichExperiment, selectionMade] = listdlg('PromptString', 'Which experiment?', 'ListString', experimentTypes);
 
