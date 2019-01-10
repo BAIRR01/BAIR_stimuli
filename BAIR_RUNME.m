@@ -73,12 +73,15 @@ elseif ismac
 end
 
 % Specify task for subject
-if contains(stimPrefix, 'task') 
+if contains(stimPrefix, 'task') || contains(sensoryDomain, 'motor')
     params.fixation = '4 color dot';
 else
     %params.fixation = 'disk';
     params.fixation = 'cross';
 end
+
+% See if we need to initialize the data glove (NOTE Should this go in
+% a site/domainspecific function?
 if contains(sensoryDomain,'motor','IgnoreCase',true)
     params.glovePointer = initializeDataGlove;
 end
