@@ -18,9 +18,7 @@ stimParams = stimInitialize(experimentSpecs, whichSite, stimDiameterDeg);
 
 % Find the selected experiment
 switch experimentType
-<<<<<<< HEAD
-    case {'GESTURES', 'GESTURESTRAINING'}
-=======
+
     
      case 'BOLDHAND'
         stimDurationSeconds = 0.500; % seconds
@@ -33,8 +31,7 @@ switch experimentType
         end 
         
         
-    case 'GESTURES'
->>>>>>> 853996b5f16ae498e8235a58f68faff5e6017964
+    case {'GESTURES' 'GESTURESTRAINING'}
         stimDurationSeconds    = 5;
         numberOfRuns = 1;
         
@@ -42,27 +39,13 @@ switch experimentType
             % MAKE TASK EXPERIMENT
             stimMakeGesturesExperiment(stimParams, runNum, TR, stimDurationSeconds);
         end
-<<<<<<< HEAD
         
     case {'FINGERMAPPINGLEFT', 'FINGERMAPPINGRIGHT'}
         numberOfRuns = 1;
         for runNum = 1:numberOfRuns
             stimMakeFingermappingExperiment(stimParams,  runNum, TR, experimentType)
         end
-        
-    case 'BOLDHAND'
-        stimDurationSeconds = 0.5;
-        numberOfRuns = 1;
-        for runNum = 1:numberOfRuns
-            % MAKE TASK EXPERIMENT
-            stimMakeBoldHandExperiment(stimParams,  runNum, TR, stimDurationSeconds)
-        end
-        
-=======
-    case 'FINGERMAPPING'
-    
-   
->>>>>>> 853996b5f16ae498e8235a58f68faff5e6017964
+               
     case 'BOLDSAT'
         
 end
