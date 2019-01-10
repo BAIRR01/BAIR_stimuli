@@ -1,4 +1,4 @@
-function stimMakeBoldHandExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, TR)
+function stimMakeBoldSatExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, TR, movementRate)
 % stimMakeTaskExperiment(stimParams,  runNum, TR)
 
 site = stimParams.experimentSpecs.sites{1};
@@ -14,9 +14,10 @@ postScanPeriod        = preScanPeriod;
 minimumISIinSeconds   = 3;
 maximumISIinSeconds   = 18;
 
+% REPLACE THIS WITH INTERVALS BASED ON MOVEMENT RATE
 % Generate onsets (same as for visual HRF experiment
-[onsets, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun, preScanPeriod, ...
-    minimumISIinSeconds, maximumISIinSeconds, onsetTimeMultiple, frameRate);
+%[onsets, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun, preScanPeriod, ...
+%    minimumISIinSeconds, maximumISIinSeconds, onsetTimeMultiple, frameRate);
 
 % Define total length of experiment
 experimentLength = onsets(numberOfEventsPerRun)+stimDurationSeconds+postScanPeriod;
@@ -100,7 +101,7 @@ end
 
 
 % Create stim_file name
-fname = sprintf('%s_boldhand_%d.mat', site, runNum);
+fname = sprintf('%s_boldsat%dHz_%d.mat', movementRate, site, runNum);
 
 onset       = reshape(round(stimulus.onsets,3), [length(stimulus.onsets) 1]);
 duration    = ones(length(stimulus.onsets),1) * stimDurationSeconds;

@@ -45,6 +45,14 @@ switch experimentType
         end
                
     case 'BOLDSAT'
+        numberOfRuns = 1;
+        movementFrequencies = [.33, .8, 1.3, 1.8]; % Hz
         
+        for runNum = 1:numberOfRuns
+            for ii = 1:length(movementFrequencies)
+                movementRate = movementFrequencies(ii);
+                stimMakeBoldSatExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, TR, movementRate)
+            end
+        end
 end
 
