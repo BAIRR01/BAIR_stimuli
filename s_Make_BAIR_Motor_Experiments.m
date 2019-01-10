@@ -35,7 +35,7 @@ switch experimentType
         
         for runNum = 1:numberOfRuns
             % MAKE TASK EXPERIMENT
-            stimMakeGesturesExperiment(stimParams, runNum, TR, stimDurationSeconds);
+            stimMakeGesturesExperiment(stimParams, runNum, TR, stimDurationSeconds, experimentType);
         end
         
     case {'FINGERMAPPINGLEFT', 'FINGERMAPPINGRIGHT'}

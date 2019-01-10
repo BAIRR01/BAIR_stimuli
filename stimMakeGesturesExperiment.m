@@ -91,7 +91,7 @@ images = zeros([imgSize length(stimulus.categories)], 'uint8');
 % Load the images and resize them
 for cc = 1:length(stimulus.cat)
    %check and see that this order matches
-    imageForThisTrial = imread(fullfile(files(cc).folder, files(cc).name));
+    imageForThisTrial = imread(fullfile(imgFiles(cc).folder, imgFiles(cc).name));
     image = imresize(imageForThisTrial, [imgSize(1) imgSize(2)]);
     images(:,:,:,cc) = image;
 end
