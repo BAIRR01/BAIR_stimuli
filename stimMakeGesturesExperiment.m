@@ -127,14 +127,16 @@ end
 images(:,:,:,length(stimulus.cat)+1) = blankImg;
 stimulus.images     = images;
 
-% % Add triggers for non-fMRI modalities
-% switch lower(stimParams.modality)
-%     case 'fmri'
-%         % no trigger sequence needed
-%     otherwise
-%         % Write binary trigger sequence:
-%         stimulus.trigSeq   = blips;
-% end
+% Add triggers for non-fMRI modalities
+switch lower(stimParams.modality)
+    case 'fmri'
+        % no trigger sequence needed
+    otherwise
+        % Write trigger sequence
+        stimulus.trigSeq        = zeros(length(stimulus.seq),1);
+        idx                     = find(diff(stimulus.seq < max(stimulus.seq)) == -1);
+        stimulus.trigSeq(idx)   =  stimulus.cat(stimulus.seq(idx));
+end
 
 % Create stim_file name
 fname = sprintf('%s_%s_%d.mat', stimParams.site,lower(experimentType), runNum);
