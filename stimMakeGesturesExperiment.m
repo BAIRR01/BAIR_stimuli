@@ -1,75 +1,80 @@
-function stimMakeGesturesExperiment(stimParams,  runNum, TR, stimDurationSeconds,experimentType)
+function stimMakeGesturesExperiment(stimParams,  runNum, TR, eventLength,experimentType)
 %
 % NOTE: This is just a framework, will update soon
 % Commented text is in need of updating or checking
 %
 
-% Set a path to find .txt and .jpg files for now
+% Set a path to find .jpg files for now
 resourcePath = fullfile(BAIRRootPath , 'motorStimuliResources');
 
-% contains for each bitmap, the fMRI pulse count on which it should be shown
-rawOnsets             = load('picture_onset_sequence.txt');
-onsets                = round(rawOnsets/TR)*TR;
-numberofEvents        = length(onsets);
-preScanPeriod         = round(12/TR)*TR;
-postScanPeriod        = preScanPeriod;
-eventLength           = round(stimDurationSeconds/TR)*TR;
-experimentLength      = max(onsets) + eventLength + preScanPeriod + postScanPeriod;
-
-% Initialize, then set some the stimulus parameters
-frameRate           = stimParams.display.frameRate;
-
-% from provided UMCU code (generate_stimuli.m)
-
-%generate_stimuli('practice', 1000, 4, 6, 300)
-%
-%   generate_stimuli('fMRI', 850, 6, 15, 480)
-%
-%   generate_stimuli('IEMU', 1000, 4, 6, 480)
-% scan_period = 850; % for mri - equal to Presentation equivalent
-% isi_min =  6; % minimum inter-stimulus distance, between onset times, in s
-% isi_max = 15; % maximum inter-stimulus distance, between onset times, in s
-% max_dur = 480; % maximum duration of the whole task (seconds)
-% isi_min1 = round(isi_min / scan_period* 1000);
-% isi_max1 = round(isi_max / scan_period* 1000);
-% max_dur1 = round(max_dur / scan_period* 1000);
-% n_events = floor(max_dur / ((isi_max + isi_min) / 2));
-% isi = [1; randi(isi_max - isi_min + 1, n_events - 1, 1) + isi_min - 1];
-% onsets = cumsum(isi);
-% events = randi(length(stimulus.cat), n_events, 1);
-
 stimulus = [];
+stimulus.cat        = [10 11 12 13];
+stimulus.categories = { 'D', 'F', 'V', 'Y'};
+
+switch(lower(stimParams.modality))
+    case 'fmri'
+        if strcmp(experimentType,'GESTURES')
+            isiMin         = round(6/TR)*TR; % 6 seconds
+            isiMax         = round(15/TR)*TR; % 15 seconds
+            preScanPeriod  = round(12/TR)*TR; % 12 seconds
+            desiredLength  = round(480/TR)*TR; % 480 seconds (8 min)
+            eventLength    = round(eventLength/TR)*TR;
+            
+        elseif contains(experimentType,{'GESTURESPRACTICE','GESTURESLEARNING'})
+            % keep these shorter and with the same timing as ecog/meg
+            isiMin        = 4; % seconds
+            isiMax        = 6; % seconds
+            preScanPeriod = 3; % seconds
+            desiredLength = 300; % seconds
+        end
+        
+    case {'ecog' 'eeg' 'meg'}
+        isiMin        = 4; % seconds
+        isiMax        = 6; % seconds
+        preScanPeriod = 3; % seconds
+        desiredLength = 480; % seconds
+    otherwise
+        error('Unknown modality')
+end
+
+rng('shuffle');
+% Find the number of events we can fit in desires experiment time and jitter ISIs
+numberofEvents = floor(desiredLength / ((isiMax + isiMin) / 2));
+possibleISIs   = linspace(isiMin,isiMax,numberofEvents-1);
+isiSeq         = randperm(numberofEvents-1);
+
+% Find the onsets and match the stimulus presentation to the frame rate
+frameRate        = stimParams.display.frameRate;
+onsets           = cumsum([preScanPeriod possibleISIs(isiSeq)]);
+onsets           = round(onsets*frameRate)/frameRate;
+postScanPeriod   = preScanPeriod;
+experimentLength = max(onsets) + eventLength + postScanPeriod;
+
+% set some stimulus properties
+stimulus.ISI        = possibleISIs;
+stimulus.prescan    = preScanPeriod;
+stimulus.postscan   = postScanPeriod;
+stimulus.onsets     = onsets;
 stimulus.cmap       = stimParams.stimulus.cmap;
 stimulus.srcRect    = stimParams.stimulus.srcRect;
 stimulus.dstRect    = stimParams.stimulus.destRect;
 stimulus.display    = stimParams.display;
-stimulus.onsets     = onsets;
-stimulus.cat        = [10 11 12 13];
-stimulus.categories = { 'D', 'F', 'V', 'Y'};
 
 stimulus.seqtiming  = 0:1/frameRate:experimentLength;
 stimulus.fixSeq     = ones(size(stimulus.seqtiming));
-stimulus.seq        = zeros(size(stimulus.seqtiming)); %initialize it for now
+stimulus.seq        = zeros(size(stimulus.seqtiming));
 
-% % contains the filenames of the bitmaps to be shown
-testImgSeq     = importdata('bitmap_filename_sequence.txt');
-imgLetterSeq   = string(zeros(length(testImgSeq),1));
-imgNumSeq      = zeros(length(testImgSeq),1);
-for ii = 1:length(stimulus.cat)
-    idx               = contains(testImgSeq, sprintf('exec_stim_%d', ii));
-    imgNumSeq(idx)    = stimulus.cat(ii);
-    imgLetterSeq(idx) = stimulus.categories{ii};
-end
+% Figure out a random order to present the images
+imgSeq      = randi([1,length(stimulus.cat)],length(onsets),1);
 
 eventLengthInFrames = length(0:1/frameRate:eventLength);
 for ee = 1: numberofEvents
-    StartFrame = length(0:1/frameRate:preScanPeriod+onsets(ee));
-    EndFrame = StartFrame + eventLengthInFrames;
-    stimulus.seq(StartFrame:EndFrame) = imgNumSeq(ee);
+    StartFrame = length(0:1/frameRate:onsets(ee));
+    EndFrame   = StartFrame + eventLengthInFrames;
+    stimulus.seq(StartFrame:EndFrame) = imgSeq(ee);
 end
-blankIdx = find(stimulus.seq == 0);
+blankIdx = stimulus.seq == 0;
 stimulus.seq(blankIdx) = length(stimulus.cat)+1;
-
 
 % first, find all the bitmaps
 bitmapPth = fullfile(resourcePath, 'bitmaps');
@@ -80,26 +85,28 @@ switch experimentType
         %figure out which ones are for training
         trainingIdx = contains({files.name},stimulus.categories);
         imgFiles    = files(trainingIdx);
+        resizeImg   = 1; %these images are smaller, double their size
     case {'GESTURESPRACTICE' ,'GESTURES'}
         %figure out which ones are for testing
-        testIdx  = contains({files.name},'exec_stim');
-        imgFiles = files(testIdx);
+        testIdx   = contains({files.name},'exec_stim');
+        imgFiles  = files(testIdx);
+        resizeImg = 0; %don't resize them
 end
 
-%load in the first bitmap to set a standard size for the rest in case they
-% are not the same (this is the case with the training images)
-
-%imageSizeInPixels = size(stimParams.stimulus.images); % based on visual simuli
+%load in one image to resize and use that for the experiment
 [tempImg, ~,~] = imread(fullfile(imgFiles(1).folder, imgFiles(1).name));
-%resizedImgSize = size(imresize(tempImg, [imageSizeInPixels(1) NaN]));
-imgSize = size(tempImg);
+if resizeImg
+    imgSize = size(imresize(tempImg, 2));
+else
+    imgSize = size(tempImg);
+end
 
 % Find the rectangle the image will be displayed in so we can shift the image into the center later
-screenRect = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
-leftShift = abs(.5*screenRect(2)-0.5*imgSize(2));
-topShift = abs(.5*screenRect(1)-0.5*imgSize(1));
-imgLocation1 = topShift:topShift+imgSize(1)-1;
-imgLocation2 = leftShift:leftShift+imgSize(2)-1;
+screenRect       = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
+leftShift        = abs(.5*screenRect(2)-0.5*imgSize(2));
+topShift         = abs(.5*screenRect(1)-0.5*imgSize(1));
+shiftedLocation1 = topShift:topShift+imgSize(1)-1; %shifted to center
+shiftedLocation2 = leftShift:leftShift+imgSize(2)-1; %shifted to center
 
 % Pre-allocate arrays to store images
 images = zeros([screenRect imgSize(3) length(stimulus.categories)+1], 'uint8');
@@ -110,11 +117,11 @@ blankImg(:) = 127;
 
 % Load the images and resize them
 for cc = 1:length(stimulus.cat)
-   %check and see that this order matches
+    %check and see that this order matches
     imageForThisTrial = imread(fullfile(imgFiles(cc).folder, imgFiles(cc).name));
     image = imresize(imageForThisTrial, [imgSize(1) imgSize(2)]);
     images(:,:,:,cc) = 127; %first set the entire image to gray
-    images(imgLocation1,imgLocation2,:,cc) = image; %then insert the bitmap
+    images(shiftedLocation1,shiftedLocation2,:,cc) = image; %then insert the bitmap
     
 end
 images(:,:,:,length(stimulus.cat)+1) = blankImg;
@@ -133,10 +140,10 @@ stimulus.images     = images;
 fname = sprintf('%s_%s_%d.mat', stimParams.site,lower(experimentType), runNum);
 
 % Add table with elements to write to tsv file for BIDS
-onset           = onsets;
-duration        = ones(size(onset)) * eventLength;
-trial_type      = imgLetterSeq;
-trial_name      = imgLetterSeq;
+onset           = round(stimulus.onsets,3)';
+duration        = repmat(round(eventLength,3),length(onsets),1);
+trial_type      = stimulus.cat(imgSeq)';
+trial_name      = stimulus.categories(imgSeq)';
 stim_file       = repmat(fname, length(onset),1);
 stim_file_index = repmat('n/a', length(stimulus.onsets),1);
 
