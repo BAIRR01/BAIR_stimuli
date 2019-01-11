@@ -1,8 +1,9 @@
 function stimMakeGesturesExperiment(stimParams,  runNum, TR, eventLength,experimentType)
+% stimMakeGesturesExperiment(stimParams,  runNum, TR, eventLength,experimentType)
 %
-% NOTE: This is just a framework, will update soon
-% Commented text is in need of updating or checking
+% Loads in bitmaps found in ~/BAIRstimuli/motorStimuliResources/bitmaps
 %
+% This code should be run from s_Make_BAIR_Motor_Experiments 
 
 % Set a path to find .jpg files for now
 resourcePath = fullfile(BAIRRootPath , 'motorStimuliResources');
