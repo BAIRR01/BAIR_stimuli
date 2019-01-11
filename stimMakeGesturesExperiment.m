@@ -20,6 +20,12 @@ experimentLength      = max(onsets) + eventLength + preScanPeriod + postScanPeri
 frameRate           = stimParams.display.frameRate;
 
 % from provided UMCU code (generate_stimuli.m)
+
+%generate_stimuli('practice', 1000, 4, 6, 300)
+%
+%   generate_stimuli('fMRI', 850, 6, 15, 480)
+%
+%   generate_stimuli('IEMU', 1000, 4, 6, 480)
 % scan_period = 850; % for mri - equal to Presentation equivalent
 % isi_min =  6; % minimum inter-stimulus distance, between onset times, in s
 % isi_max = 15; % maximum inter-stimulus distance, between onset times, in s
@@ -38,22 +44,22 @@ stimulus.srcRect    = stimParams.stimulus.srcRect;
 stimulus.dstRect    = stimParams.stimulus.destRect;
 stimulus.display    = stimParams.display;
 stimulus.onsets     = onsets;
-stimulus.cat        = [1 2 3 4];
+stimulus.cat        = [10 11 12 13];
 stimulus.categories = { 'D', 'F', 'V', 'Y'};
 
 stimulus.seqtiming  = 0:1/frameRate:experimentLength;
 stimulus.fixSeq     = ones(size(stimulus.seqtiming));
 stimulus.seq        = zeros(size(stimulus.seqtiming)); %initialize it for now
 
-% contains the filenames of the bitmaps to be shown
-testImgSeq     = importdata('bitmap_filename_sequence.txt');
-imgLetterSeq   = string(zeros(length(testImgSeq),1));
-imgNumSeq      = zeros(length(testImgSeq),1);
-for ii = 1:length(stimulus.cat)
-    idx               = contains(testImgSeq, sprintf('exec_stim_%d', ii));
-    imgNumSeq(idx)    = stimulus.cat(ii);
-    imgLetterSeq(idx) = stimulus.categories{ii};
-end
+% % contains the filenames of the bitmaps to be shown
+% testImgSeq     = importdata('bitmap_filename_sequence.txt');
+% imgLetterSeq   = string(zeros(length(testImgSeq),1));
+% imgNumSeq      = zeros(length(testImgSeq),1);
+% for ii = 1:length(stimulus.cat)
+%     idx               = contains(testImgSeq, sprintf('exec_stim_%d', ii));
+%     imgNumSeq(idx)    = stimulus.cat(ii);
+%     imgLetterSeq(idx) = stimulus.categories{ii};
+% end
 
 eventLengthInFrames = length(0:1/frameRate:eventLength);
 for ee = 1: numberofEvents
@@ -61,17 +67,20 @@ for ee = 1: numberofEvents
     EndFrame = StartFrame + eventLengthInFrames;
     stimulus.seq(StartFrame:EndFrame) = imgNumSeq(ee);
 end
+blankIdx = find(stimulus.seq == 0);
+stimulus.seq(blankIdx) = length(stimulus.cat)+1;
+
 
 % first, find all the bitmaps
 bitmapPth = fullfile(resourcePath, 'bitmaps');
 files     = dir([bitmapPth '/*jpg']);
 
 switch experimentType
-    case 'GESTURESTRAINING'
+    case 'GESTURESLEARNING'
         %figure out which ones are for training
         trainingIdx = contains({files.name},stimulus.categories);
         imgFiles    = files(trainingIdx);
-    case 'GESTURES'
+    case {'GESTURESPRACTICE' ,'GESTURES'}
         %figure out which ones are for testing
         testIdx  = contains({files.name},'exec_stim');
         imgFiles = files(testIdx);
@@ -86,7 +95,11 @@ end
 imgSize = size(tempImg);
 
 % Pre-allocate arrays to store images
-images = zeros([imgSize length(stimulus.categories)], 'uint8');
+images = zeros([imgSize length(stimulus.categories)+1], 'uint8');
+
+% make a blank to insert between simulus presentations
+blankImg = zeros(imgSize);
+blankImg(:) = 127;
 
 % Load the images and resize them
 for cc = 1:length(stimulus.cat)
@@ -95,17 +108,17 @@ for cc = 1:length(stimulus.cat)
     image = imresize(imageForThisTrial, [imgSize(1) imgSize(2)]);
     images(:,:,:,cc) = image;
 end
-
+images(:,:,:,length(stimulus.cat)+1) = blankImg;
 stimulus.images     = images;
 
-% Add triggers for non-fMRI modalities
-switch lower(stimParams.modality)
-    case 'fmri'
-        % no trigger sequence needed
-    otherwise
-        % Write binary trigger sequence:
-        stimulus.trigSeq   = blips;
-end
+% % Add triggers for non-fMRI modalities
+% switch lower(stimParams.modality)
+%     case 'fmri'
+%         % no trigger sequence needed
+%     otherwise
+%         % Write binary trigger sequence:
+%         stimulus.trigSeq   = blips;
+% end
 
 % Create stim_file name
 fname = sprintf('%s_%s_%d.mat', stimParams.site,lower(experimentType), runNum);

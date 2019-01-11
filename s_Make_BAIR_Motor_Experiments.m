@@ -29,7 +29,7 @@ switch experimentType
             stimMakeBoldHandExperiment(stimParams,  runNum, stimDurationSeconds, onsetTimeMultiple, TR)
         end 
         
-    case {'GESTURES' 'GESTURESTRAINING'}
+    case {'GESTURES' 'GESTURESPRACTICE' 'GESTURESLEARNING'}
         stimDurationSeconds    = 5;
         numberOfRuns = 1;
         

@@ -18,7 +18,7 @@ function generate_stimuli(condition, scan_period, isi_min, isi_max, max_dur)
 % EXAMPLES:
 %   generate_stimuli('practice', 1000, 4, 6, 300)
 %
-%   generate_stimuli_old('fMRI', 850, 6, 15, 480)
+%   generate_stimuli('fMRI', 850, 6, 15, 480)
 %
 %   generate_stimuli('IEMU', 1000, 4, 6, 480)
 %
