@@ -52,14 +52,14 @@ stimulus.fixSeq     = ones(size(stimulus.seqtiming));
 stimulus.seq        = zeros(size(stimulus.seqtiming)); %initialize it for now
 
 % % contains the filenames of the bitmaps to be shown
-% testImgSeq     = importdata('bitmap_filename_sequence.txt');
-% imgLetterSeq   = string(zeros(length(testImgSeq),1));
-% imgNumSeq      = zeros(length(testImgSeq),1);
-% for ii = 1:length(stimulus.cat)
-%     idx               = contains(testImgSeq, sprintf('exec_stim_%d', ii));
-%     imgNumSeq(idx)    = stimulus.cat(ii);
-%     imgLetterSeq(idx) = stimulus.categories{ii};
-% end
+testImgSeq     = importdata('bitmap_filename_sequence.txt');
+imgLetterSeq   = string(zeros(length(testImgSeq),1));
+imgNumSeq      = zeros(length(testImgSeq),1);
+for ii = 1:length(stimulus.cat)
+    idx               = contains(testImgSeq, sprintf('exec_stim_%d', ii));
+    imgNumSeq(idx)    = stimulus.cat(ii);
+    imgLetterSeq(idx) = stimulus.categories{ii};
+end
 
 eventLengthInFrames = length(0:1/frameRate:eventLength);
 for ee = 1: numberofEvents
@@ -94,11 +94,18 @@ end
 %resizedImgSize = size(imresize(tempImg, [imageSizeInPixels(1) NaN]));
 imgSize = size(tempImg);
 
+% Find the rectangle the image will be displayed in so we can shift the image into the center later
+screenRect = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
+leftShift = abs(.5*screenRect(2)-0.5*imgSize(2));
+topShift = abs(.5*screenRect(1)-0.5*imgSize(1));
+imgLocation1 = topShift:topShift+imgSize(1)-1;
+imgLocation2 = leftShift:leftShift+imgSize(2)-1;
+
 % Pre-allocate arrays to store images
-images = zeros([imgSize length(stimulus.categories)+1], 'uint8');
+images = zeros([screenRect imgSize(3) length(stimulus.categories)+1], 'uint8');
 
 % make a blank to insert between simulus presentations
-blankImg = zeros(imgSize);
+blankImg = images(:,:,:,1);
 blankImg(:) = 127;
 
 % Load the images and resize them
@@ -106,7 +113,9 @@ for cc = 1:length(stimulus.cat)
    %check and see that this order matches
     imageForThisTrial = imread(fullfile(imgFiles(cc).folder, imgFiles(cc).name));
     image = imresize(imageForThisTrial, [imgSize(1) imgSize(2)]);
-    images(:,:,:,cc) = image;
+    images(:,:,:,cc) = 127; %first set the entire image to gray
+    images(imgLocation1,imgLocation2,:,cc) = image; %then insert the bitmap
+    
 end
 images(:,:,:,length(stimulus.cat)+1) = blankImg;
 stimulus.images     = images;
