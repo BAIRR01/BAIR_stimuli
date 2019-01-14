@@ -80,21 +80,8 @@ else
     params.fixation = 'cross';
 end
 
-[params, quitProg] = checkforSensoryDomainSpecificRequest(params);
-
-% % See if we need to initialize the data glove 
-% if contains(sensoryDomain,'motor','IgnoreCase',true)
-%     try params.glovePointer = initializeDataGlove;
-%     catch ME
-%        warning(ME.identifier, ME.message)
-%        str = input('Failure to initialize data glove. Continue anyway? (y/n)', 's');
-%        if strcmpi(str, 'y')
-%            params.glovePointer = NaN; 
-%        else
-%            quitProg = true; return; 
-%        end
-%     end
-% end
+% Sensory modality-specific stuff to do before starting experiment?
+[params] = checkforSensoryDomainSpecificRequest(params);
 
 % Debug mode?
 params.skipSyncTests = 1;
