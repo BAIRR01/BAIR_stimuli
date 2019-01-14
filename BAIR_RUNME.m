@@ -80,20 +80,21 @@ else
     params.fixation = 'cross';
 end
 
-% See if we need to initialize the data glove (NOTE Should this go in
-% a site/domainspecific function?
-if contains(sensoryDomain,'motor','IgnoreCase',true)
-    try params.glovePointer = initializeDataGlove;
-    catch ME
-       warning(ME.identifier, ME.message)
-       str = input('Failure to initialize data glove. Continue anyway? (y/n)', 's');
-       if strcmpi(str, 'y')
-           params.glovePointer = NaN; 
-       else
-           quitProg = true; return; 
-       end
-    end
-end
+[params, quitProg] = checkforSensoryDomainSpecificRequest(params);
+
+% % See if we need to initialize the data glove 
+% if contains(sensoryDomain,'motor','IgnoreCase',true)
+%     try params.glovePointer = initializeDataGlove;
+%     catch ME
+%        warning(ME.identifier, ME.message)
+%        str = input('Failure to initialize data glove. Continue anyway? (y/n)', 's');
+%        if strcmpi(str, 'y')
+%            params.glovePointer = NaN; 
+%        else
+%            quitProg = true; return; 
+%        end
+%     end
+% end
 
 % Debug mode?
 params.skipSyncTests = 1;
