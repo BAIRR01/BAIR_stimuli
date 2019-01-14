@@ -54,28 +54,27 @@ imgFiles = dir(imgDir);
 
 %load in one image to set size for the experiment
 [tempImg, ~,~] = imread(fullfile(imgFiles(1).folder, imgFiles(1).name));
+imgSize = size(tempImg);
 
-% % Find the rectangle the image will be displayed in so we can shift the image into the center later
-% screenRect       = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
-% leftShift        = abs(.5*screenRect(2)-0.5*imgSize(2));
-% topShift         = abs(.5*screenRect(1)-0.5*imgSize(1));
-% shiftedLocation1 = topShift:topShift+imgSize(1)-1; %shifted to center
-% shiftedLocation2 = leftShift:leftShift+imgSize(2)-1; %shifted to center
+% Find the rectangle the image will be displayed in so we can shift the image into the center later
+screenRect       = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
+cropAmt2    = abs(.5*screenRect(2)-0.5*imgSize(2));
+cropAmt1    = abs(.5*screenRect(1)-0.5*imgSize(1));
+cropLocation1 = 0.75*cropAmt1:(imgSize(1) - .75*cropAmt1)-1;
+cropLocation2 = cropAmt2:(imgSize(2) - cropAmt2)-1;
 
 % Pre-allocate arrays to store images
-images = zeros([size(tempImg) length(stimulus.categories)], 'uint8');
+images = zeros([screenRect imgSize(3) length(stimulus.categories)], 'uint8');
 
-% % make a blank to insert between simulus presentations
-% blankImg = images(:,:,:,1);
-% blankImg(:) = 127;
- 
 % Load the images and resize them
 for cc = 1:length(stimulus.cat)
     thisImgName = sprintf('%02d.png', cc);
-    thisimage = imread(fullfile(imgFiles(cc).folder, thisImgName));
-%     image = imresize(thisImage, [imgSize(1) imgSize(2)]);
-%     images(:,:,:,cc) = 127; %first set the entire image to gray
-    images(:,:,:,cc) = thisimage; %then insert the bitmap
+    thisImage = imread(fullfile(imgFiles(cc).folder, thisImgName));
+    %the gray in these images is off, set them equal to a different gray
+    grayIdx = thisImage == 148;  
+    thisImage(grayIdx) = 127;
+%     croppedImg = thisimage(cropLocation1,cropLocation2);
+    images(:,:,:,cc) = imresize(thisImage(cropLocation1,cropLocation2, :), screenRect); %then insert the bitmap
     
 end
 % images(:,:,:,length(stimulus.cat)+1) = blankImg;
