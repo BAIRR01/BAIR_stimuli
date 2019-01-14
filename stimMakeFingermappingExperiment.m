@@ -99,7 +99,7 @@ end
 fname = sprintf('%s_%s_%d.mat', stimParams.site,lower(experimentType), runNum);
 
 % Add table with elements to write to tsv file for BIDS
-onset           = round(stimulus.onsets,3)';
+onset           = round(stimulus.onsets,3);
 duration        = diff(onsets);
 duration(end+1) = 1/frameRate; %the last onset is only on for a frame
 trial_type      = stimulus.cat(imgSeq)';

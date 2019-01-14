@@ -41,7 +41,7 @@ switch experimentType
     case {'FINGERMAPPINGLEFT', 'FINGERMAPPINGRIGHT'}
         numberOfRuns = 1;
         for runNum = 1:numberOfRuns
-            stimMakeFingermappingExperiment(stimParams,  runNum, TR, experimentType)
+            stimMakeFingermappingExperiment(stimParams,  runNum, experimentType)
         end
                
     case 'BOLDSAT'
