@@ -72,12 +72,13 @@ elseif ismac
     params.runPriority  = 7;
 end
 
-% Specify task for subject
-if contains(stimPrefix, 'task') || contains(sensoryDomain, 'motor')
+% Specify which type of fixation to use
+params.fixation = 'cross'; % default
+if contains(stimPrefix, 'dottask') 
     params.fixation = '4 color dot';
-else
-    %params.fixation = 'disk';
-    params.fixation = 'cross';
+end
+if contains(lower(sensoryDomain), 'motor')
+    params.fixation = 'disk';
 end
 
 % Sensory modality-specific stuff to do before starting experiment?
