@@ -10,7 +10,7 @@ if ~selectionMade, return; end
 if ~selectionMade, return; end
 
 % Set some defaults for all the experiments
-TR              = 0.850;      % ms
+TR              = 0.850;      % seconds
 stimDiameterDeg = 16.6;       % degrees
 
 % Generate stimulus template and set some defaults
@@ -30,7 +30,7 @@ switch experimentType
         end 
         
     case {'GESTURES' 'GESTURESPRACTICE' 'GESTURESLEARNING'}
-        stimDurationSeconds    = 5;
+        stimDurationSeconds    = 5; % seconds
         numberOfRuns = 1;
         
         for runNum = 1:numberOfRuns
@@ -45,13 +45,14 @@ switch experimentType
         end
                
     case 'BOLDSAT'
+        stimDurationSeconds = 0.4; % seconds
         numberOfRuns = 1;
-        movementRates = [.33, .8, 1.3, 1.8]; % Hz 
+        movementRates = [1/3, .8, 1.3, 1.8]; % Hz 
         
         for runNum = 1:numberOfRuns
             for ii = 1:length(movementRates)
                 movementRate = movementRates(ii);
-                stimMakeBoldSatExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, TR, movementRate)
+                stimMakeBoldSatExperiment(stimParams, runNum, stimDurationSeconds, TR, movementRate,ii)
             end
         end
 end

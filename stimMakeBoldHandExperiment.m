@@ -15,17 +15,11 @@ postScanPeriod        = preScanPeriod;
 % Determine min and max ISI
 switch(lower(stimParams.modality))
     case 'fmri'
-        
         minimumISIinSeconds   = 3;
         maximumISIinSeconds   = 24;
-
     case {'ecog' 'eeg' 'meg'}
-        
         minimumISIinSeconds   = 3;
         maximumISIinSeconds   = 18;
-        
-    otherwise
-        error('Unknown modality')
 end
 
 % Generate onsets (same as for visual HRF experiment
@@ -89,7 +83,7 @@ fname = sprintf('%s_boldhand_%d.mat', site, runNum);
 
 onset       = reshape(round(stimulus.onsets,3), [length(stimulus.onsets) 1]);
 duration    = ones(length(stimulus.onsets),1) * stimDurationSeconds;
-trial_type  = ones(length(stimulus.onsets),1)*stimulus.cat{2};
+trial_type  = ones(length(stimulus.onsets),1)*stimulus.cat(2);
 trial_name  = repmat(stimulus.categories{2}, length(stimulus.onsets),1);
 stim_file   = repmat(fname, length(stimulus.onsets),1);
 stim_file_index = repmat('n/a', length(stimulus.onsets),1);
