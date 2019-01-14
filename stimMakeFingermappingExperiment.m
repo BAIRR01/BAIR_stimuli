@@ -56,28 +56,30 @@ imgFiles = dir(imgDir);
 [tempImg, ~,~] = imread(fullfile(imgFiles(1).folder, imgFiles(1).name));
 imgSize = size(tempImg);
 
-% Find the rectangle the image will be displayed in so we can shift the image into the center later
-screenRect       = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
-cropAmt2    = abs(.5*screenRect(2)-0.5*imgSize(2));
-cropAmt1    = abs(.5*screenRect(1)-0.5*imgSize(1));
-cropLocation1 = 0.75*cropAmt1:(imgSize(1) - .75*cropAmt1)-1;
-cropLocation2 = cropAmt2:(imgSize(2) - cropAmt2)-1;
+% Find the destination rectangle so we can crop our stimuli
+screenRect  = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
+cropAmt2    = (abs(screenRect(2)-imgSize(2))/ 2);
+cropAmt1    = (abs(screenRect(1)-imgSize(1))/ 2);
+cropIdx1 = 0.75*cropAmt1+2:(imgSize(1) - 0.75*cropAmt1);
+cropIdx2 = cropAmt2:(imgSize(2) - cropAmt2);
 
 % Pre-allocate arrays to store images
 images = zeros([screenRect imgSize(3) length(stimulus.categories)], 'uint8');
+% we're going to gray out the center fixation point, so find the image center
+imgCenter = 0.5*imgSize;
 
 % Load the images and resize them
 for cc = 1:length(stimulus.cat)
     thisImgName = sprintf('%02d.png', cc);
-    thisImage = imread(fullfile(imgFiles(cc).folder, thisImgName));
+    thisImg = imread(fullfile(imgFiles(cc).folder, thisImgName));
     %the gray in these images is off, set them equal to a different gray
-    grayIdx = thisImage == 148;  
-    thisImage(grayIdx) = 127;
-%     croppedImg = thisimage(cropLocation1,cropLocation2);
-    images(:,:,:,cc) = imresize(thisImage(cropLocation1,cropLocation2, :), screenRect); %then insert the bitmap
+    grayIdx = thisImg == 148;  
+    thisImg(grayIdx) = 127;
+    %the fixation point is in the center, so make everything in the center gray 
+    thisImg(imgCenter(1)-10:imgCenter(1)+10,imgCenter(2)-10:imgCenter(2)+10, :) = 127;
+    images(:,:,:,cc) =  imresize(thisImg(cropIdx1,cropIdx2, :), screenRect);
     
 end
-% images(:,:,:,length(stimulus.cat)+1) = blankImg;
 stimulus.images     = images;
 
 % Add triggers for non-fMRI modalities
