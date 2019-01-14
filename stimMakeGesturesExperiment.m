@@ -78,7 +78,7 @@ blankIdx = stimulus.seq == 0;
 stimulus.seq(blankIdx) = length(stimulus.cat)+1;
 
 % first, find all the bitmaps
-bitmapPth = fullfile(resourcePath, 'bitmaps');
+bitmapPth = fullfile(resourcePath,'gestures', 'bitmaps');
 files     = dir([bitmapPth '/*jpg']);
 
 switch experimentType
@@ -119,8 +119,8 @@ blankImg(:) = 127;
 % Load the images and resize them
 for cc = 1:length(stimulus.cat)
     %check and see that this order matches
-    imageForThisTrial = imread(fullfile(imgFiles(cc).folder, imgFiles(cc).name));
-    image = imresize(imageForThisTrial, [imgSize(1) imgSize(2)]);
+    thisImage = imread(fullfile(imgFiles(cc).folder, imgFiles(cc).name));
+    image = imresize(thisImage, [imgSize(1) imgSize(2)]);
     images(:,:,:,cc) = 127; %first set the entire image to gray
     images(shiftedLocation1,shiftedLocation2,:,cc) = image; %then insert the bitmap
     
@@ -137,6 +137,8 @@ switch lower(stimParams.modality)
         stimulus.trigSeq        = zeros(length(stimulus.seq),1);
         idx                     = find(diff(stimulus.seq < max(stimulus.seq)) == -1);
         stimulus.trigSeq(idx)   =  stimulus.cat(stimulus.seq(idx));
+        stimulus.trigSeq(1)     = 255; %experiment onset
+        stimulus.trigSeq(end)   = 255; %experiment offset
 end
 
 % Create stim_file name
