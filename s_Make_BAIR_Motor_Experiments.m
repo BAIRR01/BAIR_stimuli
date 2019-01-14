@@ -21,12 +21,12 @@ switch experimentType
 
     case 'BOLDHAND'
         stimDurationSeconds = 0.500; % seconds
-        onsetTimeMultiple   = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR
+        %onsetTimeMultiple   = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR
         numberOfRuns = 1; 
         
         for runNum = 1:numberOfRuns
             % MAKE TASK EXPERIMENT
-            stimMakeBoldHandExperiment(stimParams,  runNum, stimDurationSeconds, onsetTimeMultiple, TR)
+            stimMakeBoldHandExperiment(stimParams,  runNum, stimDurationSeconds, TR)
         end 
         
     case {'GESTURES' 'GESTURESPRACTICE' 'GESTURESLEARNING'}
@@ -46,12 +46,11 @@ switch experimentType
                
     case 'BOLDSAT'
         numberOfRuns = 1;
-        movementFrequencies = [.33, .8, 1.3, 1.8]; % Hz 
-        % This range of freq was recommended by Nick R on Jan 4 2019
+        movementRates = [.33, .8, 1.3, 1.8]; % Hz 
         
         for runNum = 1:numberOfRuns
-            for ii = 1:length(movementFrequencies)
-                movementRate = movementFrequencies(ii);
+            for ii = 1:length(movementRates)
+                movementRate = movementRates(ii);
                 stimMakeBoldSatExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, TR, movementRate)
             end
         end

@@ -1,4 +1,4 @@
-function stimMakeBoldHandExperiment(stimParams, runNum, stimDurationSeconds, onsetTimeMultiple, TR)
+function stimMakeBoldHandExperiment(stimParams, runNum, stimDurationSeconds, TR)
 % stimMakeTaskExperiment(stimParams,  runNum, TR)
 
 site = stimParams.experimentSpecs.sites{1};
@@ -11,12 +11,26 @@ frameRate             = stimParams.display.frameRate;
 
 preScanPeriod         = round(30/TR)*TR;
 postScanPeriod        = preScanPeriod;
-minimumISIinSeconds   = 3;
-maximumISIinSeconds   = 18;
+
+% Determine min and max ISI
+switch(lower(stimParams.modality))
+    case 'fmri'
+        
+        minimumISIinSeconds   = 3;
+        maximumISIinSeconds   = 24;
+
+    case {'ecog' 'eeg' 'meg'}
+        
+        minimumISIinSeconds   = 3;
+        maximumISIinSeconds   = 18;
+        
+    otherwise
+        error('Unknown modality')
+end
 
 % Generate onsets (same as for visual HRF experiment
 [onsets, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun, preScanPeriod, ...
-    minimumISIinSeconds, maximumISIinSeconds, onsetTimeMultiple, frameRate);
+    minimumISIinSeconds, maximumISIinSeconds, TR, frameRate);
 
 % Define total length of experiment
 experimentLength = onsets(numberOfEventsPerRun)+stimDurationSeconds+postScanPeriod;
@@ -47,7 +61,7 @@ sequencePerTrial = ones(1,imagesPerTrial);
 
 for ii = 1:numberOfEventsPerRun
     indices = onsetIndices(ii) + (0:imagesPerTrial-1);
-    stimulus.fixSeq(indices) = sequencePerTrial+1;
+    stimulus.fixSeq(indices) = sequencePerTrial+1; % CLENCH = stimcode 2
 end
 
 stimulus.onsets = onsets;
@@ -62,49 +76,20 @@ switch lower(stimParams.modality)
         % no trigger sequence needed
     otherwise
         % Write binary trigger sequence:
-        stimulus.trigSeq = stimulus.fixSeq-1; % no trigger should equal zero
+        stimulus.trigSeq = zeros(size(stimulus.seqtiming));
+        stimulus.trigSeq(onsetIndices) = 2;
 end
 
 % Sparsify stimulus sequence % ADAPT THIS FOR MOTOR??
 %maxUpdateInterval = 0.25;
 %stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
 
-% If we want to use different ISIs for ECOG, use switch like below:
-% switch(lower(stimParams.modality))
-%     case 'fmri'
-%         minISI   = 3; % seconds
-%         maxISI   = 18;  % seconds
-%         prescan  = round(30/TR)*TR; % seconds 
-%         postscan = prescan; 
-% 
-%         % Jitter ITIs
-%         ISIs = linspace(ISI_min,ISI_max,numStim-1);                
-% 
-%         % Round off to onsetMultiple
-%         %ISIs = round(ISIs/onsetTimeMultiple)*onsetTimeMultiple;
-%         % Round off to TR
-%         ISIs = round(ISIs/TR)*TR;
-%         
-%     case {'ecog' 'eeg' 'meg'}
-%         ITI_min  = 1.25;
-%         ITI_max  = 1.75;
-%         prescan  = 3; % seconds
-%         postscan = 3; % seconds
-% 
-%         % Jitter ITIs
-%         ITIs = linspace(ITI_min,ITI_max,numberOfStimuli-1);
-% 
-%     otherwise
-%         error('Unknown modality')
-% end
-
-
 % Create stim_file name
 fname = sprintf('%s_boldhand_%d.mat', site, runNum);
 
 onset       = reshape(round(stimulus.onsets,3), [length(stimulus.onsets) 1]);
 duration    = ones(length(stimulus.onsets),1) * stimDurationSeconds;
-trial_type  = ones(length(stimulus.onsets),1);
+trial_type  = ones(length(stimulus.onsets),1)*stimulus.cat{2};
 trial_name  = repmat(stimulus.categories{2}, length(stimulus.onsets),1);
 stim_file   = repmat(fname, length(stimulus.onsets),1);
 stim_file_index = repmat('n/a', length(stimulus.onsets),1);
