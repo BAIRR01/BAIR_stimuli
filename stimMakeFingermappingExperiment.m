@@ -4,7 +4,7 @@ function stimMakeFingermappingExperiment(stimParams, runNum,experimentType)
 resourcePath = fullfile(BAIRRootPath , 'motorStimuliResources', 'fingerMap');
 
 %first load in the onsets file depending on the modality
-if strcmpi(stimParams.modality, {'ecog', 'meg', 'eeg'})
+if any(strcmpi(stimParams.modality, {'ecog', 'meg', 'eeg'}))
     tmpData = load(fullfile(resourcePath,'stiminfo_ecog.txt'));
 elseif strcmpi(stimParams.modality, 'fmri')
     tmpData = load(fullfile(resourcePath,'stiminfo_mri.txt'));
