@@ -14,6 +14,9 @@ TR              = 0.850;      % seconds
 stimDiameterDeg = 16.6;       % degrees
 
 % Generate stimulus template and set some defaults
+if whichSite == 3
+    experimentSpecs(3,1) = {'BAIR_ACER'};
+end
 stimParams = stimInitialize(experimentSpecs, whichSite, stimDiameterDeg);
 
 % Find the selected experiment

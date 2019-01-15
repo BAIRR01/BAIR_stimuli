@@ -60,8 +60,8 @@ imgSize = size(tempImg);
 screenRect  = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
 cropAmt2    = (abs(screenRect(2)-imgSize(2))/ 2);
 cropAmt1    = (abs(screenRect(1)-imgSize(1))/ 2);
-cropIdx1 = 0.75*cropAmt1+2:(imgSize(1) - 0.75*cropAmt1);
-cropIdx2 = cropAmt2:(imgSize(2) - cropAmt2);
+cropIdx1 = round(0.75*cropAmt1+2:(imgSize(1) - 0.75*cropAmt1));
+cropIdx2 = round(cropAmt2:(imgSize(2) - cropAmt2));
 
 % Pre-allocate arrays to store images
 images = zeros([screenRect imgSize(3) length(stimulus.categories)], 'uint8');
