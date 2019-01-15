@@ -29,14 +29,14 @@ stimulus.srcRect    = stimParams.stimulus.srcRect;
 stimulus.dstRect    = stimParams.stimulus.destRect;
 stimulus.display    = stimParams.display;
 
-stimulus.seqtiming  = 0:1/frameRate:experimentLength;
+stimulus.seqtiming  = 0:((1/frameRate)*2)*2:experimentLength;
 stimulus.fixSeq     = ones(size(stimulus.seqtiming));
 stimulus.seq        = zeros(size(stimulus.seqtiming));
 
 % Insert the image sequence into stimulus.seq
 for ee = 1: length(onsets)-1
-    startIdx = length(0:1/frameRate:(onsets(ee)));
-    endIdx = length(0:1/frameRate:(onsets(ee+1)-1/frameRate));
+    startIdx = length(0:(1/frameRate)*2:(onsets(ee)));
+    endIdx = length(0:(1/frameRate)*2:(onsets(ee+1)-(1/frameRate)*2));
      stimulus.seq(startIdx:endIdx) = imgSeq(ee);
 end
 % Insert the last stimulus.seq value we missed
@@ -102,7 +102,7 @@ fname = sprintf('%s_%s_%d.mat', stimParams.site,lower(experimentType), runNum);
 % Add table with elements to write to tsv file for BIDS
 onset           = round(stimulus.onsets,3);
 duration        = diff(onsets);
-duration(end+1) = 1/frameRate; %the last onset is only on for a frame
+duration(end+1) = (1/frameRate)*2; %the last onset is only on for a frame
 trial_type      = stimulus.cat(imgSeq)';
 trial_name      = stimulus.categories(imgSeq)';
 stim_file       = repmat(fname, length(onset),1);

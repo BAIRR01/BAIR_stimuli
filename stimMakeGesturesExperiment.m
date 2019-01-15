@@ -61,16 +61,16 @@ stimulus.srcRect    = stimParams.stimulus.srcRect;
 stimulus.dstRect    = stimParams.stimulus.destRect;
 stimulus.display    = stimParams.display;
 
-stimulus.seqtiming  = 0:1/frameRate:experimentLength;
+stimulus.seqtiming  = 0:(1/frameRate)*2:experimentLength;
 stimulus.fixSeq     = ones(size(stimulus.seqtiming));
 stimulus.seq        = zeros(size(stimulus.seqtiming));
 
 % Figure out a random order to present the images
 imgSeq      = randi([1,length(stimulus.cat)],length(onsets),1);
 
-eventLengthInFrames = length(0:1/frameRate:eventLength);
+eventLengthInFrames = length(0:(1/frameRate)*2:eventLength);
 for ee = 1: numberofEvents
-    StartFrame = length(0:1/frameRate:onsets(ee));
+    StartFrame = length(0:(1/frameRate)*2:onsets(ee));
     EndFrame   = StartFrame + eventLengthInFrames;
     stimulus.seq(StartFrame:EndFrame) = imgSeq(ee);
 end

@@ -38,7 +38,7 @@ onsets = round(onsets/TR)*TR;
 % Round to multiples of frameRate
 onsets = round(onsets*frameRate)/frameRate;
 % Derive indices into the stimulus sequence (defined at frameRate)
-onsetIndices  = round(onsets*frameRate)+1;
+onsetIndices  = round(onsets*(frameRate*.5))+1;
 
 % Define total length of experiment
 experimentLength = onsets(numberOfEventsPerRun)+trialDuration+postScanPeriod;
@@ -55,7 +55,7 @@ stimulus.display    = stimParams.display;
 stimulus.images     = stimParams.stimulus.images(:,:,end);
 
 % Specify stimulus sequence at frame rate resolution
-stimulus.seqtiming  = 0:1/frameRate:experimentLength;
+stimulus.seqtiming  = 0:(1/frameRate*2):experimentLength;
 stimulus.seq        = ones(size(stimulus.seqtiming));
 
 % For this motor task, the fixation changes are the task instructions
@@ -72,10 +72,10 @@ movementOnsets = [0:movementISI:movementOnDuration];
 movementsPerTrial = length(movementOnsets);
 
 movementOnsets  = round(movementOnsets*frameRate)/frameRate;
-movementOnsetIndices  = round(movementOnsets*frameRate)+1;
+movementOnsetIndices  = round(movementOnsets*(frameRate*.5))+1;
 
-imagesPerTrial = round(movementOnDuration*frameRate);
-imagesPerMovement = round(stimDurationSeconds*frameRate);
+imagesPerTrial = round(movementOnDuration*(frameRate*.5));
+imagesPerMovement = round(stimDurationSeconds*(frameRate*.5));
 
 % Generate sequence of movements onsets per trial
 sequencePerTrial = ones(1,imagesPerTrial);

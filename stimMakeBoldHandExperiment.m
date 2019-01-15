@@ -41,7 +41,7 @@ stimulus.display    = stimParams.display;
 stimulus.images     = stimParams.stimulus.images(:,:,end);
 
 % Specify stimulus sequence at frame rate resolution
-stimulus.seqtiming  = 0:1/frameRate:experimentLength;
+stimulus.seqtiming  = 0:(1/frameRate)*2:experimentLength;
 stimulus.seq        = ones(size(stimulus.seqtiming));
 
 % For this motor task, the fixation changes are the task instructions
@@ -50,7 +50,7 @@ stimulus.seq        = ones(size(stimulus.seqtiming));
 stimulus.fixSeq     = stimulus.seq;
 
 % Add the stimulus indices
-imagesPerTrial = round(stimDurationSeconds*frameRate);
+imagesPerTrial = round(stimDurationSeconds*(frameRate*.5));
 sequencePerTrial = ones(1,imagesPerTrial);
 
 for ii = 1:numberOfEventsPerRun
@@ -123,7 +123,7 @@ onsets   = cumsum([prescan ISIs(randperm(numStimuli-1))]);
 onsets   = round(onsets*frameRate)/frameRate;
 
 % Derive indices into the stimulus sequence (defined at temporalResolution)
-indices  = round(onsets*frameRate)+1;
+indices  = round(onsets*(frameRate*.5))+1;
 
 % % Debug
 % figure(2), clf; set(gcf, 'Color', 'w')

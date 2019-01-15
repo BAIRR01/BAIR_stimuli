@@ -16,7 +16,7 @@ if ~selectionMade, return; end
 if ~fileSelected, return; end
 
 % Site-specific stuff to do before starting experiment?
-checkforSiteSpecificRequest(experimentSpecs,whichSite);
+checkforSiteSpecificRequest(experimentSpecs,whichSite, sensoryDomain);
 
 % Run these experiments!
 for ii = 1:numberOfExperiments
