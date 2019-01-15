@@ -1,4 +1,4 @@
-function stimMakeGesturesExperiment(stimParams,  runNum, TR, eventLength,experimentType)
+function stimMakeGesturesExperiment(stimParams,  runNum, TR, stimDurationSeconds,experimentType)
 % stimMakeGesturesExperiment(stimParams,  runNum, TR, eventLength,experimentType)
 %
 % Loads in bitmaps found in ~/BAIRstimuli/motorStimuliResources/bitmaps
@@ -19,7 +19,7 @@ switch(lower(stimParams.modality))
             isiMax         = round(15/TR)*TR; % 15 seconds
             preScanPeriod  = round(12/TR)*TR; % 12 seconds
             desiredLength  = round(480/TR)*TR; % 480 seconds (8 min)
-            eventLength    = round(eventLength/TR)*TR;
+            stimDurationSeconds    = round(stimDurationSeconds/TR)*TR;
             
         elseif contains(experimentType,{'GESTURESPRACTICE','GESTURESLEARNING'})
             % keep these shorter and with the same timing as ecog/meg
@@ -39,17 +39,18 @@ switch(lower(stimParams.modality))
 end
 
 rng('shuffle');
-% Find the number of events we can fit in desires experiment time and jitter ISIs
-numberofEvents = floor(desiredLength / ((isiMax + isiMin) / 2));
+% Find the number of events we can fit in desired experiment time and jitter ISIs
+numberofEvents = floor(desiredLength / (stimDurationSeconds+((isiMax + isiMin) / 2)));
 possibleISIs   = linspace(isiMin,isiMax,numberofEvents-1);
 isiSeq         = randperm(numberofEvents-1);
 
 % Find the onsets and match the stimulus presentation to the frame rate
 frameRate        = stimParams.display.frameRate;
-onsets           = cumsum([preScanPeriod possibleISIs(isiSeq)]);
+onsets           = cumsum([preScanPeriod stimDurationSeconds+possibleISIs(isiSeq)]);
 onsets           = round(onsets*frameRate)/frameRate;
+onsetFrameIdx    = onsets*(frameRate*.5);
 postScanPeriod   = preScanPeriod;
-experimentLength = max(onsets) + eventLength + postScanPeriod;
+experimentLength = max(onsets) + stimDurationSeconds + postScanPeriod;
 
 % set some stimulus properties
 stimulus.ISI        = possibleISIs;
@@ -68,11 +69,10 @@ stimulus.seq        = zeros(size(stimulus.seqtiming));
 % Figure out a random order to present the images
 imgSeq      = randi([1,length(stimulus.cat)],length(onsets),1);
 
-eventLengthInFrames = length(0:(1/frameRate)*2:eventLength);
+eventLengthInFrames = length(0:(1/frameRate)*2:stimDurationSeconds);
 for ee = 1: numberofEvents
-    StartFrame = length(0:(1/frameRate)*2:onsets(ee));
-    EndFrame   = StartFrame + eventLengthInFrames;
-    stimulus.seq(StartFrame:EndFrame) = imgSeq(ee);
+    startIdx = length(0:(1/frameRate)*2:(onsets(ee)));
+    stimulus.seq(startIdx:startIdx+eventLengthInFrames) = imgSeq(ee);  
 end
 blankIdx = stimulus.seq == 0;
 stimulus.seq(blankIdx) = length(stimulus.cat)+1;
@@ -146,7 +146,7 @@ fname = sprintf('%s_%s_%d.mat', stimParams.site,lower(experimentType), runNum);
 
 % Add table with elements to write to tsv file for BIDS
 onset           = round(stimulus.onsets,3)';
-duration        = repmat(round(eventLength,3),length(onsets),1);
+duration        = repmat(round(stimDurationSeconds,3),length(onsets),1);
 trial_type      = stimulus.cat(imgSeq)';
 trial_name      = stimulus.categories(imgSeq)';
 stim_file       = repmat(fname, length(onset),1);
