@@ -71,8 +71,7 @@ imgSeq      = randi([1,length(stimulus.cat)],length(onsets),1);
 
 eventLengthInFrames = length(0:(1/frameRate)*2:stimDurationSeconds);
 for ee = 1: numberofEvents
-    startIdx = length(0:(1/frameRate)*2:(onsets(ee)));
-    stimulus.seq(startIdx:startIdx+eventLengthInFrames) = imgSeq(ee);  
+    stimulus.seq (onsetFrameIdx(ee):onsetFrameIdx(ee)+eventLengthInFrames) = imgSeq(ee);
 end
 blankIdx = stimulus.seq == 0;
 stimulus.seq(blankIdx) = length(stimulus.cat)+1;
