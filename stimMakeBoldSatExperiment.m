@@ -12,31 +12,43 @@ site = stimParams.experimentSpecs.sites{1};
 %trial duration of 19 s was reached. Each task consisted of 13?15 trials of
 %19 s.
 
-% One trial consists of multiple repeated movements
-% Each movements has a stimDurationInSeconds
-
 frameRate             = stimParams.display.frameRate;
 numberOfEventsPerRun  = 15; 
 movementOnDuration    = 6;
 
+% determine how many movements per trial for this movementRate
+movementISI = 1/movementRate;
+movementsPerTrial = round(movementOnDuration/movementISI);
+if movementRateIndex == 1
+    movementsPerTrial = movementsPerTrial+1;
+end
+
 % Determine trial length
 switch(lower(stimParams.modality))
     case 'fmri'        
+        %totalTrialDuration = 21; 
         movementOffDuration = 15;
-        preScanPeriod       = 3;
-    case {'ecog' 'eeg' 'meg'}
-        movementOffDuration = 6;
         preScanPeriod       = 12;
+    case {'ecog' 'eeg' 'meg'}
+        %totalTrialDuration = 12; 
+        movementOffDuration = 6;
+        preScanPeriod       = 3;
 end
+preScanPeriod       = round(preScanPeriod/TR)*TR;
 postScanPeriod      = preScanPeriod; % seconds
-trialDuration       = (movementOnDuration+movementOffDuration); % seconds
+movementOffDuration = round(movementOffDuration/TR)*TR;
+trialDuration = (stimDurationSeconds*movementsPerTrial)+(movementISI*(movementsPerTrial-1))+movementOffDuration;
+%trialDuration  = round(totalTrialDuration/TR)*TR;
+
+% One trial consists of multiple repeated movements
+% Each movements has a stimDurationSeconds
 
 % Generate onsets
 onsets = cumsum([preScanPeriod ones([1 numberOfEventsPerRun-1])*trialDuration]);
+
 % Round to multiples of TR
 onsets = round(onsets/TR)*TR;
-% Round to multiples of frameRate
-onsets = round(onsets*frameRate)/frameRate;
+
 % Derive indices into the stimulus sequence (defined at frameRate)
 onsetIndices  = round(onsets*(frameRate*.5))+1;
 
@@ -65,16 +77,17 @@ stimulus.fixSeq     = stimulus.seq;
 
 % Add the stimulus indices
 % One trial consists of multiple repeated movements
-% Each movements has a stimDurationInSeconds
+% Each movements has a stimDurationSeconds
 
-movementISI = 1/movementRate;
-movementOnsets = [0:movementISI:movementOnDuration];
-movementsPerTrial = length(movementOnsets);
+%movementISI = 1/movementRate;
+%movementsPerTrial = round(movementOnDuration/movementISI)+1;
+movementOnsets = 0:movementISI+stimDurationSeconds:(movementISI+stimDurationSeconds)*movementsPerTrial;
 
+% Round to multiples of frameRate
 movementOnsets  = round(movementOnsets*frameRate)/frameRate;
 movementOnsetIndices  = round(movementOnsets*(frameRate*.5))+1;
 
-imagesPerTrial = round(movementOnDuration*(frameRate*.5));
+imagesPerTrial = round((movementOnsets(end)+stimDurationSeconds)*(frameRate*.5));
 imagesPerMovement = round(stimDurationSeconds*(frameRate*.5));
 
 % Generate sequence of movements onsets per trial
