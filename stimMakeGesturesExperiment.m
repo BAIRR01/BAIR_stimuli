@@ -3,7 +3,7 @@ function stimMakeGesturesExperiment(stimParams,  runNum, TR, stimDurationSeconds
 %
 % Loads in bitmaps found in ~/BAIRstimuli/motorStimuliResources/bitmaps
 %
-% This code should be run from s_Make_BAIR_Motor_Experiments 
+% This code should be run from s_Make_BAIR_Motor_Experiments
 
 % Set a path to find .jpg files for now
 resourcePath = fullfile(BAIRRootPath , 'motorStimuliResources');
@@ -48,7 +48,7 @@ isiSeq         = randperm(numberofEvents-1);
 frameRate        = stimParams.display.frameRate;
 onsets           = cumsum([preScanPeriod stimDurationSeconds+possibleISIs(isiSeq)]);
 onsets           = round(onsets*frameRate)/frameRate;
-onsetFrameIdx    = onsets*(frameRate*.5);
+onsetFrameIdx    = round(onsets*(frameRate*.5));
 postScanPeriod   = preScanPeriod;
 experimentLength = max(onsets) + stimDurationSeconds + postScanPeriod;
 
@@ -69,47 +69,65 @@ stimulus.seq        = zeros(size(stimulus.seqtiming));
 % Figure out a random order to present the images
 imgSeq      = randi([1,length(stimulus.cat)],length(onsets),1);
 
-eventLengthInFrames = length(0:(1/frameRate)*2:stimDurationSeconds);
+eventLengthInFrames = round(length(0:(1/frameRate)*2:stimDurationSeconds));
 for ee = 1: numberofEvents
     stimulus.seq (onsetFrameIdx(ee):onsetFrameIdx(ee)+eventLengthInFrames) = imgSeq(ee);
+    stimulus.fixSeq(onsetFrameIdx(ee):onsetFrameIdx(ee)+eventLengthInFrames) = 0;
 end
 blankIdx = stimulus.seq == 0;
 stimulus.seq(blankIdx) = length(stimulus.cat)+1;
 
-% first, find all the bitmaps
-bitmapPth = fullfile(resourcePath,'gestures', 'bitmaps');
-files     = dir([bitmapPth '/*jpg']);
 
 switch experimentType
     case 'GESTURESLEARNING'
+        % first, find all the bitmaps
+        bitmapPth = fullfile(resourcePath,'gestures', 'bitmaps');
+        files     = dir([bitmapPth '/*jpg']);
+        
         %figure out which ones are for training
         trainingIdx = contains({files.name},stimulus.categories);
         imgFiles    = files(trainingIdx);
-        resizeImg   = 1; %these images are smaller, double their size
+        
+        %load in one image to resize and use that for the experiment
+        [tempImg, ~,~] = imread(fullfile(imgFiles(1).folder, imgFiles(1).name));
+        imgSize = size(imresize(tempImg, 2));
+        isLoadedImg = 1;
+        
     case {'GESTURESPRACTICE' ,'GESTURES'}
-        %figure out which ones are for testing
-        testIdx   = contains({files.name},'exec_stim');
-        imgFiles  = files(testIdx);
-        resizeImg = 0; %don't resize them
-end
-
-%load in one image to resize and use that for the experiment
-[tempImg, ~,~] = imread(fullfile(imgFiles(1).folder, imgFiles(1).name));
-if resizeImg
-    imgSize = size(imresize(tempImg, 2));
-else
-    imgSize = size(tempImg);
+        % load in letters from Kay et al, 2013 PLOS CB and find the ones we need
+        load (fullfile(resourcePath,'gestures', 'letters.mat'), 'letters');
+        
+        %the corresponding letter numbers for our stimuli
+        lettersIdx = [4 6 22 25];
+        gestureLetters = letters(:,:,lettersIdx);
+        
+        % set the colors equal to what we're using for this experiment
+        tmpIdx = gestureLetters == 0;
+        gestureLetters (tmpIdx) = 127; % make the background gray
+        tmpIdx = gestureLetters < 0;
+        gestureLetters (tmpIdx) = 0; % make the letter black
+        
+        % there is a lot of space around the letters, so crop it
+        origImgSize = size(gestureLetters);
+        cropAmt = round([(origImgSize(1))/2 (origImgSize(1))/2]);
+        cropIdx1 = cropAmt(1)/2:origImgSize(1)-cropAmt(1)/2;
+        cropIdx2 = cropAmt(2)/2:origImgSize(2)-cropAmt(2)/2;
+        gestureLetters = gestureLetters(cropIdx1,cropIdx2,:);
+        
+        % we want to make the letters a little bigger, so get the size
+        imgSize = size(imresize(gestureLetters(:,:,1), 3));
+        isLoadedImg = 0;
 end
 
 % Find the rectangle the image will be displayed in so we can shift the image into the center later
 screenRect       = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
-leftShift        = abs(.5*screenRect(2)-0.5*imgSize(2));
-topShift         = abs(.5*screenRect(1)-0.5*imgSize(1));
+leftShift        = round(abs(.5*screenRect(2)-0.5*imgSize(2)));
+topShift         = round(abs(.5*screenRect(1)-0.5*imgSize(1)));
 shiftedLocation1 = topShift:topShift+imgSize(1)-1; %shifted to center
 shiftedLocation2 = leftShift:leftShift+imgSize(2)-1; %shifted to center
 
 % Pre-allocate arrays to store images
-images = zeros([screenRect imgSize(3) length(stimulus.categories)+1], 'uint8');
+images = zeros([screenRect 3 length(stimulus.categories)+1], 'uint8');
 
 % make a blank to insert between simulus presentations
 blankImg = images(:,:,:,1);
@@ -117,12 +135,19 @@ blankImg(:) = 127;
 
 % Load the images and resize them
 for cc = 1:length(stimulus.cat)
-    %check and see that this order matches
-    thisImage = imread(fullfile(imgFiles(cc).folder, imgFiles(cc).name));
-    image = imresize(thisImage, [imgSize(1) imgSize(2)]);
-    images(:,:,:,cc) = 127; %first set the entire image to gray
-    images(shiftedLocation1,shiftedLocation2,:,cc) = image; %then insert the bitmap
+    %first set the entire image to gray
+    images(:,:,:,cc) = 127;
     
+    if isLoadedImg
+        thisImage = imread(fullfile(imgFiles(cc).folder, imgFiles(cc).name));
+    else
+        thisImage = ones([size(gestureLetters(:,:,cc)) 3]);
+        for jj = 1:3
+            thisImage(:,:,jj) = gestureLetters(:,:,cc);
+        end
+    end
+    % then insert the resized image in the center
+    images(shiftedLocation1,shiftedLocation2,:,cc) = imresize(thisImage, imgSize(:,:));
 end
 images(:,:,:,length(stimulus.cat)+1) = blankImg;
 stimulus.images     = images;
