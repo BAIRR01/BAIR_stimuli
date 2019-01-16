@@ -34,8 +34,11 @@ postScanPeriod        = preScanPeriod;
 IN = load(fullfile(BAIRRootPath,'motorStimuliResources','boldhand', 'BOLDHAND_ISIandONSETS_secs.mat'));
 onsets = IN.onsets;
 
+% % Match onsets to TR
+onsets = round(onsets/TR)*TR;
+
 % Match the stimulus presentation to the frame rate
-onsets   = round(onsets*frameRate)/frameRate;
+onsets = round(onsets*frameRate)/frameRate;
 
 % Derive indices into the stimulus sequence (defined at temporalResolution)
 onsetIndices  = round(onsets*(frameRate*.5))+1; 
