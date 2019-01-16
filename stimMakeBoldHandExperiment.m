@@ -12,19 +12,36 @@ frameRate             = stimParams.display.frameRate;
 preScanPeriod         = round(30/TR)*TR;
 postScanPeriod        = preScanPeriod;
 
-% Determine min and max ISI
-switch(lower(stimParams.modality))
-    case 'fmri'
-        minimumISIinSeconds   = 3;
-        maximumISIinSeconds   = 24;
-    case {'ecog' 'eeg' 'meg'}
-        minimumISIinSeconds   = 3;
-        maximumISIinSeconds   = 18;
-end
+% GENERATE ONSETS: OPTION 1, expontential distribution
 
-% Generate onsets (same as for visual HRF experiment
-[onsets, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun, preScanPeriod, ...
-    minimumISIinSeconds, maximumISIinSeconds, TR, frameRate);
+% % Determine min and max ISI
+% switch(lower(stimParams.modality))
+%     case 'fmri'
+%         minimumISIinSeconds   = 3;
+%         maximumISIinSeconds   = 24;
+%     case {'ecog' 'eeg' 'meg'}
+%         minimumISIinSeconds   = 3;
+%         maximumISIinSeconds   = 18;
+% end
+% 
+% % Generate onsets (same as for visual HRF experiment
+% [onsets, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun, preScanPeriod, ...
+%     minimumISIinSeconds, maximumISIinSeconds, TR, frameRate);
+
+% GENERATE ONSETS: OPTION 2, use same onsets as Utrecht ECOG
+
+% Load in Utrecht onset files
+IN = load(fullfile(BAIRRootPath,'motorStimuliResources','boldhand', 'BOLDHAND_ISIandONSETS_secs.mat'));
+onsets = IN.onsets;
+
+% Match the stimulus presentation to the frame rate
+onsets   = round(onsets*frameRate)/frameRate;
+
+% Derive indices into the stimulus sequence (defined at temporalResolution)
+onsetIndices  = round(onsets*(frameRate*.5))+1; 
+% NOTE Jan 16, 2019: We're specifying stimulus sequence at half the
+% framerate (every other frame) because PsychToolbox presentation accuracy
+% is impacted if we tell it to flipping for every frame
 
 % Define total length of experiment
 experimentLength = onsets(numberOfEventsPerRun)+stimDurationSeconds+postScanPeriod;
