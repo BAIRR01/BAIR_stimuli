@@ -147,7 +147,7 @@ for cc = 1:length(stimulus.cat)
         end
     end
     % then insert the resized image in the center
-    images(shiftedLocation1,shiftedLocation2,:,cc) = imresize(thisImage, imgSize(:,:));
+    images(shiftedLocation1,shiftedLocation2,:,cc) = imresize(thisImage, imgSize(1:2));
 end
 images(:,:,:,length(stimulus.cat)+1) = blankImg;
 stimulus.images     = images;
