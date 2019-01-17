@@ -29,7 +29,7 @@ stimulus.srcRect    = stimParams.stimulus.srcRect;
 stimulus.dstRect    = stimParams.stimulus.destRect;
 stimulus.display    = stimParams.display;
 
-stimulus.seqtiming  = 0:((1/frameRate)*2)*2:experimentLength;
+stimulus.seqtiming  = 0:((1/frameRate)*2):experimentLength;
 stimulus.fixSeq     = ones(size(stimulus.seqtiming));
 stimulus.seq        = zeros(size(stimulus.seqtiming));
 
