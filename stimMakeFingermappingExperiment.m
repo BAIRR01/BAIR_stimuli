@@ -95,13 +95,12 @@ switch lower(stimParams.modality)
         stimulus.trigSeq(end)   = 255; %experiment offset
 end
 
-
 % Create stim_file name
 fname = sprintf('%s_%s_%d.mat', stimParams.site,lower(experimentType), runNum);
 
 % Add table with elements to write to tsv file for BIDS
 onset           = round(stimulus.onsets,3);
-duration        = diff(onsets);
+duration        = round(diff(onsets),3);
 duration(end+1) = (1/frameRate)*2; %the last onset is only on for a frame
 trial_type      = stimulus.cat(imgSeq)';
 trial_name      = stimulus.categories(imgSeq)';
