@@ -21,8 +21,8 @@ experimentLength = max(onsets);
 %initialize and set some stimulus properties
 stimulus            = [];
 stimulus.cat        = [20 21 22 23 24 25 26 27 28 29];
-stimulus.categories = {'none', 'pinky', 'pinky:ring', 'pinky:middle','pinky:pointer',...
-                        'all','thumb', 'thumb:pointer','thumb:middle','thumb:ring'};
+stimulus.categories = {'open palm', 'pinky close', 'ring close', 'middle close','pointer close',...
+                        'closed palm','thumb open', 'pointer open','middle open','ring open'};
 stimulus.onsets     = onsets;
 stimulus.cmap       = stimParams.stimulus.cmap;
 stimulus.srcRect    = stimParams.stimulus.srcRect;
