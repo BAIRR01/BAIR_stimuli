@@ -60,6 +60,7 @@ params.useSerialPort    = siteSpecs.serialport;
 params.useEyeTracker    = siteSpecs.eyetracker;
 params.shiftDestRect    = siteSpecs.displaypos;
 params.sensoryDomain    = sensoryDomain;
+params.useDataGlove     = false; 
 
 % Additional parameters 
 params.prescanDuration  = 0;
