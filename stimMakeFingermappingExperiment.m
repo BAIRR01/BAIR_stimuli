@@ -58,15 +58,15 @@ imgSize = size(tempImg);
 
 % Find the destination rectangle so we can crop our stimuli
 screenRect  = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
-cropAmt2    = (abs(screenRect(2)-imgSize(2))/ 2);
-cropAmt1    = (abs(screenRect(1)-imgSize(1))/ 2);
-cropIdx1 = round(0.75*cropAmt1+2:(imgSize(1) - 0.75*cropAmt1));
-cropIdx2 = round(cropAmt2:(imgSize(2) - cropAmt2));
 
 % Pre-allocate arrays to store images
 images = zeros([screenRect imgSize(3) length(stimulus.categories)], 'uint8');
 % we're going to gray out the center fixation point, so find the image center
 imgCenter = 0.5*imgSize;
+
+cropAmt    = 500; 
+cropIdx1 = round(imgCenter(1)-cropAmt:imgCenter(1)+cropAmt);
+cropIdx2 = round(imgCenter(2)-cropAmt:imgCenter(2)+cropAmt);
 
 % Load the images and resize them
 for cc = 1:length(stimulus.cat)
