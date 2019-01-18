@@ -159,7 +159,7 @@ switch lower(stimParams.modality)
     otherwise
         % Write trigger sequence
         stimulus.trigSeq        = zeros(length(stimulus.seq),1);
-        idx                     = find(diff(stimulus.seq < max(stimulus.seq)) == -1);
+        idx                     = find((diff(stimulus.seq) < 0))+1;
         stimulus.trigSeq(idx)   =  stimulus.cat(stimulus.seq(idx));
         stimulus.trigSeq(1)     = 255; %experiment onset
         stimulus.trigSeq(end)   = 255; %experiment offset
