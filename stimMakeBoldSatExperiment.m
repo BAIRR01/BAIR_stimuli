@@ -118,7 +118,9 @@ switch lower(stimParams.modality)
     otherwise
          % Write binary trigger sequence:
         stimulus.trigSeq = zeros(size(stimulus.seqtiming));
-        stimulus.trigSeq(onsetIndices) = 2;
+        stimulus.trigSeq(onsetIndices) = stimulus.cat(2);
+        stimulus.trigSeq(1)      = 255; %experiment onset
+        stimulus.trigSeq(end)    = 255; %experiment offset
 end
 
 % Sparsification is OFF for motor because we need to sample data glove at

@@ -14,25 +14,25 @@ postScanPeriod        = preScanPeriod;
 
 % GENERATE ONSETS: OPTION 1, expontential distribution
 
-% % Determine min and max ISI
-% switch(lower(stimParams.modality))
-%     case 'fmri'
-%         minimumISIinSeconds   = 3;
-%         maximumISIinSeconds   = 24;
-%     case {'ecog' 'eeg' 'meg'}
-%         minimumISIinSeconds   = 3;
-%         maximumISIinSeconds   = 18;
-% end
-% 
-% % Generate onsets (same as for visual HRF experiment
-% [onsets, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun, preScanPeriod, ...
-%     minimumISIinSeconds, maximumISIinSeconds, TR, frameRate);
+% Determine min and max ISI
+%switch(lower(stimParams.modality))
+%    case 'fmri'
+        minimumISIinSeconds   = 3;
+        maximumISIinSeconds   = 24;
+%    case {'ecog' 'eeg' 'meg'}
+%        minimumISIinSeconds   = 3;
+%        maximumISIinSeconds   = 18;
+%end
+
+% Generate onsets (same as for visual HRF experiment
+[onsets, onsetIndices] = getExponentialOnsets(numberOfEventsPerRun, preScanPeriod, ...
+    minimumISIinSeconds, maximumISIinSeconds, TR, frameRate);
 
 % GENERATE ONSETS: OPTION 2, use same onsets as Utrecht ECOG
 
-% Load in Utrecht onset files
-IN = load(fullfile(BAIRRootPath,'motorStimuliResources','boldhand', 'BOLDHAND_ISIandONSETS_secs.mat'));
-onsets = IN.onsets;
+% % Load in Utrecht onset files
+% IN = load(fullfile(BAIRRootPath,'motorStimuliResources','boldhand', 'BOLDHAND_ISIandONSETS_secs.mat'));
+% onsets = IN.onsets;
 
 % % Match onsets to TR
 onsets = round(onsets/TR)*TR;
@@ -70,8 +70,8 @@ stimulus.seq        = ones(size(stimulus.seqtiming));
 stimulus.fixSeq     = stimulus.seq;
 
 % Add the stimulus indices
-imagesPerTrial = round(stimDurationSeconds*(frameRate*.5));
-sequencePerTrial = ones(1,imagesPerTrial);
+imagesPerTrial      = round(stimDurationSeconds*(frameRate*.5));
+sequencePerTrial    = ones(1,imagesPerTrial);
 
 for ii = 1:numberOfEventsPerRun
     indices = onsetIndices(ii) + (0:imagesPerTrial-1);
@@ -90,8 +90,10 @@ switch lower(stimParams.modality)
         % no trigger sequence needed
     otherwise
         % Write binary trigger sequence:
-        stimulus.trigSeq = zeros(size(stimulus.seqtiming));
+        stimulus.trigSeq               = zeros(size(stimulus.seqtiming));
         stimulus.trigSeq(onsetIndices) = 2;
+        stimulus.trigSeq(1)     = 255; %experiment onset
+        stimulus.trigSeq(end)   = 255; %experiment offset
 end
 
 % Sparsify stimulus sequence % ADAPT THIS FOR MOTOR??
