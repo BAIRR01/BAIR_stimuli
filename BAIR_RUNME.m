@@ -79,7 +79,7 @@ if contains(stimPrefix, 'dottask')
     params.fixation = '4 color dot';
 end
 if contains(lower(sensoryDomain), 'motor')
-    params.fixation = 'disk';
+    params.fixation = 'crossdisk';
 end
 
 % Sensory modality-specific stuff to do before starting experiment?
