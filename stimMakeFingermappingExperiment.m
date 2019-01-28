@@ -90,9 +90,9 @@ switch lower(stimParams.modality)
         % Write trigger sequence
         stimulus.trigSeq        = zeros(length(stimulus.seq),1);
         idx                     = find(diff(stimulus.seq) ~= 0);
-        stimulus.trigSeq(idx)   = imgSeq(2:end-1);
+        stimulus.trigSeq(idx)   =  stimulus.cat(stimulus.seq((idx+1)));
         stimulus.trigSeq(1)     = 255; %experiment onset
-        stimulus.trigSeq(2)     = imgSeq(1); %first image
+        stimulus.trigSeq(2)     = stimulus.cat(stimulus.seq((idx(1)))); %first image
         stimulus.trigSeq(end)   = 255; %experiment offset
 end
 
