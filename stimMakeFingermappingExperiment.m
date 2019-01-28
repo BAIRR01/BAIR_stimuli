@@ -90,8 +90,9 @@ switch lower(stimParams.modality)
         % Write trigger sequence
         stimulus.trigSeq        = zeros(length(stimulus.seq),1);
         idx                     = find(diff(stimulus.seq) ~= 0);
-        stimulus.trigSeq(idx)   =  stimulus.cat(stimulus.seq(idx));
+        stimulus.trigSeq(idx)   = imgSeq(2:end-1);
         stimulus.trigSeq(1)     = 255; %experiment onset
+        stimulus.trigSeq(2)     = imgSeq(1); %first image
         stimulus.trigSeq(end)   = 255; %experiment offset
 end
 
@@ -99,13 +100,12 @@ end
 fname = sprintf('%s_%s_%d.mat', stimParams.site,lower(experimentType), runNum);
 
 % Add table with elements to write to tsv file for BIDS
-onset           = round(stimulus.onsets,3);
+onset           = round(stimulus.onsets(1:end-1),3);
 duration        = round(diff(onsets),3);
-duration(end+1) = (1/frameRate)*2; %the last onset is only on for a frame
-trial_type      = stimulus.cat(imgSeq)';
-trial_name      = stimulus.categories(imgSeq)';
+trial_type      = stimulus.cat(imgSeq(1:end-1))';
+trial_name      = stimulus.categories(imgSeq(1:end-1))';
 stim_file       = repmat(fname, length(onset),1);
-stim_file_index = repmat('n/a', length(stimulus.onsets),1);
+stim_file_index = repmat('n/a', length(onset),1);
 
 stimulus.tsv = table(onset, duration, trial_type, trial_name, stim_file, stim_file_index);
 
