@@ -13,7 +13,7 @@ else
 end
 
 frameRate        = stimParams.display.frameRate;
-onsets           = tmpData(:,1)/1000; %convert onsets from milliseconds to seconds
+onsets           = tmpData(:,1)'/1000; %convert onsets from milliseconds to seconds
 onsets           = round(onsets*frameRate)/frameRate; % match onset to frame rate
 imgSeq           = tmpData(:,2);
 experimentLength = max(onsets);
