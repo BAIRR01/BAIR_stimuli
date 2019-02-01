@@ -133,7 +133,7 @@ fname = sprintf('%s_boldsat%d_%d.mat', site, movementRateIndex, runNum);
 
 onset       = reshape(round(stimulus.onsets,3), [length(stimulus.onsets) 1]);
 duration    = ones(length(stimulus.onsets),1) * stimDurationSeconds;
-trial_type  = ones(length(stimulus.onsets),1);
+trial_type  = ones(length(stimulus.onsets),1) * stimulus.cat(2);
 trial_name  = repmat(stimulus.categories{2}, length(stimulus.onsets),1);
 stim_file   = repmat(fname, length(stimulus.onsets),1);
 stim_file_index = repmat('n/a', length(stimulus.onsets),1);
