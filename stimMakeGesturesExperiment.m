@@ -67,7 +67,7 @@ stimulus.fixSeq     = ones(size(stimulus.seqtiming));
 stimulus.seq        = zeros(size(stimulus.seqtiming));
 
 % Figure out a random order to present the images
-if contains(experimentType,{'GESTURESPRACTICE','GESTURESLEARNING'})
+if contains(experimentType,{'GESTURESLEARNING'})
     tmp     = repmat([1:length(stimulus.cat)]', ceil(length(onsets)/length(stimulus.cat)),1);
     imgSeq  = tmp(1:length(onsets));
 else
