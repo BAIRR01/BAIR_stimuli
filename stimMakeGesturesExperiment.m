@@ -14,21 +14,11 @@ stimulus.categories = { 'D', 'F', 'V', 'Y'};
 
 switch(lower(stimParams.modality))
     case 'fmri'
-        if strcmp(experimentType,'GESTURES')
-            isiMin         = round(6/TR)*TR; % 6 seconds
-            isiMax         = round(15/TR)*TR; % 15 seconds
-            preScanPeriod  = round(12/TR)*TR; % 12 seconds
-            desiredLength  = round(480/TR)*TR; % 480 seconds (8 min)
-            stimDurationSeconds    = round(stimDurationSeconds/TR)*TR;
-            
-        elseif contains(experimentType,{'GESTURESPRACTICE','GESTURESLEARNING'})
-            % keep these shorter and with the same timing as ecog/meg
-            isiMin        = 4; % seconds
-            isiMax        = 6; % seconds
-            preScanPeriod = 3; % seconds
-            desiredLength = 180; % seconds
-        end
-        
+        isiMin         = round(6/TR)*TR; % 6 seconds
+        isiMax         = round(15/TR)*TR; % 15 seconds
+        preScanPeriod  = round(12/TR)*TR; % 12 seconds
+        desiredLength  = round(480/TR)*TR; % 480 seconds (8 min)
+        stimDurationSeconds    = round(stimDurationSeconds/TR)*TR;
     case {'ecog' 'eeg' 'meg'}
         isiMin        = 4; % seconds
         isiMax        = 6; % seconds
@@ -36,6 +26,14 @@ switch(lower(stimParams.modality))
         desiredLength = 480; % seconds
     otherwise
         error('Unknown modality')
+end
+
+if contains(experimentType,{'GESTURESPRACTICE','GESTURESLEARNING'})
+    % keep these shorter and with the same timing as ecog/meg
+    isiMin        = 4; % seconds
+    isiMax        = 6; % seconds
+    preScanPeriod = 3; % seconds
+    desiredLength = 180; % seconds
 end
 
 % rng('shuffle');
@@ -83,7 +81,7 @@ blankIdx = stimulus.seq == 0;
 stimulus.seq(blankIdx) = length(stimulus.cat)+1;
 
 
-switch experimentType 
+switch experimentType
     case 'GESTURESLEARNING'
         % first, find all the bitmaps
         bitmapPth = fullfile(resourcePath,'gestures', 'bitmaps');
