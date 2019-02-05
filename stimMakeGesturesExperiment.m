@@ -26,7 +26,7 @@ switch(lower(stimParams.modality))
             isiMin        = 4; % seconds
             isiMax        = 6; % seconds
             preScanPeriod = 3; % seconds
-            desiredLength = 300; % seconds
+            desiredLength = 180; % seconds
         end
         
     case {'ecog' 'eeg' 'meg'}
@@ -38,7 +38,7 @@ switch(lower(stimParams.modality))
         error('Unknown modality')
 end
 
-rng('shuffle');
+% rng('shuffle');
 % Find the number of events we can fit in desired experiment time and jitter ISIs
 numberofEvents = floor(desiredLength / (stimDurationSeconds+((isiMax + isiMin) / 2)));
 possibleISIs   = linspace(isiMin,isiMax,numberofEvents-1);
@@ -67,7 +67,12 @@ stimulus.fixSeq     = ones(size(stimulus.seqtiming));
 stimulus.seq        = zeros(size(stimulus.seqtiming));
 
 % Figure out a random order to present the images
-imgSeq      = randi([1,length(stimulus.cat)],length(onsets),1);
+if contains(experimentType,{'GESTURESPRACTICE','GESTURESLEARNING'})
+    tmp     = repmat([1:length(stimulus.cat)]', ceil(length(onsets)/length(stimulus.cat)),1);
+    imgSeq  = tmp(1:length(onsets));
+else
+    imgSeq  = randi([1,length(stimulus.cat)],length(onsets),1);
+end
 
 eventLengthInFrames = round(length(0:(1/frameRate)*2:stimDurationSeconds));
 for ee = 1: numberofEvents
@@ -78,7 +83,7 @@ blankIdx = stimulus.seq == 0;
 stimulus.seq(blankIdx) = length(stimulus.cat)+1;
 
 
-switch experimentType
+switch experimentType 
     case 'GESTURESLEARNING'
         % first, find all the bitmaps
         bitmapPth = fullfile(resourcePath,'gestures', 'bitmaps');
