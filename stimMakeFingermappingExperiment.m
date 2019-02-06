@@ -19,10 +19,14 @@ imgSeq           = tmpData(:,2);
 experimentLength = max(onsets);
 
 %initialize and set some stimulus properties
-stimulus            = [];
-stimulus.cat        = [20 21 22 23 24 25 26 27 28 29];
-stimulus.categories = {'open palm', 'little', 'ring', 'middle','index',...
-                        'closed palm','thumb', 'index','middle','little'};
+stimulus             = [];
+stimulus.cat         = [20 21 22 23 24 25 26 27 28 29]; %one per image
+stimulus.movementCat = [20 21 22 23 24 25 26 27 28 29 30 31 24 23 22 32 33 29 28 27 35]; %one per motion
+stimulus.categories  = {'open palm','little close','ring close', 'middle close',...
+    'index close','thumb close closed palm', 'thumb open', 'index open','middle open',...
+    'ring open','little open open palm','thumb close','index close','middle close',...
+    'ring close','pinky close closed palm','pinky open','ring open', 'middle open',...
+    'index open','thumb open open palm'};
 stimulus.onsets     = onsets;
 stimulus.cmap       = stimParams.stimulus.cmap;
 stimulus.srcRect    = stimParams.stimulus.srcRect;
@@ -97,15 +101,15 @@ switch lower(stimParams.modality)
 end
 
 % Create stim_file name
-fname = sprintf('%s_%s_%d.mat', stimParams.site,lower(experimentType), runNum);
+fname = sprintf('%s_%s_%d.mat', stimParams.site,lower(experimentType), runNum); 
 
 % Add table with elements to write to tsv file for BIDS
 onset           = round(stimulus.onsets(1:end-1),3,'decimals')';
 duration        = round(diff(onsets),3, 'decimals')';
-trial_type      = stimulus.cat(imgSeq(1:end-1))';
-trial_name      = stimulus.categories(imgSeq(1:end-1))';
+trial_type      = cat(2,stimulus.movementCat,repmat(stimulus.movementCat(2:end),1,3))';
+trial_name      = cat(2,stimulus.categories,repmat(stimulus.categories(2:end),1,3))';
 stim_file       = repmat(fname, length(onset),1);
-stim_file_index = repmat('n/a', length(onset),1);
+stim_file_index = imgSeq(1:end-1);
 
 stimulus.tsv = table(onset, duration, trial_type, trial_name, stim_file, stim_file_index);
 
