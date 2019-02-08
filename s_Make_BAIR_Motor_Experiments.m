@@ -6,7 +6,7 @@
 if ~selectionMade, return; end
 
 % Which experiment to make?
-[experimentType, selectionMade] = bairWhichExperiment();
+[experimentType, selectionMade] = bairWhichExperimentMotor();
 if ~selectionMade, return; end
 
 % Set some defaults for all the experiments
