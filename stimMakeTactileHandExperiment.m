@@ -60,6 +60,7 @@ stimulus.display    = stimParams.display;
 stimulus.vibrFreq   = vibrFreq;
 stimulus.NIdaqRate  = stimParams.NIdaqRate;
 stimulus.NIdaqNames = stimParams.NIdaqNames;
+stimulus.numOfStimulators = numOfStimulators; 
 stimulus.numCycles  = nrCycles;
 
 stimulus.seqtiming  = 0:(1/frameRate)*2:experimentLength;
