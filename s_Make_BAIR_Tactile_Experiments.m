@@ -32,7 +32,7 @@ switch experimentType
         
         directions = {'ascending', 'descending', 'random', 'staircase1','staircase2'}; %makes one of each by default
         stimDurationSeconds = 6; % seconds
-        numberOfStimulators = 10;
+        numberOfStimulators = 5;
         numberOfRuns = 1; 
         
         for runNum = 1:numberOfRuns
