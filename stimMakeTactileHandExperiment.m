@@ -20,7 +20,7 @@ switch(lower(stimParams.modality))
         nrCycles            = 6; % how many sweeps
         vibrFreq            = 30;
         preScanPeriod       = round(12/TR)*TR; % seconds
-        pulseOnDur          = 400; %msec
+        pulseOnDur          = 400; % msec
         nrPulsesPerStim     = 12; % within each stimulus duration
         stimDuration        = round(stimDuration/TR)*TR;
         isi                 = stimDuration;
