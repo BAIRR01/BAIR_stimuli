@@ -36,10 +36,4 @@ if prompt
     [whichSite, selectionMade] = listdlg('PromptString', 'Which site?', 'SelectionMode', 'single', 'ListString', sites);
 end
 
-% Check if alternate display should be used
-[newDisplay , choiceMade] = bairUseAlternateDisplay(experimentSpecs(whichSite,:).displays{1});
-if choiceMade 
-    experimentSpecs(whichSite,:).displays{1} = newDisplay;
-end
-
 end
