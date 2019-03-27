@@ -73,6 +73,9 @@ end
 % Debug mode?
 params.skipSyncTests = 1;
 
+% Visual (could also be motor or tactile)
+params.sensoryDomain = 'visual';
+
 % Go!
 quitProg = doExperiment(params);
 
