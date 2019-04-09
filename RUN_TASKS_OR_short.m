@@ -4,13 +4,13 @@
 whichSite = 7;
 
 % Which subject and session?
-subjID = 'intraop009';
+subjID = 'intraop_P009';
 sessionID = '01';
 
 % Which experiments to run?
-experimentTypes = {'prf', 'temporalpattern', 'temporalpattern', 'prf',  'temporalpattern', 'temporalpattern', 'prf',  'temporalpattern', 'temporalpattern', 'prf'};
+experimentTypes = {'prf', 'temporalpattern', 'temporalpattern',  'temporalpattern', 'temporalpattern',  'temporalpattern', 'temporalpattern'};
 numberOfExperiments = length(experimentTypes);
-runIDs = [1 1     2     2     1     2     1     1     2     2     1     2];
+runIDs = [1 1 2 1 2 1 2];
 
 % Site-specific stuff to do before starting experiment?
 checkforSiteSpecificRequest(experimentSpecs,whichSite);
