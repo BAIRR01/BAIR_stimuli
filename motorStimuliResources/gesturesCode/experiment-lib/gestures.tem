@@ -1,0 +1,65 @@
+
+# headers
+
+## custom headers
+
+pcl_file = "..\\..\\experiment-lib\\gestures.pcl";
+
+active_buttons = 1;
+button_codes = 255;
+
+## task
+$default_font = "Arial";
+default_font_size = 24;
+
+$language = 1; # nl=1, en=2
+
+$use_mri_emulator_for_non_scanning = 1;
+
+default_background_color = 0,0,0;
+
+default_all_responses = false;
+response_logging = log_active;
+
+## standard headers
+TEMPLATE "..\\lib\\standard_headers.tem";
+
+
+# SDL main section
+begin;
+
+## standard include
+TEMPLATE "..\\lib\\standard_objects.tem";
+
+picture { background_color = 0,0,0; } pic_gray;
+
+bitmap { 
+		filename = "\bitmaps\\fixation.jpg";
+		width = $bitmap_width; 
+		scale_factor = scale_to_width;
+	} pic_eye_gray;
+
+picture {
+      bitmap pic_eye_gray; 
+      x = 0; y = 70;
+    } pic_default;
+
+array {
+	LOOP $i 2000;
+		bitmap {
+			preload = false; 
+			width = $bitmap_width;
+			scale_factor = scale_to_width; };
+	ENDLOOP;
+} abmp_bitmaps;
+
+
+array {
+	LOOP $i 2000;
+	trial {
+		picture { background_color = 0,0,0; };
+		picture pic_default;
+	};
+	ENDLOOP;
+} atr_trials;
+

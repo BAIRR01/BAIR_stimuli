@@ -7,15 +7,19 @@ if ~selectionMade, return; end
 [subjID, sessionID, ssDefined] = bairWhichSubjectandSession();
 if ~ssDefined, return; end
 
+% Which type of experiment?
+[sensoryDomain, selectionMade] = bairWhichSensoryModality();
+if ~selectionMade, return; end
+
 % Which experiments to run?
 [numberOfExperiments, experimentTypes, runIDs, fileSelected] = bairWhichExperimentList(experimentSpecs.sites{whichSite});
 if ~fileSelected, return; end
 
 % Site-specific stuff to do before starting experiment?
-checkforSiteSpecificRequest(experimentSpecs,whichSite);
+checkforSiteSpecificRequest(experimentSpecs,whichSite, sensoryDomain);
 
 % Run these experiments!
 for ii = 1:numberOfExperiments
-    quitProg = BAIR_RUNME(lower(experimentTypes{ii}), runIDs(ii), experimentSpecs(whichSite,:), subjID, sessionID);
+    quitProg = BAIR_RUNME(lower(experimentTypes{ii}), runIDs(ii), experimentSpecs(whichSite,:), subjID, sessionID, sensoryDomain);
     if quitProg, break; end
 end

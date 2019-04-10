@@ -1,0 +1,1267 @@
+int LIB_MINIMAL_INTEGER = -2147483647;
+
+int BITMAP_REF = 1;
+int TEXT_REF = 2;
+int TEXT = 3;
+
+int SCANNING_NONE = 1;
+int SCANNING_FMRI_EMULATION = 2;
+int SCANNING_FMRI = 3;
+bool lib_mri;
+bool lib_mri_test_by_emulation;
+int lib_scenario_type;
+double lib_scan_period;
+bool port_output;
+
+int lib_language;
+int LANG_NL = 1;
+int LANG_EN = 2;
+
+int lib_char_0; # initialized in lib_initialize_lib()
+int lib_char_9; # idem.
+int lib_char_dot; # idem.
+int lib_char_minus; # idem
+
+#string g_str_scheme_filename = get_sdl_variable("scheme_filename");
+
+bool lib_debug_mode = false;
+
+sub double lib_time
+begin
+	return double(clock.time_dms()) / 10.0;
+end;
+
+sub lib_debug(string message)
+begin
+	if lib_debug_mode then
+		term.print(message);
+	end;
+end;
+
+sub lib_error_exit (string message) 
+begin
+	#term.print(message);
+	#term.print("\n");
+	#system_beep(5000, 1000)
+	term.print("\n\nFATAL ERROR: " + message);
+	exit(message);
+end;
+
+#sub string_vector_add(array<string>& astr, int
+
+sub string lib_string_array_to_string(array<string,1>& astr, string delim)
+begin
+	string str = "";
+	loop
+		int i = 1;
+		int count = astr.count()
+	until
+		i > count
+	begin
+		str.append(astr[i]);
+		if (i < count) then
+			str.append(delim);
+		end;
+		i = i + 1;
+	end;
+	return str;
+end;
+
+sub string lib_int_array_to_string(array<int,1>& aint, string delim)
+begin
+	string str = "";
+	loop
+		int i = 1;
+		int count = aint.count()
+	until
+		i > count
+	begin
+		str.append(string(aint[i]));
+		if (i < count) then
+			str.append(delim);
+		end;
+		i = i + 1;
+	end;
+	return str;
+end;
+
+sub string lib_double_array_to_string(array<double,1>& adouble, string delim)
+begin
+	string str = "";
+	loop
+		int i = 1;
+		int count = adouble.count()
+	until
+		i > count
+	begin
+		str.append(string(adouble[i]));
+		if (i < count) then
+			str.append(delim);
+		end;
+		i = i + 1;
+	end;
+	return str;
+end;
+
+sub lib_lexe_string(string str, array<string,1>& astr)
+begin
+	lib_debug("<lex(\"" + str + "\")>");
+	# variable which will eventually hold the number of seperatwords.
+	int word_count = 0;
+	
+	loop
+		# character counter for the input string
+		int i = 1;
+		# number of characters in the input string
+		int count = str.count();
+		
+		# initialize to it's theoretical maximum, at the end we shrink it.
+		astr.resize(count / 2 + 1); 
+	until
+		i > count
+	begin
+		int char = str[i];
+		# beginning of new word?
+		if (char != ' ') then
+			
+			int word_length;
+			int next_space = str.find(" ", i);
+			if (next_space == 0) then
+				word_length = count - i + 1;
+			else
+				word_length = next_space - i; 
+			end;
+			string word = str.substring(i, word_length);
+			word_count = word_count + 1;
+			lib_debug("<word_count=" + string(word_count) + ">");
+			astr[word_count] = word;
+			#lib_debug("i");
+			i = i + word_length;
+		# else do nothing, continue loop.
+		else
+			i = i + 1;
+		end;
+	end;
+	astr.resize(word_count);
+	lib_debug("<c=(" + lib_string_array_to_string(astr, ",") + ")>");
+end;
+
+sub string lib_rtrim_char(string s, string char)
+begin
+	if (s == "") then 
+		return "";
+	end;
+
+	int count = s.count();
+	int i = count;
+	loop until i < 1
+	begin
+		if (s.substring(i, 1) != char) then
+			break;
+		end;
+		
+		i = i - 1;
+	end;
+	
+	string ret;
+	if (i == 0) then
+		ret = "";
+	else
+		ret = s.substring(1, i);
+	end;
+	return ret;
+	
+end;
+
+sub string lib_rtrim(string s)
+begin
+	return lib_rtrim_char(lib_rtrim_char(lib_rtrim_char(s, " "), "\t"), "\n");
+end;
+
+sub string lib_ltrim(string s)
+begin
+	if (s == "") then 
+		return "";
+	end;
+
+	int i = 1;
+	int count = s.count();
+	loop until i > count
+	begin
+		string char = s.substring(i, 1);
+		if ( char != " " && char != "\t" && char != "\n") then
+			break;
+		end;
+		
+		i = i + 1;
+	end;
+	
+	string ret;
+	int length = count - i + 1;
+	if (length == 0) then
+		ret = "";
+	else
+		ret = s.substring(i, length);
+	end;
+	return ret;
+end;
+
+sub string lib_trim(string s)
+begin
+   return lib_ltrim(lib_rtrim(s));
+end;
+
+sub int lib_string_find_last(string string_, string find_string)
+begin
+	int last_pos;
+	loop 
+		int pos;
+	until false begin
+		last_pos = pos;
+		pos = string_.find(find_string, last_pos);
+		if pos == 0 then 
+			return 0; 
+		end;
+	end;
+	
+	return last_pos;
+end;
+
+# returns: 
+# the index or -1 if not found
+
+sub int lib_string_array_index(array<string,1>& astr, string value)
+begin
+	
+	int i = 1;
+	bool found = false;	
+
+	loop
+	until
+		i > astr.count()
+	begin
+		if (astr[i] == value) then
+			found = true;
+			break;
+		end;
+			
+		i = i + 1;
+	end;
+	
+	if (!found) then 
+		i = -1;
+	end;
+	
+	return i;
+end;
+
+sub int lib_last_pulse_time
+begin
+	int pulses = pulse_manager.main_pulse_count();
+	return pulse_manager.main_pulse_time(pulses);
+end;
+
+sub lib_read_marker_line_seperated_file(string filename, string marker, array<string,1> &strings)
+begin
+	# open the file
+	input_file file = new input_file;
+	string nl = "\n";
+	file.set_delimiter(nl[1]);
+	file.open(filename);
+
+	# parse the lines.
+	string string_ = "";
+	loop 
+		int marker_length = marker.count();
+	until 
+		file.end_of_file()
+	begin
+		
+		string line = file.get_line();
+		lib_debug("line=" + line + "\n");
+		if !file.last_succeeded() then
+			lib_error_exit("read_marker_line_seperated_file(): file could not be read succesfully");
+		end;
+
+		bool marker_line = false;
+		if line.count() >= marker_length then
+			if line.substring(1, marker_length) == marker then
+				if string_ != "" then
+					strings.add(string_);
+					lib_debug("add(" + string_ + ")\n");
+					string_ = "";
+				end;
+				marker_line = true;
+			end;
+		end;
+		
+		if ! marker_line then	
+			if string_ == "" then 
+				string_ = line;
+			else 
+				string_ = string_ + "\n" + line;
+			end;
+		end;
+		
+		lib_debug("next line\n");
+		
+	end;
+	
+	# add the last string if any
+	if string_ != "" then
+		strings.add(string_);
+		lib_debug("add(" + string_ + ")\n");
+	end;
+
+	lib_debug(lib_string_array_to_string(strings, "~~~"));
+	
+	file.close();
+end;
+
+sub lib_read_1d_integer_array_file(string filename, int delimiter_char, array<int,1> &integers)
+begin
+	# open the file
+	input_file file = new input_file;
+	file.set_delimiter(delimiter_char);
+	file.open(filename);
+
+	# parse the integers.
+	loop until file.end_of_file()
+	begin
+		
+		string line = file.get_line();
+		if !file.last_succeeded() then
+			lib_error_exit("read_1d_integer_array_file(): file could not be read succesfully");
+		end;
+
+		int integer = int(lib_trim(line));
+		integers.add(integer);
+	end;
+
+	file.close();
+end;
+
+sub lib_read_1d_double_array_file(string filename, int delimiter_char, array<double,1> &doubles)
+begin
+	# open the file
+	input_file file = new input_file;
+	file.set_delimiter(delimiter_char);
+	file.open(filename);
+
+	# parse the integers.
+	loop until file.end_of_file()
+	begin
+		
+		string line = file.get_line();
+		if !file.last_succeeded() then
+			lib_error_exit("read_1d_integer_array_file(): file could not be read succesfully");
+		end;
+
+		lib_debug("[" + lib_trim(line) + "]");
+		double double_= double(lib_trim(line));
+		doubles.add(double_);
+	end;
+
+	file.close();
+end;
+
+sub lib_read_lines_from_file_to_string_array(string filename, array<string,1> &strings)
+begin
+	# open the file
+	input_file file = new input_file;
+	file.open(filename);
+
+	# parse the integers.
+	loop until file.end_of_file()
+	begin
+		
+		string line = file.get_line();
+		if !file.last_succeeded() then
+			lib_error_exit(
+				"lib_read_lines_from_file_to_string_array(): " + 
+				"file could not be read succesfully");
+		end;
+
+		strings.add(line);
+	end;
+
+	file.close();
+end;
+
+# output variables: headers, data_rows
+sub lib_lexe_csv_file(string filename, string delimiter, bool skip_first_line, array<string,2>& data_rows)
+begin
+	lib_debug("<lexe_csv_file>\n");
+
+	# open the file
+	input_file file = new input_file;
+	file.open(filename);
+
+	# skip first line, containing the column names
+	if skip_first_line then 
+		file.get_line();
+	end;
+	
+	# process all other lines
+	loop 
+		int line_number = 0;
+		string previous_condition = "";
+	until 
+		file.end_of_file()
+	begin
+		line_number = line_number + 1;
+		
+		array<string> strings[0];
+		string line = file.get_line();
+		line.split(delimiter, strings);
+		lib_debug("<line number=\"" + string(line_number) +
+			"\" strings=\"" + lib_string_array_to_string(strings, ",") + "\" />\n");				
+
+		if !file.last_succeeded() then
+			lib_error_exit("lib_lexe_csv_file(): file could not be read succesfully");
+		end;
+
+		data_rows.add(strings);
+	end;
+
+	file.close();
+	
+	lib_debug("</lexe_csv_file>\n");
+end;
+
+sub lib_update_caption(text text_, string caption)
+begin
+	lib_debug("<" + caption + "/>");
+	if caption == "" then caption = " "; end;
+	text_.set_caption(caption);
+	text_.redraw();
+end;
+
+/*
+# old name
+# lib
+#sub array<picture_part,1> array__t_to_pp(array<text,1>& text_array) 
+sub array<picture_part,1> lib_array__text_to_picture_part(array<text,1>& text_array) 
+begin
+	int count = text_array.count();
+	array<picture_part> pp_array [count];
+	loop
+		int i = 1;
+	until
+		i > count
+	begin
+		pp_array[i] = text_array[i];
+		i = i + 1
+	end;	
+	return pp_array;
+end;
+*/
+
+sub array<picture_part,1> lib_atxt_to_app(array<text,1>& atxt) 
+begin
+	int count = atxt.count();
+	array<picture_part> app [count];
+	loop
+		int i = 1;
+	until
+		i > count
+	begin
+		app[i] = atxt[i];
+		i = i + 1
+	end;	
+	return app;
+end;
+
+sub array<picture_part,1> lib_abmp_to_app(array<bitmap,1>& abmp) 
+begin
+	int count = abmp.count();
+	array<picture_part> app [count];
+	loop
+		int i = 1;
+	until
+		i > count
+	begin
+		app[i] = abmp[i];
+		i = i + 1
+	end;	
+	return app;
+end;
+
+sub string last_filepath_element(string filepath)
+begin
+	array<string> elements[0];
+	filepath.split("\\", elements);
+	
+	return elements[elements.count()];
+end;
+
+/*
+impossible to implement
+
+sub get_first_picture_in_trial (trial tr)
+begin
+	
+	loop
+		int count = tr.stimulus_event_count();
+		int i = 1;
+	until
+		i > count
+	begin
+		stimulus_event event = tr.get_stimulus_event(i);
+		stimulus stim = event.get_stimulus();
+		
+		if (picture(stim) == null) then # null is not a literal....
+			term.print("ja");
+		end;
+		
+		i = i + 1
+	end;	
+	
+	return 
+end;
+*/
+
+# taken almost directly from original Sternberg code written by somebody else.
+
+#int x = (-nr / 2 * spacing) + n * spacing;
+
+
+sub int lib_position_in_centered_line_up(
+	int stimulus_index, int num_stimuli_on_screen, int spacing)
+begin
+	int x = 0;
+	int middle;
+	int deviation = 0;
+	if mod(num_stimuli_on_screen, 2)== 1 then # odd number of stimuli
+		middle = num_stimuli_on_screen / 2 + 1;
+		deviation = stimulus_index - middle;
+		x = deviation * spacing;
+	else # even number of stimuli
+		middle = (num_stimuli_on_screen + 1) * 10 / 2;
+		deviation = stimulus_index * 10 - middle;
+		x = deviation * spacing;
+		x = x / 10;		
+		
+	end;
+
+	return x;
+end;
+
+sub int lib_add_picture_part_aligned(picture pic, picture_part part, int x, int x_alignment, int y, int y_alignment)
+begin
+	pic.add_part(part, x, y);
+	int part_index = pic.part_count();
+	pic.set_part_x(part_index, x, x_alignment);
+	pic.set_part_y(part_index, y, y_alignment);
+	return part_index; 
+end;
+
+sub int lib_add_picture_part(picture pic, picture_part part, int x, int y)
+begin
+	pic.add_part(part, x, y);
+	int part_index = pic.part_count();
+	return part_index; 
+end;
+
+sub lib_add_picture_parts_horizontally_in_line_to_picture (
+		picture p, array<picture_part,1>& app, int spacing) 
+begin
+	int count = app.count();
+
+	loop
+		int i = 1;
+	until
+		i > count
+	begin
+		int x_coordinate = lib_position_in_centered_line_up(i, count, spacing);
+		int y_coordinate = 0;
+		p.add_part(app[i], x_coordinate, y_coordinate);
+		i = i + 1
+	end;
+end;
+
+# lib
+#
+# or  
+# sub add_txts_to_p_horizontally_inline
+sub lib_add_text_elements_horizontally_in_line_to_picture (
+		picture p, array<text,1>& text_array, int spacing) 
+begin
+	array<picture_part> app [text_array.count()] = lib_atxt_to_app(text_array);
+	lib_add_picture_parts_horizontally_in_line_to_picture(p, app, spacing);
+end;
+
+# lib
+sub lib_present_trial_array(array<trial,1>& atr) 
+begin
+	int count = atr.count();
+	loop
+		int i = 1;
+	until
+		i > count
+	begin
+		atr[i].present();
+		i = i + 1
+	end;
+
+end;
+
+sub lib_set_caption_by_language(text txt, array<string,1>& astr_captions)
+begin
+	txt.set_caption(astr_captions[lib_language]);
+	txt.redraw();
+end;
+
+array<string> lib_str_press_a_key_to_start[2] = {"Druk op een knop om te beginnen", "Press a button to start"};
+
+sub lib_set_instruction_caption(text txt, array<string,1>& language_texts)
+begin
+
+	string str = language_texts[lib_language];
+	str = str + "\n\n(" + lib_str_press_a_key_to_start[lib_language] + ")";
+	
+	txt.set_caption(str);
+	txt.redraw();
+
+end;
+
+sub trial lib_get_instruction_trial(array<string,1>& language_texts)
+begin
+	lib_set_instruction_caption(lib_txt_instruction, language_texts);
+
+	return lib_tr_instruction;
+end;
+
+sub lib_present_instruction(array<string,1>& language_texts) 
+begin
+	lib_debug("<lib_present_instruction>");
+	lib_get_instruction_trial(language_texts).present();
+	lib_debug("</lib_present_instruction>");
+end;
+/*
+sub lib_wait_for_fmri_trigger
+begin
+	lib_tr_wait_for_frmi_trigger.present();
+end;
+*/
+/*
+sub lib_wait_for_scanner_trigger_1(array<string,1>& message_per_language)
+begin
+
+	text t = lib_txt_wait_for_scanner_trigger;
+	t.set_caption(message_per_language[lib_language]);
+	t.redraw();
+	
+	if (g_str_scanning_type == "fmri") then lib_wait_for_fmri_trigger() end;
+	#else if
+end;
+
+
+sub lib_wait_for_scanner_trigger
+begin
+	array <string> message_per_language[2] = {
+		"(wachten op scanner)",
+		"(waiting for scanner)"
+	};
+	lib_wait_for_scanner_trigger_1(message_per_language);
+end;
+*/
+
+sub lib_present_each_picture_part_in_prototype_trial_5(array<picture_part, 1>& app, int x, int y, picture pic, trial tr)
+begin
+	int count = app.count();
+	loop
+		int i = 1;
+	until
+		i > count
+	begin
+		pic.clear();
+		pic.add_part(app[i], x, y);
+
+		tr.present();
+		
+		i = i + 1
+	end;
+end;
+
+sub lib_present_each_text_in_prototype_trial_5(array<text, 1>& atxt, int x, int y, picture pic, trial tr)
+begin
+	array <picture_part> app [atxt.count()] = lib_atxt_to_app(atxt);
+	lib_present_each_picture_part_in_prototype_trial_5(app, 0, 0, pic, tr);
+end;
+
+sub lib_present_each_bitmap_in_prototype_trial_5(array<bitmap, 1>& abmp, int x, int y, picture pic, trial tr)
+begin
+	array <picture_part> app [abmp.count()] = lib_abmp_to_app(abmp);
+	lib_present_each_picture_part_in_prototype_trial_5(app, 0, 0, pic, tr);
+end;
+
+/*
+int lib_nothing_trials_count = 0;
+sub trial lib_get_event_code_log_trial(string event_code)
+begin
+	lib_nothing_trials_count = lib_nothing_trials_count + 1;
+	trial tr = lib_atr_nothing[lib_nothing_trials_count];
+	tr.get_stimulus_event(1).set_event_code(event_code);
+	return tr;
+end;
+*/
+
+/*
+sub lib_log_event_code_before_time(string code, int time) 
+begin
+	lib_tr_nothing.get_stimulus_event(1).set_event_code(code);
+	lib_tr_nothing.set_start_time(time - 50);
+	lib_tr_nothing.present();
+end;
+*/
+/*
+sub lib_log_event_code(string code) 
+begin
+	lib_tr_nothing.get_stimulus_event(1).set_event_code(code);
+	lib_tr_nothing.present();
+end;
+*/
+sub int lib_number_of_lines_in_file(string filename) 
+begin
+
+	input_file file = new input_file;
+	file.open(filename);
+
+	int count = 0;
+	loop until file.end_of_file()
+	begin 
+		file.get_line();
+		count = count + 1;
+	end;
+	
+	file.close();
+	
+	return count;
+end;
+
+sub string lib_response_class_to_string(int stimulus_data_type)
+begin
+	string class;
+	if stimulus_data_type == stimulus_hit then class = "hit";
+	elseif stimulus_data_type == stimulus_incorrect then class = "incorrect";
+	elseif stimulus_data_type == stimulus_miss then class = "miss";
+	elseif stimulus_data_type == stimulus_false_alarm then class = "false_alarm";	
+	elseif stimulus_data_type == stimulus_other then class = "other";
+	else class = "unknown";
+	end;
+	
+	return class;
+end;
+
+sub bool lib_string_is_integer(string string_)
+begin
+	int length = string_.count();
+	
+	# empty string
+	if length == 0 then 
+		return false;
+	end;
+
+	# first character
+	int char = string_[1];
+	if (char < lib_char_0 || char > lib_char_9) && char != lib_char_minus then
+		return false;
+	end;
+
+	# the remaining characters
+	loop
+		int p = 2;
+	until p > length
+	begin
+		char = string_[p];
+		if char < lib_char_0 || char > lib_char_9 then
+			return false;
+		end;
+		
+		p = p + 1;		
+	end;
+	return true;
+end;
+
+sub bool lib_string_is_double(string string_)
+begin
+	int length = string_.count();
+	if length == 0 then return false; end;
+
+	loop
+		int p = 1;
+	until p > length
+	begin
+		int char = string_[p];
+		if char != lib_char_dot && (char < lib_char_0 || char > lib_char_9) then
+			return false;
+		end;
+		
+		p = p + 1;		
+	end;
+	return true;
+end;
+
+sub string lib_get_nonempty_sdl_string_variable(string variable_name)
+begin
+	string string_value = get_sdl_variable(variable_name);
+	if string_value == "" then
+		lib_error_exit("sdl_variable \"" + variable_name + "\" should be a non-empty string. '" + 
+			string_value + "' is not.");
+	end;
+	return string_value;
+end;
+
+sub int lib_get_required_sdl_integer_variable(string variable_name)
+begin
+	string string_value = get_sdl_variable(variable_name);
+	if ! lib_string_is_integer(string_value) then
+		lib_error_exit("sdl_variable \"" + variable_name + "\" should have an integer value. '" + 
+			string_value + "' is not.");
+	end;
+	return int(string_value);
+end;
+
+sub double lib_get_required_sdl_double_variable(string variable_name)
+begin
+	string string_value = get_sdl_variable(variable_name);
+	if ! lib_string_is_double(string_value) then
+		lib_error_exit("sdl_variable \"" + variable_name + "\" should have " + 
+			"a double (floating point) value, e.g. '3.0' . '" + string_value + "' is not.");
+	end;
+	return double(string_value);
+end;
+
+sub bool lib_get_required_sdl_boolean_variable(string variable_name)
+begin
+	string string_value = get_sdl_variable(variable_name);
+	int value = int(string_value);
+	if value < 0 || value > 1 then
+		lib_error_exit("sdl_variable \"" + variable_name + "\" should have a value of: " + 
+			"0 or 1 (meaning resp. 'false' or 'true'). '" + string_value + "' is not.");
+	end;
+	#lib_debug("<boolean: value=" + string(value) + "/>");
+	return bool(value);
+end;
+
+sub int lib_get_required_sdl_integer_range_variable(string variable_name, int lower, int upper)
+begin
+	string string_value = get_sdl_variable(variable_name);
+	int value = int(string_value);
+	if value < lower || value > upper then
+		lib_error_exit("sdl_variable \"" + variable_name + "\" should have an integer value in the range: " + 
+			"[" + string(lower) + ", " + string(upper) + "]. '" + string_value + "' is not.");
+	end;
+	return value;
+end;
+
+array<trial> lib_trial_pools[0][0];
+array<int> lib_trial_pool_indices[0];
+/*
+sub lib_init_trial_pools(int pool_count)
+begin
+	lib_trial_pools.resize(pool_count);
+	lib_trial_pool_indices.resize(pool_count);
+end;
+*/
+
+# returns index of pool
+sub int lib_register_trial_pool (array<trial,1>& pool)
+begin
+	lib_trial_pools.add(pool);
+
+	int pool_count = lib_trial_pools.count();
+	lib_trial_pool_indices.resize(pool_count);
+	
+	return pool_count;
+end;
+
+sub trial lib_get_next_trial(int pool_number)
+begin
+	
+	# increment the pool's cursor to point at next element
+	int pool_index = lib_trial_pool_indices[pool_number];
+	pool_index = pool_index + 1;
+	lib_trial_pool_indices[pool_number] = pool_index;
+	
+	# return the element
+	return lib_trial_pools[pool_number][pool_index];
+end;
+
+sub int lib_get_number_of_trials_in_pool(int pool_number)
+begin
+	return lib_trial_pool_indices[pool_number];
+end;
+
+## bitmap pools
+array<bitmap> lib_bitmap_pools[0][0];
+array<int> lib_bitmap_pool_indices[0];
+
+# returns index of pool
+sub int lib_register_bitmap_pool (array<bitmap,1>& pool)
+begin
+	lib_bitmap_pools.add(pool);
+
+	int pool_count = lib_bitmap_pools.count();
+	lib_bitmap_pool_indices.resize(pool_count);
+	
+	return pool_count;
+end;
+
+sub bitmap lib_get_next_bitmap(int pool_number)
+begin
+	
+	# increment the pool's cursor to point at next element
+	int pool_index = lib_bitmap_pool_indices[pool_number];
+	pool_index = pool_index + 1;
+	lib_bitmap_pool_indices[pool_number] = pool_index;
+	
+	# return the element
+	return lib_bitmap_pools[pool_number][pool_index];
+end;
+
+## text pools
+array<text> lib_text_pools[0][0];
+array<int> lib_text_pool_indices[0];
+
+# returns index of pool
+sub int lib_register_text_pool (array<text,1>& pool)
+begin
+	lib_text_pools.add(pool);
+
+	int pool_count = lib_text_pools.count();
+	lib_text_pool_indices.resize(pool_count);
+	
+	return pool_count;
+end;
+
+sub text lib_get_next_text(int pool_number)
+begin
+	
+	# increment the pool's cursor to point at next element
+	int pool_index = lib_text_pool_indices[pool_number];
+	pool_index = pool_index + 1;
+	lib_text_pool_indices[pool_number] = pool_index;
+	
+	# return the element
+	return lib_text_pools[pool_number][pool_index];
+end;
+
+
+/*
+array<int> lib_trial_pool_indices[10] = {0,0,0,0,0,0,0,0,0,0};
+sub trial lib_get_next_trial(int events_in_trial)
+begin
+	
+	# increment the pool's cursor to point at next element
+	int pool_index = lib_trial_pool_indices[events_in_trial];
+	pool_index = pool_index + 1;
+	lib_trial_pool_indices[pool_number] = pool_index;
+	
+	# determine trial pool
+	array<trial> pool;
+	if events_in_trial == 1 then
+		pool = lib_atr_1_event;
+	end;
+	
+	# return the fresh trial
+	return pool[pool_index];
+end;
+*/
+
+/*
+sub string lib_logfile_directory
+begin
+	string filename = logfile.filename();
+	lib_debug("<logfile.filename()=" + filename + "/>");
+	int last_path_seperator_pos = lib_string_find_last(filename, "\\");
+	return filename.substring(1, last_path_seperator_pos);
+end;
+*/
+
+/*
+array<bitmap> lib_a2bmp_bitmap_arrays[0][0];
+array<string> lib_astr_bitmap_array_names[0];
+# register a bitmap array by it's SDL name, so we can use it as a pool.
+sub lib_register_bitmap_array(array<bitmap> abmp, string sdl_name)
+begin
+	array<bitmap,2> arrays = lib_a2bmp_bitmap_arrays;
+	arrays.add(abmp);
+	
+	array<string> names = lib_astr_bitmap_array_names;
+	names.add(name);
+end
+*/
+
+#get("a2bmp", "
+#array<text,2> text_pools
+#bitmaps name, pool, pool_index
+
+#array<string,2> lib_bitmap_directory [0][3]; # = {name, pool_index, bitmap_index)
+
+/*
+array<bitmap,2> lib_bitmap_pools
+#array<string> lib_bitmap_pool_names
+array<int> lib_bitmap_pools_count;
+
+sub register_bitmap_pool(array<bitmap,1>& pool)
+begin
+	lib_bitmap_pools_count = lib_bitmap_pools_count + 1;
+	lib_bitmap_pools[lib_bitmap_pools_count] = pool;
+end
+
+sub array<bitmap,1> get_bitmap_pools_count
+*/
+
+/*
+sub array<bitmap> get_bitmap_pool_by_name(string name)
+begin
+	int index = lib_get_name_index(lib_bitmap_pool_names, name);
+	if (index == -1) then
+		lib_error_exit(
+			"lib_get_bitmap_pool_by_name(): bitmap_pool with name '" + 
+			name + "' not found in the name-array.");		
+	end;
+	return lib_bitmap_pools[index];	
+	
+#	array<bitmap,2> pools = lib_a2bmp_pools;
+end
+*/
+/*
+bitmap_size = 50%
+pool = "small_pictures"
+a.jpg 
+b.jpg
+c.jpg
+*/
+/*
+
+sub int lib_register_bitmap_pool
+
+sub bitmap lib_get_bitmap_by_name(string name)
+begin
+	
+	int i = 1;
+	bool found = false;	
+
+	loop
+	until
+		i > lib_bitmap_directory.count()
+	begin
+		if (lib_bitmap_directory[i][1] == name) then
+			found = true;
+			break;
+		end;
+			
+		i = i + 1;
+	end;
+	
+	if (!found) then
+		lib_error_exit("no bitmap with name: '" + name + "'.";
+	end;
+	
+	int pool_index = lib_bitmap_directory[i][2];
+	array<bitmap> pool = lib_bitmap_pools[pool_index];
+	
+	int bitmap_index = bitmap_directory[i][3];
+	bitmap bmp = bitmap_pool[bitmap_index];
+	
+	return bmp;
+	
+end;
+*/
+/*
+text_pool
+trial_type
+
+if (pool: "small") then 
+	pool = abmp_small_bitmaps;
+end
+
+
+b filename:"b.jpg" pool: small_bitmaps
+*/
+
+/* !
+
+array<string> lib_bitmap_names[0];
+sub bitmap get_bitmap_by_name(string name, array<bitmap,1>& bitmap_pool)
+begin
+	int index = lib_string_array_index(lib_bitmap_names, name);
+	if (index == -1) then
+		lib_error_exit(
+			"lib_get_bitmap_by_name(): bitmap with name '" + 
+			name + "' not found in the name-array.");		
+	end;
+	return bitmap_pool[index];	
+	
+#	array<bitmap,2> pools = lib_a2bmp_pools;
+end;
+
+# private
+sub lib_mount_bitmap(string name, string filename, array<bitmap>& bitmap_pool) 
+begin
+
+	# increment bitmap counter
+	int index = lib_int_used_bitmaps + 1;
+	
+	# check validity of counter
+	int pool_size = bitmap_pool.count();
+	if (index > pool_size ) then
+		lib_error_exit(
+			"lib_mount_bitmap(): Can not load more than " + string(pool_size) + " bitmaps into " + 
+			"this pool.");
+	end;
+	
+	# (update global counter)
+	lib_int_used_bitmaps = index;
+	
+	# get a bitmap object from the pool, set the filename and load it.
+	bitmap bmp = bitmap_pool[index];
+	bmp.set_filename(filename);
+	bmp.load();
+
+	# register the name
+	lib_astr_bitmap_names[index] = name;
+	
+end;
+
+sub lib_mount_bitmap_by_def(string def, string pool_name, int pool_index)
+begin
+	lib_debug("<def='" + def + "'>");
+	array<string> strings[0];
+	def.split(" ", strings);
+	int count = strings.count();
+	lib_debug("<count=" + string(count) + ">");
+	
+	if (count != 2) then 
+		lib_error_exit("lib_mount_bitmap(): non valid <bitmap definition>");
+	end;
+
+	string name = strings[1];
+	string filename = strings[2];
+	
+	lib_mount_bitmap(name, filename, pool_name, pool_index);
+end;
+
+
+
+# bitmaps("a a.jpg, b b.jpg, c c.jpg");
+sub lib_mount_bitmaps (string bitmaps_def, array<bitmap> bitmap_pool) 
+begin
+
+	array<string> bitmap_defs[0];
+	s.split(",", bitmap_defs);
+	
+	loop
+		int i = 1;
+	until
+		i > bitmap_defs.count()
+	begin
+		string bitmap_def = bitmap_defs[i];
+		bitmap_def = lib_trim(str_bitmap);
+		lib_mount_bitmap_by_def(bitmap_def);
+		
+		i = i + 1;
+	end;
+end
+
+
+! */ 
+
+sub output_file open_extra_logfile(string prefix)
+begin
+	# check for existence of subject-id 
+	string subject = logfile.subject();
+	if lib_trim(subject) == "" then
+		lib_error_exit("The subject-id is not set.");
+	end;
+
+	# open the secondary logfile
+	output_file out = new output_file();
+	string filename_base = prefix + " " + subject;
+	loop 
+		int count = 0;
+	until false
+	begin
+		string counter_suffix;
+		if count == 0 then
+			counter_suffix = "";
+		else
+			counter_suffix = " " + string(count);
+		end;
+		string filename = filename_base + counter_suffix + ".log";
+		out = new output_file();
+		if out.open(filename, 0, false) then
+			lib_debug("<created secondary logfile: '" + filename + "' />\n");
+			break;
+		else
+			count = count + 1;
+		end;
+	end;
+	
+	return out;
+end; 
+
+# if start_count == 0, then the first version will not have a count suffix.
+sub output_file lib_open_new_versioned_file(
+	string base_path, string suffix, int start_count, int & result_count)
+begin
+
+	# open the secondary logfile
+	string filename;
+	int count = start_count;
+	output_file out = new output_file();
+	string filename_base = base_path;
+	loop 
+	until false
+	begin
+		string counter_suffix;
+		if count == 0 then
+			counter_suffix = "";
+		else
+			counter_suffix = " " + string(count);
+		end;
+		filename = filename_base + counter_suffix + suffix;
+		out = new output_file();
+		if out.open(filename, 0, false) then
+			lib_debug("<created secondary logfile: '" + filename + "' />");
+			break;
+		else
+			count = count + 1;
+		end;
+	end;
+	
+	result_count = count;
+	
+	return out;
+end; 
+
+
+include_once "..\\lib\\lib_timing.pcl";
+
+sub lib_initialize_lib
+begin
+	
+	string special_chars = "09.-";
+	lib_char_0 = special_chars[1];
+	lib_char_9 = special_chars[2];
+	lib_char_dot = special_chars[3];
+	lib_char_minus = special_chars[4];
+	
+	lib_mri = bool(lib_get_required_sdl_integer_range_variable("mri", 0, 1));
+	lib_mri_test_by_emulation = bool(lib_get_required_sdl_integer_range_variable("mri_test_by_emulation", 0, 1));
+	lib_scenario_type = lib_get_required_sdl_integer_variable("scanning");
+	if lib_scenario_type != SCANNING_NONE then
+		lib_scan_period = lib_get_required_sdl_double_variable("scan_period");
+	end;
+	
+	port_output = bool(lib_get_required_sdl_integer_range_variable("port_output", 0, 1));
+	
+	lib_language = lib_get_required_sdl_integer_variable("language");
+	
+	lib_initialize_lib_timing();
+	
+end;
+lib_initialize_lib();

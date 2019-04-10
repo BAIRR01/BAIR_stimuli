@@ -247,7 +247,7 @@ switch site
                 fname    = 'Kay2013unfilteredstim.mat';
                 writePth = fullfile(stimDir, fname);
                 if ~exist(writePth, 'file')
-                    readPth  = 'https://wikis.nyu.edu/download/attachments/85394548/Kay2013unfilteredstim.mat?api=v2';
+                    readPth  = 'https://wikis.nyu.ed*u/download/attachments/85394548/Kay2013unfilteredstim.mat?api=v2';
                     websave(writePth,readPth);
                 end
                 load(writePth);

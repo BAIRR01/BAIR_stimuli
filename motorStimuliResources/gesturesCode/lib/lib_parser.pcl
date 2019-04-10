@@ -1,0 +1,76 @@
+array<string> lib_strings[0];
+int lib_string_index = 0;
+string lib_string;
+
+sub lib_lexe_scheme_file
+begin
+
+	string filename = g_str_scheme_filename;
+	array<string> all_strings[0];
+
+	input_file file = new input_file;
+	file.open(filename);
+	
+	loop 
+	until file.end_of_file()
+	begin
+		string line = file.get_line();
+		
+		array<string> line_strings[0];
+		line.split(" ", line_strings);
+
+		#debug("<line_strings:" + string_array_to_string(line_strings, ",") + "/>");
+		all_strings.append(line_strings);
+		#debug("<all_strings:" + string_array_to_string(all_strings, ",") + "/>");
+	end;
+	
+	
+	# filter the empty strings
+	
+	int count = all_strings.count();
+	#debug("<count=" + string(count) + "/>");
+	
+	# index for the filtered array (w->write)
+	int w = 0;	
+	# max size is same as source array, we will downsize when filtered count is known.
+	lib_strings.resize(count);
+
+	loop 
+		# index for the unfiltered source array (r->read)
+		int r = 1;
+	until r > count
+	begin
+		string str = all_strings[r];
+		#int strc = str.count();
+		#debug("<str.count()=" + string(strc) + "/>");
+
+		# not an empty string?
+		if (str.count() != 0) then
+			w = w + 1;
+			lib_strings[w] = str;
+		end;
+		
+		r = r + 1;
+	end;
+
+	# count now known, we resize to the count filtered.
+	lib_strings.resize(w);
+	
+	file.close();
+	
+	debug("<lexed:(" + string_array_to_string(lib_strings, ",") + ")/>");
+end;
+
+sub bool lib_has_next_string
+begin
+	return lib_string_index < lib_strings.count();
+end;
+
+sub lib_next_string
+begin
+	lib_string_index = lib_string_index + 1;
+	lib_string = lib_strings[lib_string_index];
+	
+	set_string_type();
+	#debug("<next-string: lib_string=" + lib_string + ", string_type=" + string(string_type) + "/>");
+end;

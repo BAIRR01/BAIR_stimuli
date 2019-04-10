@@ -1,0 +1,76 @@
+# output variables: headers, data_rows
+sub lib_lexe_csv_file(string filename, string delimiter, bool skip_first_line, array<string,2>& data_rows)
+begin
+	lib_debug("<lexe_csv_file>\n");
+
+	# open the file
+	input_file file = new input_file;
+	file.open(filename);
+
+	# skip first line, containing the column names
+	if skip_first_line then 
+		file.get_line();
+	end;
+	
+	# process all other lines
+	loop 
+		string previous_condition = "";
+	until 
+		file.end_of_file()
+	begin
+	
+		array<string> strings[0];
+		string line = file.get_line();
+		lib_debug("<line>" + line + "</line>\n");		
+		line.split(delimiter, strings);
+
+		if !file.last_succeeded() then
+			lib_error("lib_lexe_csv_file(): file could not be read succesfully");
+		end;
+
+		data_rows.add(row);
+	end;
+
+	file.close();
+	
+	lib_debug("</lexe_csv_file>\n");
+end;
+
+
+sub lexe_csv_file_and_dont_use_headers(string filename, string delimiter, bool skip_first_line, array<string,2>& data_rows)
+begin
+	if skip_first_line then 
+		# skip first line, containing the column names
+		file.get_line();
+	end;
+end;
+
+
+# output variables: headers, data_rows
+sub lexe_csv_file_and_use_headers(string filename, string delimiter, array<string,1>& headers, array<string,2>& data_rows)
+begin
+	lib_debug("<lexe_csv_file>\n");
+
+	# open the file
+	input_file file = new input_file;
+	file.open(filename);
+
+	# process all other lines
+	loop 
+		string previous_condition = "";
+	until 
+		file.end_of_file()
+	begin
+	
+		array<string> strings[0];
+		string line = file.get_line();
+		lib_debug("<line>" + line + "</line>\n");		
+		line.split(delimiter, strings);
+
+		data_rows.add(row);
+	end;
+
+	file.close();
+	
+	lib_debug("</lexe_csv_file>\n");
+end;

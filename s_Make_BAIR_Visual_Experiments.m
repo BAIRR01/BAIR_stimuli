@@ -17,7 +17,7 @@
 if ~selectionMade, return; end
 
 % Which experiment to make?
-[experimentType, selectionMade] = bairWhichExperiment();
+[experimentType, selectionMade] = bairWhichExperimentVisual();
 if ~selectionMade, return; end
 
 % Generate stimulus template

@@ -1,0 +1,25 @@
+# specific analyzer definition file for the Auditive Comprehension Sentences experiment (aud-com-sentences).
+
+picture: event_type == "Picture"
+sound:   event_type == "Sound"
+video:   event_type == "Video"
+nothing: event_type == "Nothing"
+
+response: event_type == "Response"
+response_count = count( response )
+
+stimulus: picture or sound or video or nothing or response
+stimulus_count = count( stimulus )
+
+pulses:       event_type == "Pulse"
+port_input:   event_type == "Port Input"
+text_input:   event_type == "Text Input"
+save_logfile: event_type == "Save Logfile"
+control:      event_type == "Pause" or event_type == "Resume" or event_type == "Quit"
+
+no_pulses:	  not pulses
+
+#event_table augmented_table( trial, event_type, code, base, RT, target_button_, time, trial_time, time_uncertainty, duration, duration_uncertainty, requested_time, requested_duration)
+event_table custom_etable( trial, event_type, stimulus_type, code, time, trialnumber, block, trialtype, target_vis, target_aud, condition, time_uncertainty )
+
+

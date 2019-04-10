@@ -1,0 +1,44 @@
+response_matching = simple_matching;
+
+## fMRI headers
+IF '$mri == 0';
+	IF '$use_mri_emulator_for_non_scanning == 0';
+		$scanning = 1; 
+	ENDIF;
+	IF '$use_mri_emulator_for_non_scanning == 1';
+		$scanning = 2; 
+	ENDIF;
+ENDIF;
+
+IF '$mri == 1';
+	IF '$mri_test_by_emulation == 0';
+		$scanning = 3; # (none=1; don't use), fmri_emulation=2, fmri=3
+	ENDIF;
+
+	IF '$mri_test_by_emulation == 1';
+		$scanning = 2; # (none=1; don't use), fmri_emulation=2, fmri=3
+	ENDIF;
+ENDIF;
+
+IF '$scanning==1';
+	scenario_type = trials;
+ENDIF;
+IF '$scanning==2';
+	scenario_type = fMRI_emulation; 
+	scan_period = 'int($scan_period)'; # to be used by the fMRI-emulator
+ENDIF;
+IF '$scanning==3';
+	scenario_type = fMRI;
+	pulses_per_scan = 1;
+	pulse_code = 49;
+ENDIF;
+
+IF '$port_output==1';
+	write_codes = true;
+ENDIF;
+
+default_monitor_sounds = false;
+
+screen_width = $screen_width;
+screen_height = $screen_height;
+screen_bit_depth = 32;
