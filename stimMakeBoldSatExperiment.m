@@ -9,51 +9,45 @@ site = stimParams.experimentSpecs.sites{1};
 %thus resulting in 0.33 Hz movement. In the second, third, and fourth
 %tasks, respectively, 4, 7, or 13 cues were given with 2, 1, and 0.5 s
 %intercue interval. Each trial was followed by a rest period until a total
-%trial duration of 19 s was reached. Each task consisted of 13?15 trials of
+%trial duration of 19 s was reached. Each task consisted of 13-15 trials of
 %19 s.
 
-frameRate             = stimParams.display.frameRate;
-numberOfEventsPerRun  = 15; 
+numberOfTrialsPerRun  = 15; 
 movementOnDuration    = 6;
-
-% determine how many movements per trial for this movementRate
-movementISI = 1/movementRate;
-movementsPerTrial = round(movementOnDuration/movementISI);
-if movementRateIndex == 1
-    movementsPerTrial = movementsPerTrial+1;
-end
+frameRate             = stimParams.display.frameRate/2;
+% NOTE Jan 16, 2019: We're specifying stimulus sequence at half the
+% framerate (every other frame) because PsychToolbox presentation accuracy
+% is impacted if we tell it to flip for every frame
 
 % Determine trial length
-switch(lower(stimParams.modality))
+switch lower(stimParams.modality)
     case 'fmri'        
-        %totalTrialDuration = 21; 
         movementOffDuration = 15;
         preScanPeriod       = 12;
     case {'ecog' 'eeg' 'meg'}
-        %totalTrialDuration = 12; 
         movementOffDuration = 6;
         preScanPeriod       = 3;
 end
-preScanPeriod       = round(preScanPeriod/TR)*TR;
-postScanPeriod      = preScanPeriod; % seconds
-movementOffDuration = round(movementOffDuration/TR)*TR;
-trialDuration = (stimDurationSeconds*movementsPerTrial)+(movementISI*(movementsPerTrial-1))+movementOffDuration;
-%trialDuration  = round(totalTrialDuration/TR)*TR;
 
-% One trial consists of multiple repeated movements
-% Each movements has a stimDurationSeconds
+% Compute the length of each trial
+trialDuration = movementOnDuration+movementOffDuration;
 
-% Generate onsets
-onsets = cumsum([preScanPeriod ones([1 numberOfEventsPerRun-1])*trialDuration]);
+% for fMRI, we need to synchronize the onsets with the TR
+switch lower(stimParams.modality)
+    case 'fmri'
+        preScanPeriod = round(preScanPeriod/TR)*TR;
+        trialDuration = round(trialDuration/TR)*TR;
+end
+postScanPeriod = preScanPeriod; % seconds
 
-% Round to multiples of TR
-onsets = round(onsets/TR)*TR;
+% Generate trial onsets
+trialOnsets = cumsum([preScanPeriod ones([1 numberOfTrialsPerRun-1])*trialDuration]);
 
-% Derive indices into the stimulus sequence (defined at frameRate)
-onsetIndices  = round(onsets*(frameRate*.5))+1;
+% Derive indices into the stimulus sequence (defined at half the frameRate)
+trialOnsetIndices  = round(trialOnsets*(frameRate))+1;
 
 % Define total length of experiment
-experimentLength = onsets(numberOfEventsPerRun)+trialDuration+postScanPeriod;
+experimentLength = trialOnsets(numberOfTrialsPerRun)+trialDuration+postScanPeriod;
 
 % Create a stimulus struct
 stimulus = [];
@@ -67,7 +61,7 @@ stimulus.display    = stimParams.display;
 stimulus.images     = stimParams.stimulus.images(:,:,end);
 
 % Specify stimulus sequence at frame rate resolution
-stimulus.seqtiming  = 0:(1/frameRate*2):experimentLength;
+stimulus.seqtiming  = 0:(1/frameRate):experimentLength;
 stimulus.seq        = ones(size(stimulus.seqtiming));
 
 % For this motor task, the fixation changes are the task instructions
@@ -75,39 +69,39 @@ stimulus.seq        = ones(size(stimulus.seqtiming));
 % filled with the movement cue onsets
 stimulus.fixSeq     = stimulus.seq;
 
-% Add the stimulus indices
-% One trial consists of multiple repeated movements
-% Each movements has a stimDurationSeconds
+% Add the repeated movement cues 
 
-%movementISI = 1/movementRate;
-%movementsPerTrial = round(movementOnDuration/movementISI)+1;
-movementOnsets = 0:movementISI+stimDurationSeconds:(movementISI+stimDurationSeconds)*movementsPerTrial;
+% Compute movement onsets at specified rate
+movementOnsets = 0:(1/movementRate):movementOnDuration;
 
-% Round to multiples of frameRate
+% Round to multiples of half the frameRate
 movementOnsets  = round(movementOnsets*frameRate)/frameRate;
-movementOnsetIndices  = round(movementOnsets*(frameRate*.5))+1;
 
-imagesPerTrial = round((movementOnsets(end)+stimDurationSeconds)*(frameRate*.5));
-imagesPerMovement = round(stimDurationSeconds*(frameRate*.5));
+% Find the corresponding indices in the stimulus sequence
+movementOnsetIndices  = movementOnsets*(frameRate)+1;
+
+% Compute how many images are needed for each cue
+imagesPerTrial = round((movementOnsets(end)+stimDurationSeconds)*(frameRate));
+imagesPerMovement = round(stimDurationSeconds*(frameRate));
 
 % Generate sequence of movements onsets per trial
 sequencePerTrial = ones(1,imagesPerTrial);
-sequencePerMovement = ones(1,imagesPerMovement);
-for ii = 1:movementsPerTrial
+sequencePerMovement = ones(1,imagesPerMovement)+1; % cue color change is 2
+for ii = 1:length(movementOnsets)
     indices = movementOnsetIndices(ii) + (0:imagesPerMovement-1);
-    sequencePerTrial(indices) = sequencePerMovement+1;
+    sequencePerTrial(indices) = sequencePerMovement;
 end
 
 % Add all trials together
-for ii = 1:numberOfEventsPerRun
-    indices = onsetIndices(ii) + (0:length(sequencePerTrial)-1);
+for ii = 1:numberOfTrialsPerRun
+    indices = trialOnsetIndices(ii) + (0:length(sequencePerTrial)-1);
     stimulus.fixSeq(indices) = sequencePerTrial;
 end
 
-stimulus.onsets = onsets;
+stimulus.onsets = trialOnsets;
 
 % Describe stimuli 
-stimulus.cat            = [1 movementRateIndex+2]; %3,4,5 or 6
+stimulus.cat            = [1 movementRateIndex+2]; % 3,4,5 or 6, see BAIR trigger spec
 stimulus.categories     = {'REST', 'CLENCH'};
 stimulus.movementRate   = movementRate; 
 
@@ -118,7 +112,7 @@ switch lower(stimParams.modality)
     otherwise
          % Write binary trigger sequence:
         stimulus.trigSeq = zeros(size(stimulus.seqtiming));
-        stimulus.trigSeq(onsetIndices) = stimulus.cat(2);
+        stimulus.trigSeq(trialOnsetIndices) = stimulus.cat(2);
         stimulus.trigSeq(1)      = 255; %experiment onset
         stimulus.trigSeq(end)    = 255; %experiment offset
 end
@@ -139,6 +133,7 @@ stim_file   = repmat(fname, length(stimulus.onsets),1);
 stim_file_index = repmat('n/a', length(stimulus.onsets),1);
    
 stimulus.tsv = table(onset, duration, trial_type, trial_name, stim_file, stim_file_index);
+stimulus.site = site;
 
 % Save
 fprintf('[%s]: Saving stimuli in: %s\n', mfilename, fullfile(vistadispRootPath, 'StimFiles',  fname));
