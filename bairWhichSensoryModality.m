@@ -1,7 +1,7 @@
 function [sensoryDomain, selectionMade] = bairWhichSensoryModality
 
 % Which experiment?
-sensoryModalityTypes = {'VISUAL','TACTILE','MOTOR'};
+sensoryModalityTypes = {'VISUAL','TACTILE','TACTILE-VISUAL','MOTOR'};
 
 [bairWhichSensoryModality, selectionMade] = listdlg('PromptString', 'Which sensory modality?', 'ListString', sensoryModalityTypes);
 

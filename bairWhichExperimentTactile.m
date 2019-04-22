@@ -1,7 +1,7 @@
 function [experimentType, selectionMade] = bairWhichExperimentTactile
 
 % Which experiment?
-experimentTypes = {'SIMPLEHANDSWEEP', 'BLOCKED' };
+experimentTypes = {'SIMPLEHANDSWEEP', 'BLOCKED', 'TACTILEVISUALSWEEP', 'TACTILEVISUALBLOCKED' };
 % 'HRFCHECKER'  'HRFPATTERNINVERTED' 'HRFCHECKERINVERTED' };
 [whichExperiment, selectionMade] = listdlg('PromptString', 'Which experiment?', 'ListString', experimentTypes);
 

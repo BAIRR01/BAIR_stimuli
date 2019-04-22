@@ -81,6 +81,9 @@ end
 if contains(lower(sensoryDomain), 'motor')
     params.fixation = 'crossdisk';
 end
+if contains(lower(sensoryDomain), 'tactile-visual')
+    params.fixation = 'hand';
+end
 
 % Sensory modality-specific stuff to do before starting experiment?
 [params] = checkforSensoryDomainSpecificRequest(params);
