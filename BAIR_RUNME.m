@@ -91,6 +91,10 @@ end
 % Debug mode?
 params.skipSyncTests = 1;
 
+% folder where to save screenshots
+% default: empty '' (doesn't save screenshots)
+params.path_for_screenshots = '';
+
 % Go!
 quitProg = doExperiment(params);
 
