@@ -18,8 +18,8 @@ stimulus.srcRect                = stimParams.stimulus.srcRect;
 stimulus.dstRect                = stimParams.stimulus.destRect;
 stimulus.display                = stimParams.display;
 
-stimParams.fingerIdx              = [1:stimulus.numOfStimulators, cumsum(1:stimulus.numOfStimulators)];
-stimParams.fingers                = {'index', 'middle', 'ring', 'little','all'};
+stimParams.fingerIdx              = [1:stimulus.numOfStimulators, 6 7];
+stimParams.fingers                = {'thumb','index', 'middle', 'ring', 'little','all', 'blank'};
 stimParams.stimDurSamples         = round(stimParams.stimDurSecs * stimParams.NIdaqRate);
 stimParams.stimDurFrames          = stimParams.stimDurSecs * stimParams.display.frameRate;
 
@@ -128,7 +128,8 @@ stimParams.vibrotactileStimulus = zeros(round(stimParams.expDurSecs*stimParams.N
 
 %initialize matrix to hold position (x,y) and size of circle for each frame during experiment
 stimParams.visualStimulus = zeros(round(stimParams.expDurSecs*stimParams.display.frameRate), 3);
-
+%initialize matrix to hold position (finger no) and size of circle for each frame during experiment
+stimParams.visualStimulus2 = zeros(round(stimParams.expDurFrames), stimParams.numOfStimulators);
 
 %% prepare images
 % X,Y center location for fixation
@@ -155,12 +156,16 @@ stimulus.images = stimParams.images;
 % check for visual congruency
 if contains(lower(stimParams.condition),'visualcongruent')
     %set coordinates for each finger (index, middle, ring, little)
-    stimParams.fingerCoords = [-8,-25; -23,-13; -27,4; -21, 21] * max(stimParams.handImageDims) * 0.01;
+    stimParams.fingerCoords = [17,-22;-8,-25; -23,-13; -27, 4; -21, 21] * max(stimParams.handImageDims) * 0.01;
 elseif contains(lower(stimParams.condition),'visualincongruent')
-    stimParams.fingerCoords = [17,-22;-8,-25; -23,-13; -27,4] * max(stimParams.handImageDims) * 0.01;
+    stimParams.fingerCoords = [17,-22;-8,-25; -23,-13;-27, 4;  -21, 21] * max(stimParams.handImageDims) * 0.01;
+elseif contains(lower(stimParams.condition),'visualshifttolittle')
+    stimParams.fingerCoords = [17,-22;-8,-25; -23,-13; -27, 4; -21, 21] * max(stimParams.handImageDims) * 0.01;
+elseif contains(lower(stimParams.condition),'visualshifttothumb')
+    stimParams.fingerCoords = [17,-22;-8,-25; -23,-13; -27, 4; -21, 21] * max(stimParams.handImageDims) * 0.01;
 elseif ~stimParams.visualPulse
     %set coordinates but tut the size of the circle will be 0
-    stimParams.fingerCoords = [-8,-25; -23,-13; -27,4; -21, 21] * max(stimParams.handImageDims) * 0.01;
+    stimParams.fingerCoords = [17,-22;-8,-25; -23,-13; -27, 4; -21, 21] * max(stimParams.handImageDims) * 0.01;
 else
     error('visual condition undefined')
 end
@@ -183,82 +188,135 @@ for jj = 1:length(directions)
             stimulatorOrder = repmat(1:stimParams.numOfStimulators, 1, stimParams.numSweeps)';
             stimulatorOrder2 = stimulatorOrder;
         case 'Descending'
-            stimulatorOrder = repmat(stimParams.numOfStimulators:-1:1, 1, stimParams.numSweeps)';
-            stimulatorOrder2 = stimulatorOrder;
+            if contains(lower(stimParams.condition),'visualcongruent') || contains(lower(stimParams.condition),'visualoff')
+                stimulatorOrder = repmat(stimParams.numOfStimulators:-1:1, 1, stimParams.numSweeps)';
+                stimulatorOrder2 = repmat(stimParams.numOfStimulators:-1:1, 1, stimParams.numSweeps)';
+            elseif contains(lower(stimParams.condition),'visualshifttothumb')
+                stimulatorOrder = repmat([stimParams.numOfStimulators:-1:2 0], 1, stimParams.numSweeps)';
+                stimulatorOrder2 = repmat([stimParams.numOfStimulators:-1:2 7], 1, stimParams.numSweeps)';
+            elseif contains(lower(stimParams.condition),'visualshifttolittle')
+                stimulatorOrder = repmat([0 (stimParams.numOfStimulators-1):-1:1], 1, stimParams.numSweeps)';
+                stimulatorOrder2 = repmat([7 (stimParams.numOfStimulators-1):-1:1], 1, stimParams.numSweeps)';
+            end
         case 'Blocked'
             stimulatorOrder = repmat(1:stimParams.numOfStimulators, stimParams.numSweeps,1);
-            stimulatorOrder2 = repmat(5, 1, stimParams.numSweeps);
-    end
-    
-    % Loop through the stimulus sequence
-    for ii = 1:length(stimParams.stimOnsetsSamples)
-        % Insert the tactile signal at the respective time points and stimulator
-        stimParams.vibrotactileStimulus(int64(stimParams.stimOnsetsSamples(ii)):int64(stimParams.stimOnsetsSamples(ii)) + stimParams.stimDurSamples - 1, ...
-            stimulatorOrder(ii,:)) = repmat(stimParams.stimulusSignal,1,size(stimulatorOrder,2));
-    end
-    
-    % Loop through the stimulus sequence
-    for ii = 1:length(stimParams.stimOnsetsFrames)
-        stimParams.visualStimulus(uint64(stimParams.stimOnsetsFrames(ii)):uint64(stimParams.stimOnsetsFrames(ii)) + stimParams.stimDurFrames - 1, 1) = stimParams.fingerCoords(stimulatorOrder(ii),1);
-        stimParams.visualStimulus(uint64(stimParams.stimOnsetsFrames(ii)):uint64(stimParams.stimOnsetsFrames(ii)) + stimParams.stimDurFrames - 1, 2) = stimParams.fingerCoords(stimulatorOrder(ii),2);
-        % Insert the tactile signal at the respective time points and stimulator
-        stimParams.visualStimulus(uint64(stimParams.stimOnsetsFrames(ii)):uint64(stimParams.stimOnsetsFrames(ii)) + stimParams.stimDurFrames - 1, 3) = stimulusSignalModulatorFrames;
-    end
-    
-    % Loop through every frame and set circle
-    for ii = 1:stimParams.expDurFrames
-        % position the rectangle on the finger
-        stimParams.dstRect2(ii,:) = CenterRectOnPointd(circleBaseRect*stimParams.visualStimulus(ii,3), stimParams.fixX + stimParams.visualStimulus(ii,1), stimParams.fixY + stimParams.visualStimulus(ii,2));
-    end
-    
-    switch lower(stimParams.modality)
-        case 'fmri'
-            % no trigger sequence needed
-        otherwise
-            % Write trigger sequence
-    end
-    
-    %Save stimulus matrix, tsv info and make figures
-    fname = sprintf('%s_%s%s_%d.mat', stimParams.site,stimParams.condition, directions{jj}(1:4), runNum);
-    
-    % check whether figures should be made
-    if makeFigure
-        % save figure with images of stimulus
-        f = figure('visible', 'off');
-        imagesc(stimParams.vibrotactileStimulus)
-        title (sprintf('%s-%s', stimParams.condition, directions{jj}))
-        xlabel('Stimulators');
-        ylabel('Time (s)')
-        xticks(stimParams.fingerIdx(1:4))
-        xticklabels(stimParams.fingers(1:4))
-        yticks(0:stimParams.NIdaqRate * 10:stimParams.expDurSecs * stimParams.NIdaqRate)
-        yticklabels(0:10:stimParams.expDurSecs)
-        saveas(f, fullfile(vistadispRootPath, 'StimFiles', sprintf('%s.png',fname(1:end-6))))
-    end
-    
-    % Set TSV file information
-    onsets          = round(stimParams.stimOnsetsSecs,3)';
-    duration        = repmat(stimParams.stimDurSecs, length(stimParams.stimOnsetsSecs),1);
-    trial_type      = stimParams.fingerIdx(stimulatorOrder2)';
-    trial_name      = stimParams.fingers(stimulatorOrder2)';
-    stim_file       = repmat(fname, length(stimParams.stimOnsetsSecs),1);
-    stim_order      = repmat(directions(jj), length(stimParams.stimOnsetsSecs),1);
-    stim_condition  = repmat(stimParams.condition, length(stimParams.stimOnsetsSecs),1);
-    stim_file_index = repmat('n/a', length(stimParams.stimOnsetsSecs),1);
-    
-    stimParams.tsv = table(onsets, duration, trial_type, trial_name, stim_file, stim_file_index, stim_order, stim_condition);
-    
-    % store for main script calls
-    stimulus.vibrotactileStimulus = stimParams.vibrotactileStimulus;
-    stimulus.dstRect2 = stimParams.dstRect2;
-    
-    % Save
-    if ~exist(fullfile(vistadispRootPath, 'StimFiles',  fname), 'file')
-        fprintf('[%s]: Saving stimuli in: %s\n', mfilename, fullfile(vistadispRootPath, 'StimFiles',  fname));
-        save(fullfile(vistadispRootPath, 'StimFiles',  fname), 'stimulus')
-        save(fullfile(vistadispRootPath, 'StimFiles',  [sprintf('%s_%s%s', stimParams.site,stimParams.condition, directions{jj}(1:4)),'_stimParams.mat']), 'stimParams');
-    else
-        error('stimulus files for this experiment already exist, move or delete old files')
+            stimulatorOrder2 = repmat(6, 1, stimParams.numSweeps);
     end
 end
 
+    for jj = 1:length(directions)
+        switch directions{jj}
+            case 'Ascending'
+                visualPositionOrder = repmat(1:stimParams.numOfStimulators, 1, stimParams.numSweeps)';
+                visualPositionOrder2 = visualPositionOrder;
+            case 'Descending'
+                if contains(lower(stimParams.condition),'visualoff')
+                    visualPositionOrder = zeros(1, stimParams.numOfStimulators * stimParams.numSweeps)';
+                    visualPositionOrder2 = visualPositionOrder;
+                elseif contains(lower(stimParams.condition),'visualcongruent')
+                    visualPositionOrder = repmat(stimParams.numOfStimulators:-1:1, 1, stimParams.numSweeps)';
+                    visualPositionOrder2 = visualPositionOrder;
+                elseif contains(lower(stimParams.condition),'visualshifttolittle')
+                    visualPositionOrder = repmat([0 stimParams.numOfStimulators:-1:2], 1, stimParams.numSweeps)';
+                    visualPositionOrder2 = visualPositionOrder;
+                elseif contains(lower(stimParams.condition),'visualshifttothumb')
+                    visualPositionOrder = repmat([(stimParams.numOfStimulators-1):-1:1 0], 1, stimParams.numSweeps)';
+                    visualPositionOrder2 = visualPositionOrder;
+                end
+            case 'Blocked'
+                visualPositionOrder = zeros(1, stimParams.numOfStimulators * stimParams.numSweeps)';
+                visualPositionOrder2 = repmat(5, 1, stimParams.numSweeps);
+        end
+        
+        
+        % Loop through the stimulus sequence
+        for ii = 1:length(stimParams.stimOnsetsSamples)
+            if stimulatorOrder(ii,:) > 0 && stimulatorOrder(ii,:) <= size(stimParams.vibrotactileStimulus, 2)
+            % Insert the tactile signal at the respective time points and stimulator
+            stimParams.vibrotactileStimulus(int64(stimParams.stimOnsetsSamples(ii) + 1):int64(stimParams.stimOnsetsSamples(ii) + 1) + stimParams.stimDurSamples - 1, ...
+                stimulatorOrder(ii,:)) = repmat(stimParams.stimulusSignal,1,size(stimulatorOrder,2));
+            end
+        end
+        
+        % Loop through the stimulus sequence
+        for ii = 1:length(stimParams.stimOnsetsFrames)
+            if visualPositionOrder(ii) > 0
+            stimParams.visualStimulus(uint64(stimParams.stimOnsetsFrames(ii)+1):uint64(stimParams.stimOnsetsFrames(ii)+1) + stimParams.stimDurFrames - 1, 1) = stimParams.fingerCoords(visualPositionOrder(ii),1);
+            stimParams.visualStimulus(uint64(stimParams.stimOnsetsFrames(ii)+1):uint64(stimParams.stimOnsetsFrames(ii)+1) + stimParams.stimDurFrames - 1, 2) = stimParams.fingerCoords(visualPositionOrder(ii),2);
+            % Insert the visual signal at the respective time points and stimulator
+            stimParams.visualStimulus(uint64(stimParams.stimOnsetsFrames(ii)+1):uint64(stimParams.stimOnsetsFrames(ii)+1) + stimParams.stimDurFrames - 1, 3) = stimulusSignalModulatorFrames;
+            
+            %insert into exra matrix
+            stimParams.visualStimulus2(uint64(stimParams.stimOnsetsFrames(ii)+1):uint64(stimParams.stimOnsetsFrames(ii)+1) + stimParams.stimDurFrames - 1, visualPositionOrder(ii)) = stimulusSignalModulatorFrames;
+            end
+        end
+        
+        % Loop through every frame and set circle
+        for ii = 1:stimParams.expDurFrames
+            % position the rectangle on the finger
+            stimParams.dstRect2(ii,:) = CenterRectOnPointd(circleBaseRect*stimParams.visualStimulus(ii,3), stimParams.fixX + stimParams.visualStimulus(ii,1), stimParams.fixY + stimParams.visualStimulus(ii,2));
+        end
+        
+        switch lower(stimParams.modality)
+            case 'fmri'
+                % no trigger sequence needed
+            otherwise
+                % Write trigger sequence
+        end
+        
+        %Save stimulus matrix, tsv info and make figures
+        fname = sprintf('%s_%s%s_%d.mat', stimParams.site,stimParams.condition, directions{jj}(1:4), runNum);
+        
+        % check whether figures should be made
+        if makeFigure
+            % save figure with images of stimulus
+            f = figure('visible', 'off');
+            subplot(2,1,1);
+            imagesc(stimParams.vibrotactileStimulus)
+            title (sprintf('%s-%s', stimParams.condition, directions{jj}))
+            xlabel('Tactile timulators');
+            ylabel('Time (s)')
+            xticks(stimParams.fingerIdx(1:stimParams.numOfStimulators))
+            xticklabels(stimParams.fingers(1:stimParams.numOfStimulators))
+            yticks(0:stimParams.NIdaqRate * 10:stimParams.expDurSecs * stimParams.NIdaqRate)
+            yticklabels(0:10:stimParams.expDurSecs)
+
+            subplot(2,1,2);
+            imagesc(stimParams.visualStimulus2)
+            title (sprintf('%s-%s', stimParams.condition, directions{jj}))
+            xlabel('Fingers of displayed hand');
+            ylabel('Time (s)')
+            xticks(stimParams.fingerIdx(1:stimParams.numOfStimulators))
+            xticklabels(stimParams.fingers(1:stimParams.numOfStimulators))
+            yticks(0:stimParams.display.frameRate * 10:stimParams.expDurSecs * stimParams.display.frameRate)
+            yticklabels(0:10:stimParams.expDurSecs)
+
+            saveas(f, fullfile(vistadispRootPath, 'StimFiles', sprintf('%s.png',fname(1:end-6))))
+        end
+        
+        % Set TSV file information
+        onsets          = round(stimParams.stimOnsetsSecs,3)';
+        duration        = repmat(stimParams.stimDurSecs, length(stimParams.stimOnsetsSecs),1);
+        trial_type      = stimParams.fingerIdx(stimulatorOrder2)';
+        trial_name      = stimParams.fingers(stimulatorOrder2)';
+        stim_file       = repmat(fname, length(stimParams.stimOnsetsSecs),1);
+        stim_order      = repmat(directions(jj), length(stimParams.stimOnsetsSecs),1);
+        stim_condition  = repmat(stimParams.condition, length(stimParams.stimOnsetsSecs),1);
+        stim_file_index = repmat('n/a', length(stimParams.stimOnsetsSecs),1);
+        
+        stimParams.tsv = table(onsets, duration, trial_type, trial_name, stim_file, stim_file_index, stim_order, stim_condition);
+        
+        % store for main script calls
+        stimulus.vibrotactileStimulus = stimParams.vibrotactileStimulus;
+        stimulus.dstRect2 = stimParams.dstRect2;
+        
+        % Save
+        if ~exist(fullfile(vistadispRootPath, 'StimFiles',  fname), 'file')
+            fprintf('[%s]: Saving stimuli in: %s\n', mfilename, fullfile(vistadispRootPath, 'StimFiles',  fname));
+            save(fullfile(vistadispRootPath, 'StimFiles',  fname), 'stimulus')
+            save(fullfile(vistadispRootPath, 'StimFiles',  [sprintf('%s_%s%s', stimParams.site,stimParams.condition, directions{jj}(1:4)),'_stimParams.mat']), 'stimParams');
+        else
+            error('stimulus files for this experiment already exist, move or delete old files')
+        end
+    end
+    

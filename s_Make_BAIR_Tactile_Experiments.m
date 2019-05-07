@@ -44,13 +44,14 @@ switch experimentType
     case 'TACTILEVISUALSWEEP' %simple hand stimulation in different patterns for now
         
         directions = {'Descending'};
-        conditions = {'TactileWeakVisualOffSweep', 'TactileStrongVisualOffSweep', 'TactileWeakVisualCongruentSweep', 'TactileWeakVisualIncongruentSweep'};
-        stimParams.stimDurSecs            = 6; % seconds, length of stimulation at one finger
-        stimParams.numSweeps              = 8; % how many sweeps across all fingers
+        conditions = {'TactileWeakVisualOffSweep', 'TactileStrongVisualOffSweep',...
+            'TactileWeakVisualCongruentSweep', 'TactileWeakVisualShiftToLittleFingerSweep', 'TactileWeakVisualShiftToThumbSweep'};
+        stimParams.stimDurSecs            = 4; % seconds, length of stimulation at one finger
+        stimParams.numSweeps              = 6; % how many sweeps across all fingers
         stimParams.interSweepIntervalSecs = 0; % pause in between sweeps in seconds
-        stimParams.preScanDurSecs         = 12; % pause at the beginning of one run in secs
-        stimParams.postScanDurSecs        = 12; % pause at the end of one run in secs
-        stimParams.numOfStimulators       = 4;
+        stimParams.preScanDurSecs         = 0; % pause at the beginning of one run in secs
+        stimParams.postScanDurSecs        = 10; % pause at the end of one run in secs
+        stimParams.numOfStimulators       = 5;
         stimParams.modulatingFreq         = 6;
         stimParams.carrierFreq            = 30;
         
@@ -68,7 +69,7 @@ switch experimentType
                 error('Unknown modality')
         end
         
-        numberOfRuns = 4;
+        numberOfRuns = 8;
         
         %loop through the conditions
         for kk = 1:length(conditions)
