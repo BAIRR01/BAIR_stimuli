@@ -52,7 +52,7 @@ switch experimentType
         stimParams.preScanDurSecs         = 0; % pause at the beginning of one run in secs
         stimParams.postScanDurSecs        = 10; % pause at the end of one run in secs
         stimParams.numOfStimulators       = 5;
-        stimParams.modulatingFreq         = 6;
+        stimParams.modulatingFreq         = 4;
         stimParams.carrierFreq            = 30;
         
         %reset TR
