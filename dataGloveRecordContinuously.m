@@ -1,3 +1,6 @@
+[subjID, sessionID, ssDefined] = bairWhichSubjectandSession();
+if ~ssDefined, return; end
+
 glovePointer = initializeDataGlove();
 
 t0 = GetSecs();  
@@ -5,9 +8,12 @@ sampleTime = 2/60;
 counter = 1;
 
 pth = fullfile(vistadispRootPath, 'Data');
-fname = sprintf('subj00DataGlove_%s', datestr(now, 'yyyy_mm_dd_hh_MM_ss'));
+fname = sprintf('sub-%s_ses-nyumeg%2d_DataGlove_%s',subjID, sessionID, datestr(now, 'yyyy_mm_dd_hh_MM_ss'));
 
 fid = fopen(fullfile(pth, fname) ,'w'); 
+
+figure;
+hold on;
 
 while true
     recordTime = sampleTime * counter;
@@ -22,7 +28,7 @@ while true
     end
     
     fprintf(fid, '\n');
- 
+ plot (data);
     counter = counter + 1;
 end
 
