@@ -12,9 +12,10 @@ counter      = 1;
 recordData   = true;
 
 % set path and file name for saving
-pth   = fullfile(vistadispRootPath, 'Data');
-fname = sprintf('sub-%s_ses-nyumeg%2d_DataGlove_%s',subjID, sessionID, datestr(now, 'yyyy_mm_dd_hh_MM_ss'));
-fid   = fopen(fullfile(pth, fname) ,'w');
+pth       = fullfile(vistadispRootPath, 'Data');
+printTime = datestr(now, 'yyyy_mm_dd_hh_MM_ss');
+fname     = sprintf('sub-%s_ses-nyumeg%s_DataGlove_%s',subjID, sessionID, printTime);
+fid       = fopen(fullfile(pth, fname) ,'w');
 
 % initialize figure and a line for each finger
 f = figure; hold on
