@@ -1,41 +1,49 @@
+% Records from the dataglove continuously (for use at MEG)
+
+% get the subject and session for file name
 [subjID, sessionID, ssDefined] = bairWhichSubjectandSession();
 if ~ssDefined, return; end
 
+% initialize the dataglove and set t0
 glovePointer = initializeDataGlove();
+t0           = GetSecs();
+sampleTime   = 2/60;
+counter      = 1;
+recordData   = true;
 
-t0 = GetSecs();
-sampleTime = 2/60;
-counter = 1;
-
-pth = fullfile(vistadispRootPath, 'Data');
+% set path and file name for saving
+pth   = fullfile(vistadispRootPath, 'Data');
 fname = sprintf('sub-%s_ses-nyumeg%2d_DataGlove_%s',subjID, sessionID, datestr(now, 'yyyy_mm_dd_hh_MM_ss'));
+fid   = fopen(fullfile(pth, fname) ,'w');
 
-fid = fopen(fullfile(pth, fname) ,'w');
-
+% initialize figure and a line for each finger
 f = figure; hold on
 for ff = 1:5
     f(ff) = animatedline;
 end
-recordData = true;
 
+% Start recording
 while recordData
     recordTime = sampleTime * counter;
-    t = GetSecs() - t0;
+    t          = GetSecs() - t0;
+    % wait until specific times to record data 
     WaitSecs(recordTime - t);
     data = sampleDataglove (glovePointer);
     
-    
+    % write it to the file
     fprintf(fid,  '%s\t', datestr(now, 'hh_MM_ss_FFF'));
     for ii = 1:length(data)
         fprintf(fid,  '%d\t', data(ii));
     end
     fprintf(fid, '\n');
+    
+    % plot it 
     for ff = 1:5
         addpoints(f(ff), counter, data(1,ff))
     end
     drawnow
-    counter = counter + 1;
     
+    % check for a q as keyboard input to stop recording
     [ssKeyIsDown,~,ssKeyCode] = KbCheck(-1);
     
     if ssKeyIsDown
@@ -48,6 +56,7 @@ while recordData
             recordData = false;
         end
     end
+    counter = counter + 1;
 end
 
 fclose(fid);
