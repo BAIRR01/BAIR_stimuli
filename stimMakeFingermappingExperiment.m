@@ -106,8 +106,10 @@ fname = sprintf('%s_%s_%d.mat', stimParams.site,lower(experimentType), runNum);
 % Add table with elements to write to tsv file for BIDS
 onset           = round(stimulus.onsets(1:end-1),3,'decimals')';
 duration        = round(diff(onsets),3, 'decimals')';
-trial_type      = cat(2,stimulus.movementCat,repmat(stimulus.movementCat(2:end),1,3))';
-trial_name      = cat(2,stimulus.categories,repmat(stimulus.categories(2:end),1,3))';
+%trial_type      = cat(2,stimulus.movementCat,repmat(stimulus.movementCat(2:end),1,3))';
+%trial_name      = cat(2,stimulus.categories,repmat(stimulus.categories(2:end),1,3))';
+trial_type      = stimulus.movementCat';
+trial_name      = stimulus.categories';
 stim_file       = repmat(fname, length(onset),1);
 stim_file_index = imgSeq(1:end-1);
 
