@@ -88,7 +88,7 @@ imagesPerMovement = round(stimDurationSeconds*(frameRate));
 sequencePerTrial = ones(1,imagesPerTrial);
 sequencePerMovement = ones(1,imagesPerMovement)+1; % cue color change is 2
 for ii = 1:length(movementOnsets)
-    indices = movementOnsetIndices(ii) + (0:imagesPerMovement-1);
+    indices = round(movementOnsetIndices(ii)) + (0:imagesPerMovement-1);
     sequencePerTrial(indices) = sequencePerMovement;
 end
 
