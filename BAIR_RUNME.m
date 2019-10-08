@@ -58,6 +58,7 @@ params.calibration      = siteSpecs.displays{1};
 params.triggerKey       = siteSpecs.trigger{1};
 params.useSerialPort    = siteSpecs.serialport;
 params.useEyeTracker    = siteSpecs.eyetracker;
+params.usePhotoDiode    = siteSpecs.photodiode;
 params.shiftDestRect    = siteSpecs.displaypos;
 params.sensoryDomain    = sensoryDomain;
 params.useDataGlove     = false; 
