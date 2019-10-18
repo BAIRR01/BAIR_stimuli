@@ -37,7 +37,7 @@ stimulus.srcRect =  [left, top, right, bottom];
 
 % Where to put it? (Destination rect)
 left   = (screenWidthInPixels - cropSizeInPixels)/2;
-top    = (screenHeightInPixels-cropSizeInPixels)/2;
+top    = (screenHeightInPixels - cropSizeInPixels)/2;
 right  = screenWidthInPixels - left; 
 bottom = screenHeightInPixels - top;
 
