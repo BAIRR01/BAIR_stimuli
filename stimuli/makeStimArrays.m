@@ -1,6 +1,7 @@
 clear all;
 %stimDir = '/Users/iris/fromNIHcomputer/groenii/Experiments_local/6categorylocalizer/stims';
-stimDir = '/Users/iris/DataAnalyses_local/IRIS_H6_WeibullStop/tmp_stimuli';
+%stimDir = '/Users/iris/DataAnalyses_local/IRIS_H6_WeibullStop/tmp_stimuli';
+stimDir = '/Volumes/GoogleDrive/My Drive/temp/sixcatlocalizer';
 
 cd(stimDir);
 d = dir(stimDir);

@@ -26,7 +26,7 @@ switch stimulusType
         numberOfImagesPerCat = 40;
 
         % Pre-allocate arrays to store images
-        images = uint8([]);%:images = zeros([imageSizeInPixels  3 length(categories) * numberOfImagesPerCat], 'uint8');
+        images = ones([imageSizeInPixels  3 length(categories) * numberOfImagesPerCat], 'uint8')*128;% fill with background color
         im_cell = cell([1 length(categories)]);
         catindex = zeros(1, length(categories) * numberOfImagesPerCat);
         imCount = 1;
@@ -54,10 +54,20 @@ switch stimulusType
             for ii = 1:numberOfImagesPerCat
                
                 inputImage = imageArray(:,:,:,imageIndex(ii));
-                %TODO fix nonsquare images
-                 if size(inputImage,1) ~= size(inputImage,2)
-                     scaleFac = max(size(inputImage))/max(imageSizeInPixels);
-                     inputImage = imresize(inputImage, scaleFac);
+                imHeight = size(inputImage,1);
+                imWidth = size(inputImage,2);
+                %fix nonsquare images
+                 if imHeight ~= imWidth
+                    scaleFac = max(imageSizeInPixels)/max(size(inputImage));
+                    resizedImage = imresize(inputImage, scaleFac);
+                    % pad with background color along shortest dimension
+                    for dim = 1:2
+                        diffPixels = imageSizeInPixels(dim)-size(resizedImage,dim);
+                        if diffPixels > 0
+                            padImage = ones([diffPixels/2 imageSizeInPixels(1) 3])*128; % backgroundColor
+                            inputImage = cat(dim, padImage, resizedImage, padImage);
+                        end
+                    end
                  else
                     inputImage = imresize(inputImage, imageSizeInPixels);
                  end
@@ -70,13 +80,13 @@ switch stimulusType
         end
 
         % Set durations and ISI
-        durations = ones(1,size(images,4))*0.2;
+        durations = ones(1,size(images,4))*0.1;
         ISI = zeros(1,size(images,4));
 
         % Generate a number specific for this stimulusType and use
         % this to set seed for stimulus sequence generator below
         % (so we don't use the same sequence for each stimulusType)
-        taskID = 11; 
+        taskID = 101; 
 end
 
 % Make individual trial sequences
@@ -87,7 +97,7 @@ rng(runNumber+taskID,'twister');
 stim_seq = randperm(numberOfStimuli);
 
 % Add blank
-images(:,:,:,end+1) = 128;%mode(images(:));
+images(:,:,:,end+1) = 128; %mode(images(:));
 BLANK = size(images,4);
 
 % This is the stimulus structure used by vistadisp
@@ -96,7 +106,8 @@ stimulus.cmap         = stimParams.stimulus.cmap;
 stimulus.srcRect      = stimParams.stimulus.srcRect;
 stimulus.dstRect      = stimParams.stimulus.destRect;
 stimulus.display      = stimParams.display;
-
+%if size(inputImage,1) ~= size(inputImage,2)
+    
 % Put everything into stimulus struct
 stimulus.categories   = categories;
 stimulus.images       = images;

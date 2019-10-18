@@ -134,7 +134,7 @@ prescanSeqTimes = 0:1/frameRate:stimulus.prescan-(1/frameRate);
 postscanSeqTimes = (1/frameRate:1/frameRate:stimulus.postscan)+totalTime+stimulus.prescan;
 
 stimulus.seqtiming = [prescanSeqTimes updatedSeqTimes postscanSeqTimes];
-stimulus.seq = [zeros(1,length(prescanSeqTimes)) stimulus.seq zeros(1,length(postscanSeqTimes))];
+stimulus.seq = [zeros(1,length(prescanSeqTimes))+blankImageIndex stimulus.seq zeros(1,length(postscanSeqTimes))+blankImageIndex];
 stimulus.onsets = stimulus.onsets + stimulus.prescan;
 
 % Get onsets

@@ -40,15 +40,38 @@ switch stimulusType
 
         % Category-specific settings
         numberOfCategories = length(categories);
-
+        
+                
         % Create the stimuli
         for cc = 1:numberOfCategories
 
             fprintf('[%s]: Creating stimuli at %d x %d pixels resolution: %s.\n',mfilename,imageSizeInPixels(1),imageSizeInPixels(2), categories{cc});
             imageArray = eval(categories{cc});    
             totalNumberOfImagesAvailable = size(imageArray,4);
+            % Remove a few stimuli with bad backgrounds
+            switch categories{cc}
+                case 'objects'
+                    exclude = [121 131 141 159 172]; % These are natural objects
+                    exclude = [exclude exclude-120]; % also remove same number of manmade objects
+                    ind = setdiff(1:totalNumberOfImagesAvailable, exclude);
+                case 'bodies'
+                    exclude1 = [1 12]; % feet
+                    exclude2 = [126 131 132 134 140 144 146 148 152:155 161 165 168 172 173 204 207 210 214 221 225 240]; % hands
+                    exclude = [exclude1 exclude2(1:(end-length(exclude1)))-120]; % also remove same number feet
+                    ind = setdiff(1:totalNumberOfImagesAvailable, exclude);
+                otherwise
+                    ind = 1:totalNumberOfImagesAvailable;
+            end
+            imageArray = imageArray(:,:,:,ind);            
+            totalNumberOfImagesAvailable = length(ind);
+                    
             % Pick which stimuli to select from original set
             % ODD for runNum == 1, EVEN for runNum == 2;
+            if mod(runNumber,2) ~= 0
+                startInx = 1;
+            else
+                startInx = 2;
+            end
             switch categories{cc}
                 case {'bodies', 'faces', 'objects'}
                     % bodies: 1:120 are feet, 121:240 are hands
@@ -56,16 +79,16 @@ switch stimulusType
                     % objects: 1:120 are manmade, 121:240 are natural
                     numberOfImagesPerSubCat = numberOfImagesPerCat/2;
                     totalNumberOfImagesAvailable = totalNumberOfImagesAvailable/2;
-                    imageIndex = runNumber:totalNumberOfImagesAvailable/numberOfImagesPerSubCat:totalNumberOfImagesAvailable;
+                    imageIndex = startInx:totalNumberOfImagesAvailable/numberOfImagesPerSubCat:totalNumberOfImagesAvailable;
                     imageIndex = [imageIndex imageIndex+totalNumberOfImagesAvailable];
                 case {'buildings', 'scrambled'}
-                    imageIndex = runNumber:totalNumberOfImagesAvailable/numberOfImagesPerCat:totalNumberOfImagesAvailable;
+                    imageIndex = startInx:totalNumberOfImagesAvailable/numberOfImagesPerCat:totalNumberOfImagesAvailable;
                 case 'scenes'
                     % scenes: 1:80 are indoor, 81:160 are outdoor
                     % manmade, 161:240 are outdoor natural
                     numberOfImagesPerSubCat = round(numberOfImagesPerCat/3);
                     totalNumberOfImagesAvailable = totalNumberOfImagesAvailable/3;
-                    imageIndex1 = runNumber:totalNumberOfImagesAvailable/numberOfImagesPerSubCat:totalNumberOfImagesAvailable;
+                    imageIndex1 = startInx:totalNumberOfImagesAvailable/numberOfImagesPerSubCat:totalNumberOfImagesAvailable;
                     imageIndex = [imageIndex1 imageIndex1+totalNumberOfImagesAvailable imageIndex1+totalNumberOfImagesAvailable*2];
                     imageIndex = round(imageIndex);
             end
@@ -89,7 +112,27 @@ switch stimulusType
                 imCount = imCount + 1;
             end
         end
-
+        
+        % Make sure images that contain grayscale pixels match the background
+        backgroundColor = mode(images(:));
+        fprintf('[%s]: Fixing stimulus backgrounds...\n',mfilename);
+        for ii = 1:size(images,4)
+            if ~contains(categories(catindex(ii)), 'scenes') % don't do this for the scenes
+                I = images(:,:,:,ii);
+                Imode = mode(I(:));
+                if Imode ~= backgroundColor
+                   ind = sum(I==Imode,3)>1;
+                   %I(I == Imode) = backgroundColor;
+                   for dim = 1:size(I,3)
+                       temp_I = I(:,:,dim);
+                       temp_I(ind) = backgroundColor;
+                       I(:,:,dim) = temp_I;
+                   end
+                   images(:,:,:,ii) = I;
+                end   
+            end
+        end
+            
         % Set durations and ISI
         durations = ones(1,size(images,4))*0.5;
         ISI = zeros(1,size(images,4));
@@ -97,7 +140,9 @@ switch stimulusType
         % Generate a number specific for this stimulusType and use
         % this to set seed for stimulus sequence generator below
         % (so we don't use the same sequence for each stimulusType)
-        taskID = 11; 
+        rng('shuffle');
+        taskIDs = randi(100);
+        taskID = taskIDs(1);
 end
 
 % Make individual trial sequences
@@ -110,6 +155,7 @@ stim_seq = randperm(numberOfStimuli);
 % Add blank
 images(:,:,:,end+1) = mode(images(:));
 BLANK = size(images,4);
+
 
 % This is the stimulus structure used by vistadisp
 stimulus              = [];
@@ -258,17 +304,17 @@ stimulus.modality = stimParams.modality;
 fname = sprintf('%s_%s_%d.mat', site, lower(stimulusType), runNumber);
 
 % Add table with elements to write to tsv file for BIDS
-onset       = round(stimulus.onsets,3)';
-duration    = round(stimulus.duration(stimulus.trialindex),3)';
-ISI         = round(stimulus.ISI(stimulus.trialindex),3)';
-trial_type  = stimulus.cat(stimulus.trialindex)'; 
-trial_name  = stimulus.categories(trial_type - min(stimulus.cat)+1)';
-stim_file   = repmat(fname, numberOfStimuli ,1);
+onset           = round(stimulus.onsets,3)';
+duration        = round(stimulus.duration(stimulus.trialindex),3)';
+ISI             = round(stimulus.ISI(stimulus.trialindex),3)';
+trial_type      = stimulus.cat(stimulus.trialindex)'; 
+trial_name      = stimulus.categories(trial_type - min(stimulus.cat)+1)';
+stim_file       = repmat(fname, numberOfStimuli ,1);
 stim_file_index = stimulus.trialindex';
 
-stimulus.tsv = table(onset, duration, ISI, trial_type, trial_name, stim_file, stim_file_index);
+stimulus.tsv    = table(onset, duration, ISI, trial_type, trial_name, stim_file, stim_file_index);
 
-stimulus.site     = site;
+stimulus.site   = site;
 
 % save 
 fprintf('[%s]: Saving stimuli in: %s\n', mfilename, fullfile(vistadispRootPath, 'StimFiles',  fname));

@@ -1,9 +1,8 @@
 function [experimentType, selectionMade] = pilotWhichExperimentVisual
 
 % Which experiment?
-experimentTypes = {'SIXCATLOC' 'EIGHTCATLOC' 'KALANITLOC' ...
-    'SCENEFACELATERAL' 'KRAVITZSCENES','BONNERSCENES', ...
-    'OBJECTDETECTION'};
+experimentTypes = {'SIXCATLOC','OBJECTDETECTION'}; 
+%'EIGHTCATLOC' 'FLOC' 'SCENEFACELATERAL' 'KRAVITZSCENES','BONNERSCENES'
 [whichExperiment, selectionMade] = listdlg('PromptString', 'Which experiment?', 'ListString', experimentTypes);
 
 if selectionMade 
