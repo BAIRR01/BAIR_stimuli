@@ -26,7 +26,7 @@ switch stimulusType
         numberOfImagesPerCat = 40;
 
         % Pre-allocate arrays to store images
-        images = zeros([imageSizeInPixels  3 length(categories) * numberOfImagesPerCat], 'uint8');
+        images = uint8([]);%:images = zeros([imageSizeInPixels  3 length(categories) * numberOfImagesPerCat], 'uint8');
         im_cell = cell([1 length(categories)]);
         catindex = zeros(1, length(categories) * numberOfImagesPerCat);
         imCount = 1;
@@ -55,10 +55,12 @@ switch stimulusType
                
                 inputImage = imageArray(:,:,:,imageIndex(ii));
                 %TODO fix nonsquare images
-%                 if size(inputImage,1) ~= size(inputImage,2)
-%                     imageSizeInPixels
-%                 end
-                inputImage = imresize(inputImage, imageSizeInPixels);
+                 if size(inputImage,1) ~= size(inputImage,2)
+                     scaleFac = max(size(inputImage))/max(imageSizeInPixels);
+                     inputImage = imresize(inputImage, scaleFac);
+                 else
+                    inputImage = imresize(inputImage, imageSizeInPixels);
+                 end
 
                 images(:,:,:,imCount) = inputImage;
                 im_cell{cc}(:,:,:,ii) = inputImage;
@@ -141,8 +143,8 @@ switch(lower(stimParams.modality))
         ITIs = round(ITIs/onsetTimeMultiple)*onsetTimeMultiple;
 
     case {'ecog' 'eeg' 'meg'}
-        ITI_min  = 0.75;
-        ITI_max  = 1.25;
+        ITI_min  = 1.25;
+        ITI_max  = 1.75;
         prescan  = 3; % seconds
         postscan = 3; % seconds
 

@@ -4,8 +4,9 @@
 % 2. Eight category localizer
 % 3. Kalanit category localizer
 % 4. Scene face lateral
-% 4. Kravitz scene categories
-% 5. Bonner scene affordance
+% 5. Kravitz scene categories
+% 6. Bonner scene affordance
+% 7. Object detection
 
 % Prompt for ExperimentSpecs
 [experimentSpecs, whichSite, selectionMade] = pilotExperimentSpecs('prompt', true);
