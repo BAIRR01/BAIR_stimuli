@@ -29,7 +29,7 @@ stimDiameterDeg = 16.6;       % degrees
 stimParams = stimInitialize(experimentSpecs, whichSite, stimDiameterDeg);
 
 switch experimentType
-    case {'SIXCATLOC'} %
+    case {'SIXCATLOC', 'SIXCATLOCTEMPORAL'} %
         % Make SIXCATLOC experiment
 
         % We have 2 unique Master runs with fixed stimulus orders that will

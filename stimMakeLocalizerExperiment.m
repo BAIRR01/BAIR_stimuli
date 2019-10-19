@@ -8,10 +8,9 @@ function stimMakeLocalizerExperiment(stimParams, runNumber, stimulusType, onsetT
 site = stimParams.experimentSpecs.sites{1};
 imageSizeInPixels = size(stimParams.stimulus.images);
 
-switch stimulusType
-    case 'SIXCATLOC'
+if contains(stimulusType, 'SIXCATLOC')
 
-        fprintf('[%s]: Creating stimulus file for stimulusType: SIXCATLOC, runID: %d.\n',mfilename, runNumber);
+        fprintf('[%s]: Creating stimulus file for stimulusType: %s, runID: %d.\n',mfilename, runNumber, stimulusType);
 
         categories = {...
             'bodies' ...
@@ -41,7 +40,17 @@ switch stimulusType
         % Category-specific settings
         numberOfCategories = length(categories);
         
-                
+        % Set durations and ISI
+        if contains(stimulusType, 'TEMPORAL')
+            durations = [];
+            ISI = [];
+            tempIndex = [1 2 4 8 16 32]/stimParams.display.frameRate;
+            numberOfUniqueTrialsPerCat = numberOfImagesPerCat/length(tempIndex)/2;
+        else  
+            durations = ones(1,size(images,4))*0.5;
+            ISI = zeros(1,size(images,4)); 
+        end
+    
         % Create the stimuli
         for cc = 1:numberOfCategories
 
@@ -111,6 +120,37 @@ switch stimulusType
                 catindex(imCount) = cc+categoryNumberToAdd;
                 imCount = imCount + 1;
             end
+            
+            if contains(stimulusType, 'TEMPORAL')
+                % Set durations and ISIs            
+                these_durations = [];
+
+                % One pulse durations:
+                for ii = 1:length(tempIndex)
+                    these_durations = [these_durations ones(1,numberOfUniqueTrialsPerCat)*tempIndex(ii)];
+                end
+
+                % Append two pulse durations:
+                these_durations = [these_durations ones(1,length(tempIndex)*numberOfUniqueTrialsPerCat)*8/stimParams.display.frameRate];
+
+                % One pulse ISI:
+                these_ISI = zeros(1,numberOfUniqueTrialsPerCat*length(tempIndex));
+
+                % Append two pulse ISI:
+                for ii = 1:length(tempIndex)
+                    these_ISI = [these_ISI ones(1,numberOfUniqueTrialsPerCat)*tempIndex(ii)];
+                end   
+
+                % shuffle the assignment of temporal condition to stimulus:
+                rng('shuffle');
+                ind = randperm(length(these_durations));
+                these_durations = these_durations(ind);
+                these_ISI = these_ISI(ind);
+
+                % append across categories
+                durations = [durations these_durations];
+                ISI = [ISI these_ISI];
+            end
         end
         
         % Make sure images that contain grayscale pixels match the background
@@ -133,10 +173,6 @@ switch stimulusType
             end
         end
             
-        % Set durations and ISI
-        durations = ones(1,size(images,4))*0.5;
-        ISI = zeros(1,size(images,4));
-
         % Generate a number specific for this stimulusType and use
         % this to set seed for stimulus sequence generator below
         % (so we don't use the same sequence for each stimulusType)
