@@ -51,14 +51,14 @@ switch stimulusType
             % Remove a few stimuli with bad backgrounds
             switch categories{cc}
                 case 'objects'
-                    exclude = [121 131 141 159 172]; % These are natural objects
+                    exclude = [121 131 141 172]; % These are natural objects
                     exclude = [exclude exclude-120]; % also remove same number of manmade objects
                     ind = setdiff(1:totalNumberOfImagesAvailable, exclude);
-                case 'bodies'
-                    exclude1 = [1 12]; % feet
-                    exclude2 = [126 131 132 134 140 144 146 148 152:155 161 165 168 172 173 204 207 210 214 221 225 240]; % hands
-                    exclude = [exclude1 exclude2(1:(end-length(exclude1)))-120]; % also remove same number feet
-                    ind = setdiff(1:totalNumberOfImagesAvailable, exclude);
+%                 case 'bodies'
+%                     exclude1 = [1 12]; % feet
+%                     exclude2 = [126 131 132 134 140 144 146 148 152:155 161 165 168 172 173 204 207 210 214 221 225 240]; % hands
+%                     exclude = [exclude1 exclude2(1:(end-length(exclude1)))-120]; % also remove same number feet
+%                     ind = setdiff(1:totalNumberOfImagesAvailable, exclude);
                 otherwise
                     ind = 1:totalNumberOfImagesAvailable;
             end

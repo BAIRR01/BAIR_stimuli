@@ -36,7 +36,7 @@ switch experimentType
         % be identical for other modalities. Timing (ISI) is different
         % between modalities; the fixation sequence is generated anew for
         % each new experiment (run)
-        numberOfRuns           = 6;        
+        numberOfRuns           = 2;        
         onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR (fMRI experiments only)
         
         for runNum = 1:numberOfRuns
