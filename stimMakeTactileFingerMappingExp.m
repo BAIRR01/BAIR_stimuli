@@ -181,18 +181,17 @@ for jj = 1:length(directions)
     % Set TSV file information
     onsets          = round(stimParams.stimOnsetsSecs,3)';
     duration        = repmat(stimParams.stimDurSecs, length(stimParams.stimOnsetsSecs),1);
-    on_dur          = repmat(stimParams.onDurSecs, length(stimParams.stimOnsetsSecs),1);
-    off_dur         = repmat(stimParams.offDurSecs, length(stimParams.stimOnsetsSecs),1);
+    ISI             = repmat(stimParams.offDurSecs, length(stimParams.stimOnsetsSecs),1);
     trial_type      = stimParams.fingerIdx(stimulatorOrder)';
     trial_name      = stimParams.fingers(stimulatorOrder)';
-    stim_frequency  = repmat(110, length(stimParams.stimOnsetsSecs),1);
+    stim_frequency  = repmat(stimParams.carrierFreq, length(stimParams.stimOnsetsSecs),1);
     stim_amplitude  = ones(length(stimParams.stimOnsetsSecs),1);
     stim_file       = repmat(fname, length(stimParams.stimOnsetsSecs),1);
     stim_order      = repmat(directions(jj), length(stimParams.stimOnsetsSecs),1);
     
-    stimParams.tsv = table(onsets, duration, on_dur, off_dur, trial_type, trial_name, ...
+    stimParams.tsv = table(onsets, duration, ISI, trial_type, trial_name, ...
         stim_frequency, stim_amplitude, stim_file, stim_order);
-    stimulus.tsv = table(onsets, duration, on_dur, off_dur, trial_type, trial_name, ...
+    stimulus.tsv = table(onsets, duration, ISI, trial_type, trial_name, ...
         stim_frequency, stim_amplitude, stim_file, stim_order);
     
         

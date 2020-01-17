@@ -137,7 +137,7 @@ switch experimentType
     case 'RANDOM_5FINGERS' % single fingers in random order
         
         directions = {'Random'};
-        condition = 'Tactile';
+        condition = 'TactileFingerMapping';
         stimParams.stimDurSecs              = 1; % seconds, length of stimulation at one finger
         stimParams.numReps                  = 10; % how many repetitions across all fingers in one run
         stimParams.interStimIntervalSecs    = 3; % pause in between single stimuli in seconds
@@ -173,14 +173,14 @@ switch experimentType
         
     case 'TEMPORAL' % all fingers, different durations
         
-        condition = 'TactileTemporal';
-        stimParams.testedDurSecs            = [0.05, 0.2, 0.4, 0.8, 1.0, 1.2]; % seconds, length of tested stimulation (either constant vibration or gap between vibrations)
+        condition = 'TactileTemporalVisualTiming';
+% %         stimParams.testedDurSecs            = [0.05, 0.2, 0.4, 0.8, 1.0, 1.2]; % seconds, length of tested stimulation (either constant vibration or gap between vibrations)
+        stimParams.testedDurSecs            = round([1, 2, 4, 8, 16, 32]/60, 3); % seconds, length of tested stimulation (either constant vibration or gap between vibrations)
         stimParams.tapCondition             = [1, 2]; % either constant vibration == 1 or gap between two vibrations == 2
-        stimParams.tapDurSecs               = 0.3; % seconds, duration of the taps in 2 tap condition
-        stimParams.numReps                  = 2; % how many repetitions across all fingers in one run
-        stimParams.interStimIntervalSecs    = 3; % pause in between single stimuli in seconds
-        stimParams.preScanDurSecs           = 5; % pause at the beginning of one run in secs
-        stimParams.postScanDurSecs          = 5; % pause at the end of one run in secs
+        stimParams.tapDurSecs               = round(8/60,3); % seconds, duration of the taps in 2 tap condition
+        stimParams.numReps                  = 6; % how many repetitions across all fingers in one run
+        stimParams.preScanDurSecs           = 3; % pause at the beginning of one run in secs
+        stimParams.postScanDurSecs          = 3; % pause at the end of one run in secs
         stimParams.numOfStimulators         = 5;
         stimParams.carrierFreq              = 110; % base vibration in Hz
 

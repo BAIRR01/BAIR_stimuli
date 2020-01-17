@@ -19,6 +19,12 @@ stimParams.fingers                  = {'thumb','index', 'middle', 'ring', 'littl
 
 stimParams.tactileIntensity         = 1.0; % maximal value is 2, check state of amplifier, too
 
+stimParams.conditionNames = {'ONE-PULSE-1','ONE-PULSE-2','ONE-PULSE-3', ...
+    'ONE-PULSE-4','ONE-PULSE-5','ONE-PULSE-6',...
+    'TWO-PULSE-1', 'TWO-PULSE-2','TWO-PULSE-3', ...
+    'TWO-PULSE-4','TWO-PULSE-5','TWO-PULSE-6'};
+stimParams.conditionNumbers = 119:130;
+
 switch lower(stimParams.modality)
     case 'fmri'
         % no trigger sequence needed
@@ -32,41 +38,50 @@ stimParams.testedDurSamples         = round(stimParams.testedDurSecs * stimParam
 stimParams.tapDurSamples            = stimParams.tapDurSecs * stimParams.NIdaqRate;
 
 % create condition matrix
-stimParams.conditions = repmat(combvec(stimParams.testedDurSecs, stimParams.tapCondition),1, stimParams.numReps)';
+stimParams.conditionsUnique = combvec(stimParams.testedDurSecs, stimParams.tapCondition)';
+% add condition identifier
+stimParams.conditionsUnique = [stimParams.conditionsUnique, (1:size(stimParams.conditionsUnique,1))'];
+stimParams.conditions = repmat(stimParams.conditionsUnique, stimParams.numReps,1);
 % shuffle conditions
 stimParams.conditions = stimParams.conditions(randperm(size(stimParams.conditions, 1)), :);
 
-% random ISIs
-stimParams.ISIs = datasample(1+[1 2 4 8 16 32]/stimParams.display.frameRate, ...
-    size(stimParams.conditions, 1)-1);
-
+% random ITIs
+stimParams.ITIs = linspace(2.25,2.75,size(stimParams.conditions, 1)-1);
+stimParams.ITIs = stimParams.ITIs(randperm(length(stimParams.ITIs)));
 
 %% stimulus sequence timing
 %duration of the whole experiment
 stimParams.expDurSecs = sum(stimParams.conditions(:, 1)) ... %durations (1 and 2 tap)
     + length(stimParams.conditions(stimParams.conditions(:,2) == 2)) * 2 * stimParams.tapDurSecs ... % duration of the taps in 2 tap conditions
-    + sum(stimParams.ISIs) ...%pause after each stimulus
+    + sum(stimParams.ITIs) ...%pause after each stimulus
     + stimParams.preScanDurSecs + stimParams.postScanDurSecs;%pauses at the beginning and the end of the experiment
 %onsets of tactile stimuli(
 stimParams.stimOnsetsSecs = cumsum([stimParams.preScanDurSecs; ... %first stimulus starts after pre-experiment pause
     stimParams.conditions(1:end-1,1) + (stimParams.conditions(1:end-1,2) == 2) * 2 * stimParams.tapDurSecs ... % stimulus durations
-    + [0,stimParams.ISIs(1:end-1)]'... % ISI
+    + [0,stimParams.ITIs(1:end-1)]'... % ITI
     ]);
 
-% calculate in frames
+% calculate experiment duration in frames
 stimParams.expDurFrames = round(stimParams.expDurSecs * stimParams.display.frameRate);%duration of the whole experiment in frames
 
-
+% convert units
 stimParams.stimOnsetsSamples         = stimParams.stimOnsetsSecs*stimParams.NIdaqRate;%onsets of tactile stim in samples
 stimParams.stimOnsetsSecsFrameNormed = round(stimParams.stimOnsetsSecs*stimParams.display.frameRate)/stimParams.display.frameRate;
-stimParams.stimOnsetsFrames          = stimParams.stimOnsetsSecsFrameNormed*stimParams.display.frameRate;%onsets of new tactile stim in frames
+stimParams.stimOnsetsFrames          = round(stimParams.stimOnsetsSecsFrameNormed*stimParams.display.frameRate);%onsets of new tactile stim in frames
+% create timing analogous to the visual one
 stimParams.seqtiming                 = 0:(1/stimParams.display.frameRate):stimParams.expDurSecs;%frame onsets
 stimParams.fixSeq                    = ones(size(stimParams.seqtiming)); %determines whether and which type of fixation is shown
 stimParams.seq                       = ones(size(stimParams.seqtiming));
-
+% add trigger timing (visual, auditory)
+stimParams.trigSeq                   = zeros(size(stimParams.seqtiming));
+stimParams.trigSeq(stimParams.stimOnsetsFrames + 1) = 1;
+stimParams.trigSeq(1) = 1;
+stimParams.trigSeq(end) = 1;
+% store in stimulus structure
 stimulus.seqtiming = stimParams.seqtiming;
 stimulus.fixSeq = stimParams.fixSeq;
 stimulus.seq = stimParams.seq;
+stimulus.trigSeq = stimParams.trigSeq;
 
 % make a blank to insert between simulus presentations
 screenRect          = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
@@ -115,12 +130,18 @@ switch lower(stimParams.site)
         % add fake tactile channel
         stimParams.vibrotactileStimulus = [stimParams.vibrotactileStimulus, ...
             zeros(size(stimParams.vibrotactileStimulus,1),1)];
+        % Insert the trigger signal at the onset of the run
+        stimParams.vibrotactileStimulus(int64(1):int64(1 +stimParams.triggerSamples - 1), ...
+            stimParams.numOfStimulators + 1) = ones(stimParams.triggerSamples,1);
         % Loop through the stimulus sequence
         for ii = 1:length(stimParams.stimOnsetsSamples)
             % Insert the tactile signal at the respective time points and stimulator
             stimParams.vibrotactileStimulus(int64(stimParams.stimOnsetsSamples(ii) + 1):int64(stimParams.stimOnsetsSamples(ii) + 1) +stimParams.triggerSamples - 1, ...
                 stimParams.numOfStimulators + 1) = ones(stimParams.triggerSamples,1);
         end
+        % Insert the trigger signal at the end of the run
+        stimParams.vibrotactileStimulus(end - stimParams.triggerSamples : end - 1, ...
+            stimParams.numOfStimulators + 1) = ones(stimParams.triggerSamples,1);
 end
 
 %Save stimulus matrix, tsv info and make figures
@@ -142,16 +163,26 @@ if makeFigure
     saveas(f, fullfile(vistadispRootPath, 'StimFiles', sprintf('%s.png',fname(1:end-6))))
 end
 
+% Sparsify the visual stimulus sequence and the triggers (apart
+% from the tactile one)
+maxUpdateInterval = 0.25;
+stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
+
 % Set TSV file information
 onsets          = round(stimParams.stimOnsetsSecs,3);
-duration        = stimParams.conditions(:,1);
-trial_type      = stimParams.conditions(:,1);
-trial_name      = stimParams.conditions(:,1);
+duration        = stimParams.conditions(:,1) .* (stimParams.conditions(:,2) == 1) ...
+    + stimParams.tapDurSecs * (stimParams.conditions(:,2) == 2);
+ISI             = stimParams.conditions(:,1) .* (stimParams.conditions(:,2) == 2);
+trial_type      = stimParams.conditionNumbers(stimParams.conditions(:,3))';
+trial_name      = vertcat(stimParams.conditionNames{stimParams.conditions(:,3)});
+stim_frequency  = repmat(stimParams.carrierFreq, length(stimParams.stimOnsetsSecs),1);
+stim_amplitude  = ones(length(stimParams.stimOnsetsSecs),1);
 stim_file       = repmat(fname, length(stimParams.stimOnsetsSecs),1);
-stim_order      = stimParams.conditions(:,1);
-stim_file_index = repmat('n/a', length(stimParams.stimOnsetsSecs),1);
 
-stimParams.tsv = table(onsets, duration, trial_type, trial_name, stim_file, stim_file_index, stim_order);
+stimParams.tsv = table(onsets, duration, ISI, trial_type, trial_name, ...
+    stim_frequency, stim_amplitude, stim_file);
+stimulus.tsv = table(onsets, duration, ISI, trial_type, trial_name, ...
+    stim_frequency, stim_amplitude, stim_file);
 
 % store for main script calls
 stimulus.vibrotactileStimulus = stimParams.vibrotactileStimulus;
