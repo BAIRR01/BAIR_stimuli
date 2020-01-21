@@ -147,7 +147,7 @@ switch experimentType
         stimParams.carrierFreq              = 110; % base vibration in Hz
         stimParams.onDurSecs                = 0.4; % duration of constant vibration
         stimParams.offDurSecs               = 0.1; % duration of break betweeen constant vibrations
-
+        
         
         %reset TR
         TR = 1;
@@ -174,7 +174,7 @@ switch experimentType
     case 'TEMPORAL' % all fingers, different durations
         
         condition = 'TactileTemporalVisualTiming';
-% %         stimParams.testedDurSecs            = [0.05, 0.2, 0.4, 0.8, 1.0, 1.2]; % seconds, length of tested stimulation (either constant vibration or gap between vibrations)
+        % %         stimParams.testedDurSecs            = [0.05, 0.2, 0.4, 0.8, 1.0, 1.2]; % seconds, length of tested stimulation (either constant vibration or gap between vibrations)
         stimParams.testedDurSecs            = round([1, 2, 4, 8, 16, 32]/60, 3); % seconds, length of tested stimulation (either constant vibration or gap between vibrations)
         stimParams.tapCondition             = [1, 2]; % either constant vibration == 1 or gap between two vibrations == 2
         stimParams.tapDurSecs               = round(8/60,3); % seconds, duration of the taps in 2 tap condition
@@ -183,7 +183,7 @@ switch experimentType
         stimParams.postScanDurSecs          = 3; % pause at the end of one run in secs
         stimParams.numOfStimulators         = 5;
         stimParams.carrierFreq              = 110; % base vibration in Hz
-
+        
         
         %reset TR
         TR = 1;
@@ -205,6 +205,27 @@ switch experimentType
             % make stimulus for experiment
             stimMakeTactileTemporalExp(stimParams, runNum,...
                 condition, makeFigure);
+        end
+        
+    case 'STIMULUSTEST' % all fingers, different durations
+        
+        directions = {'All', 'Ascending', 'Descending'};
+        condition = 'TactTest';
+        
+        stimParams.stimDurSecs              = 1; % seconds, length of stimulation at one finger
+        stimParams.interStimIntervalSecs    = 0.5; % pause in between single stimuli in seconds
+        stimParams.numReps                  = 2; % how many repetitions across all fingers in one run
+        stimParams.preScanDurSecs           = 3; % pause at the beginning of one run in secs
+        stimParams.postScanDurSecs          = 3; % pause at the end of one run in secs
+        stimParams.numOfStimulators         = 5;
+        stimParams.carrierFreq              = 110; % base vibration in Hz
+        
+        numberOfRuns = 1;
+        
+        for runNum = 1:numberOfRuns
+            % make stimulus for experiment
+            stimMakeTactileStimulatorTest(stimParams, runNum,...
+                directions, condition, makeFigure);
         end
         
 end

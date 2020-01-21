@@ -185,7 +185,7 @@ for jj = 1:length(directions)
     trial_type      = stimParams.fingerIdx(stimulatorOrder)';
     trial_name      = stimParams.fingers(stimulatorOrder)';
     stim_frequency  = repmat(stimParams.carrierFreq, length(stimParams.stimOnsetsSecs),1);
-    stim_amplitude  = ones(length(stimParams.stimOnsetsSecs),1);
+    stim_amplitude  = repmat(stimParams.tactileIntensity,length(stimParams.stimOnsetsSecs),1);
     stim_file       = repmat(fname, length(stimParams.stimOnsetsSecs),1);
     stim_order      = repmat(directions(jj), length(stimParams.stimOnsetsSecs),1);
     
