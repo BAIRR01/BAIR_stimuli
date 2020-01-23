@@ -46,7 +46,7 @@ stimParams.conditions = repmat(stimParams.conditionsUnique, stimParams.numReps,1
 stimParams.conditions = stimParams.conditions(randperm(size(stimParams.conditions, 1)), :);
 
 % random ITIs
-stimParams.ITIs = linspace(2.25,2.75,size(stimParams.conditions, 1)-1);
+stimParams.ITIs = linspace(stimParams.minITI,stimParams.maxITI,size(stimParams.conditions, 1)-1);
 stimParams.ITIs = stimParams.ITIs(randperm(length(stimParams.ITIs)));
 
 %% stimulus sequence timing
