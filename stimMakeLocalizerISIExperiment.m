@@ -361,7 +361,7 @@ trial_type      = stimulus.cat(stimulus.trialindex)';
 trial_name      = stimulus.categories(trial_type - min(stimulus.cat)+1)';
 stim_file       = repmat(fname, numberOfStimuli ,1);
 stim_file_index = stimulus.trialindex';
-category_repeat = stimulus.repeats;
+category_repeat = stimulus.repeats';
 
 stimulus.tsv    = table(onset, duration, ISI, trial_type, trial_name, stim_file, stim_file_index, category_repeat);
 
