@@ -1,12 +1,14 @@
 % Make Pilot Visual Experiment Files
 %
 % 1. Six category localizer
-% 2. Eight category localizer
-% 3. Kalanit category localizer
-% 4. Scene face lateral
-% 5. Kravitz scene categories
-% 6. Bonner scene affordance
-% 7. Object detection
+% 2. Six category localizer temporal
+% 3. Object detection
+% Other options (To do):
+% 4. Eight category localizer
+% 5. Kalanit category localizer
+% 6. Scene face lateral
+% 7. Kravitz scene categories
+% 8. Bonner scene affordance
 
 % Prompt for ExperimentSpecs
 [experimentSpecs, whichSite, selectionMade] = pilotExperimentSpecs('prompt', true);
@@ -29,27 +31,41 @@ stimDiameterDeg = 16.6;       % degrees
 stimParams = stimInitialize(experimentSpecs, whichSite, stimDiameterDeg);
 
 switch experimentType
-    case {'SIXCATLOC', 'SIXCATLOCTEMPORAL'} %
+    case {'SIXCATLOC', 'SIXCATLOCTEMPORAL', 'SIXCATLOCTEMPORALDIFF'} %
         % Make SIXCATLOC experiment
 
-        % We have 2 unique Master runs with fixed stimulus orders that will
-        % be identical for other modalities. Timing (ISI) is different
-        % between modalities; the fixation sequence is generated anew for
-        % each new experiment (run)
-        numberOfRuns           = 2;        
+        % We have two unique sets of stimuli for even and odd runs.
+        % Stimulus order is randomized across runs.
+        % For temporal, assignment of temporal condition to image is fixed
+        % with a seed based on runnumber.
+        % Fixation sequence is generated anew for each run.
+        numberOfRuns           = 6;        
         onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR (fMRI experiments only)
         
         for runNum = 1:numberOfRuns
             stimMakeLocalizerExperiment(stimParams, runNum, experimentType, onsetTimeMultiple, TR);
         end   
+     
+    case {'SIXCATLOCISIDIFF'} %
+        
+        % We have two unique sets of stimuli for even and odd runs.
+        % Stimulus order is randomized across runs.
+        % For temporal, assignment of temporal condition to image is fixed
+        % with a seed based on runnumber.
+        % Fixation sequence is generated anew for each run.
+        numberOfRuns           = 1;        
+        onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR (fMRI experiments only)
+        
+        for runNum = 1:numberOfRuns
+            stimMakeLocalizerISIExperiment(stimParams, runNum, experimentType, onsetTimeMultiple, TR);
+        end 
         
 	case {'OBJECTDETECTION'} %
         % Make SIXCATLOC experiment
 
-        % We have 2 unique Master runs with fixed stimulus orders that will
-        % be identical for other modalities. Timing (ISI) is different
-        % between modalities; the fixation sequence is generated anew for
-        % each new experiment (run)
+        % Stimulus order is randomized across runs.
+        % Currently all 480 stimuli are loaded, subselection may be better.
+        % Fixation sequence is generated anew for each run.
         numberOfRuns           = 2;        
         onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR (fMRI experiments only)
         

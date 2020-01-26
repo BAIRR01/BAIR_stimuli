@@ -1,4 +1,4 @@
-function stimMakeLocalizerExperiment(stimParams, runNumber, stimulusType, onsetTimeMultiple, TR)
+function stimMakeLocalizerISIExperiment(stimParams, runNumber, stimulusType, onsetTimeMultiple, TR)
 
 %% LOCALIZER EXPERIMENT
 
@@ -41,15 +41,11 @@ if contains(stimulusType, 'SIXCATLOC')
         numberOfCategories = length(categories);
         
         % Set durations and ISI
-        if contains(stimulusType, 'TEMPORAL')
-            durations = [];
-            ISI = [];
-            tempIndex = [1 2 4 8 16 32]/stimParams.display.frameRate;
-            numberOfUniqueTrialsPerCat = numberOfImagesPerCat/length(tempIndex)/2;
-        else  
-            durations = ones(1,size(images,4))*0.5;
-            ISI = zeros(1,size(images,4)); 
-        end
+        durations = [];
+        ISI = [];
+        repeats = [];
+        tempIndex = [1 2 4 8 16 32]/stimParams.display.frameRate;
+        numberOfUniqueTrialsPerCat = numberOfImagesPerCat/length(tempIndex)/2;
     
         % Create the stimuli
         for cc = 1:numberOfCategories
@@ -104,13 +100,6 @@ if contains(stimulusType, 'SIXCATLOC')
             imageIndex = round(imageIndex);
 
             for ii = 1:numberOfImagesPerCat
-                %inputImage = imageArray(:,:,imageIndex(ii));
-                %imageForThisTrial = createFilteredStimulus(stimParams,inputImage,imageProcessingParams);
-
-                % Double to unsigned 8 bit integer, needed for vistadisp
-                %image8Bit = uint8((imageForThisTrial+.5)*255);
-                %images(:,:,imCount) = image8Bit;
-                %im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
 
                 inputImage = imageArray(:,:,:,imageIndex(ii));
                 inputImage = imresize(inputImage, imageSizeInPixels);
@@ -120,38 +109,35 @@ if contains(stimulusType, 'SIXCATLOC')
                 catindex(imCount) = cc+categoryNumberToAdd;
                 imCount = imCount + 1;
             end
+                            
+            % Two pulse durations:
+            these_durations = ones(1,length(tempIndex)*numberOfUniqueTrialsPerCat)*8/stimParams.display.frameRate;
+            these_durations = [these_durations these_durations];
             
-            if contains(stimulusType, 'TEMPORAL')
-                
-                % Set durations and ISIs            
-                these_durations = [];
+            % Append two pulse ISI:
+            these_ISI = [];
+            for ii = 1:length(tempIndex)
+                these_ISI = [these_ISI ones(1,numberOfUniqueTrialsPerCat)*tempIndex(ii)];
+            end   
+            these_ISI = [these_ISI these_ISI];
 
-                % One pulse durations:
-                for ii = 1:length(tempIndex)
-                    these_durations = [these_durations ones(1,numberOfUniqueTrialsPerCat)*tempIndex(ii)];
-                end
+             % Same category repeats
+            these_repeats = zeros(1,numberOfUniqueTrialsPerCat*length(tempIndex));
 
-                % Append two pulse durations:
-                these_durations = [these_durations ones(1,length(tempIndex)*numberOfUniqueTrialsPerCat)*8/stimParams.display.frameRate];
-
-                % One pulse ISI:
-                these_ISI = zeros(1,numberOfUniqueTrialsPerCat*length(tempIndex));
-
-                % Append two pulse ISI:
-                for ii = 1:length(tempIndex)
-                    these_ISI = [these_ISI ones(1,numberOfUniqueTrialsPerCat)*tempIndex(ii)];
-                end   
-
-                % shuffle the assignment of temporal condition to stimulus:
-                rng(cc+100*runNumber,'twister'); 
-                ind = randperm(length(these_durations));
-                these_durations = these_durations(ind);
-                these_ISI = these_ISI(ind);
-
-                % append across categories
-                durations = [durations these_durations];
-                ISI = [ISI these_ISI];
-            end
+            % Append different category repeats            
+            these_repeats = [these_repeats ones(1,numberOfUniqueTrialsPerCat*length(tempIndex))];
+            
+            % shuffle the assignment of temporal condition to stimulus:
+            rng(cc+100*runNumber,'twister'); 
+            ind = randperm(length(these_durations));
+            these_durations = these_durations(ind);
+            these_ISI = these_ISI(ind);
+            these_repeats = these_repeats(ind);
+            
+            % append across categories
+            durations = [durations these_durations];
+            ISI = [ISI these_ISI];
+            repeats = [repeats these_repeats];
         end
         
         % Make sure images that contain grayscale pixels match the background
@@ -203,37 +189,55 @@ stimulus.cat          = catindex;
 
 stimulus.duration     = durations;
 stimulus.ISI          = ISI;
-stimulus.trialindex   = stim_seq;
+stimulus.repeats      = repeats;
 
-% Generate a second stimulus sequence 
-if contains(stimulusType, 'DIFF')   
-    stim_seq2 = randperm(numberOfStimuli);
-    % Keep reshuffling until there are no direct repeats
-    while any(stim_seq == stim_seq2)
-        stim_seq2 = randperm(numberOfStimuli);
-    end
-    stimulus.trialindex2 = stim_seq2;
+% Generate stimulus sequences
+stimseq_long = [];
+stimseq2_long = [];
+stimcats = [];
+for cc = 1:numberOfCategories
+    stimseq = (1:numberOfImagesPerCat) + (cc-1)*numberOfImagesPerCat;
+    stimseq2 = nan(size(stimseq));
+    % same category images
+    same_idx = find(repeats(stimseq) == 1);        
+    perm_order = randperm(length(same_idx));
+    stimseq2(same_idx) = stimseq(same_idx(perm_order));
+    while any(stimseq(same_idx) == stimseq2(same_idx))
+        perm_order = randperm(length(same_idx));
+        stimseq2(same_idx) = stimseq(same_idx(perm_order));
+    end  
+    stimseq_long = [stimseq_long stimseq];
+    stimseq2_long = [stimseq2_long stimseq2];
+    stimcats = [stimcats ones(1,length(stimseq))*cc];
 end
+  
+% different category images
+diff_idx = find(repeats == 0);
+seq2_leftover = setdiff(1:numberOfStimuli,stimseq2_long);
+perm_order = randperm(length(diff_idx));
+stimseq2_long(diff_idx) = seq2_leftover(perm_order);
+
+while any(stimcats(stimseq_long(diff_idx)) == stimcats(stimseq2_long(diff_idx)))
+    perm_order = randperm(length(diff_idx));
+    stimseq2_long(diff_idx) = seq2_leftover(perm_order);
+end
+
+% permute order, but keep pairs
+trialorder = randperm(numberOfStimuli);    
+
+stimulus.trialindex = stimseq_long(trialorder);
+stimulus.trialindex2 = stimseq2_long(trialorder);
 
 % Update durations for temporal stimuli
 for ii = 1:numberOfStimuli
-    idx = stimulus.trialindex(ii);
+    idx1 = stimulus.trialindex(ii);
+    idx2 = stimulus.trialindex2(ii);
 
-    if stimulus.ISI(idx)>0
-        stimulus.trial(ii).seqtiming = [...
-            [0 stimulus.duration(idx)] ... pulse one
-            [0 stimulus.duration(idx)] + stimulus.ISI(idx) + stimulus.duration(idx)... ... pulse two
-            ];
-        if contains(stimulusType, 'DIFF')
-            idx2 = stimulus.trialindex2(ii);
-            stimulus.trial(ii).seq = [idx BLANK idx2 BLANK];
-        else
-            stimulus.trial(ii).seq = [idx BLANK idx BLANK];
-        end
-    else
-        stimulus.trial(ii).seqtiming = [0 stimulus.duration(idx)];
-        stimulus.trial(ii).seq = [idx BLANK];
-    end
+    stimulus.trial(ii).seqtiming = [...
+        [0 stimulus.duration(idx1)] ... pulse one
+        [0 stimulus.duration(idx1)] + stimulus.ISI(idx1) + stimulus.duration(idx1)... ... pulse two
+        ];
+        stimulus.trial(ii).seq = [idx1 BLANK idx2 BLANK];
 end
 
 % Experiment timing            
@@ -357,12 +361,13 @@ trial_type      = stimulus.cat(stimulus.trialindex)';
 trial_name      = stimulus.categories(trial_type - min(stimulus.cat)+1)';
 stim_file       = repmat(fname, numberOfStimuli ,1);
 stim_file_index = stimulus.trialindex';
+category_repeat = stimulus.repeats;
 
-stimulus.tsv    = table(onset, duration, ISI, trial_type, trial_name, stim_file, stim_file_index);
+stimulus.tsv    = table(onset, duration, ISI, trial_type, trial_name, stim_file, stim_file_index, category_repeat);
 
 if isfield(stimulus, 'trialindex2') 
     stim_file_index2 = stimulus.trialindex2';
-    stimulus.tsv    = table(onset, duration, ISI, trial_type, trial_name, stim_file, stim_file_index, stim_file_index2);
+    stimulus.tsv    = table(onset, duration, ISI, trial_type, trial_name, stim_file, stim_file_index, stim_file_index2, category_repeat);
 end
     
 stimulus.site   = site;
