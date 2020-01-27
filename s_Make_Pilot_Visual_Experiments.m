@@ -53,7 +53,7 @@ switch experimentType
         % For temporal, assignment of temporal condition to image is fixed
         % with a seed based on runnumber.
         % Fixation sequence is generated anew for each run.
-        numberOfRuns           = 1;        
+        numberOfRuns           = 6;        
         onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR (fMRI experiments only)
         
         for runNum = 1:numberOfRuns
