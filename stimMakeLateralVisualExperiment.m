@@ -284,7 +284,7 @@ stimulus.seqtiming = seqtiming;
 minDurationInSeconds = 1;
 maxDurationInSeconds = 5;
 fixSeq = createFixationSequence(stimulus, 1/frameRate, minDurationInSeconds, maxDurationInSeconds);
-stimulus.fixSeq = fixSeq;
+stimulus.fixSeq = fixSeq+2; % black vs white cross
 %stimulus.fixSeq = ones(size(stimulus.seq))*3; %black cross
 
 % Add triggers for non-fMRI modalities
