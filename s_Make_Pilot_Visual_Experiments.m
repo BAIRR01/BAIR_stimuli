@@ -61,7 +61,7 @@ switch experimentType
         end 
         
 	case {'OBJECTDETECTION'} %
-        % Make SIXCATLOC experiment
+        % Make OBJECTDETECTION experiment
 
         % Stimulus order is randomized across runs.
         % Currently all 480 stimuli are loaded, subselection may be better.
@@ -72,5 +72,21 @@ switch experimentType
         for runNum = 1:numberOfRuns
             stimMakeSceneExperiment(stimParams, runNum, experimentType, onsetTimeMultiple, TR);
         end   
+        
+	case {'SCENEFACELATERAL'} %
+        % Make SCENEFACELATERAL experiment
+        
+        stimDiameterDeg = 20;       % degrees
+        stimParams = stimInitialize(experimentSpecs, whichSite, stimDiameterDeg);
+
+        % Stimulus order is randomized across runs.
+        % Currently all 480 stimuli are loaded, subselection may be better.
+        % Fixation sequence is generated anew for each run.
+        numberOfRuns           = 2;        
+        onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR (fMRI experiments only)
+        
+        for runNum = 1:numberOfRuns
+            stimMakeLateralVisualExperiment(stimParams, runNum, experimentType, onsetTimeMultiple, TR);
+        end 
 end
 

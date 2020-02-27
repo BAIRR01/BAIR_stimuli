@@ -2,7 +2,8 @@ clear all;
 %stimDir = '/Users/iris/fromNIHcomputer/groenii/Experiments_local/6categorylocalizer/stims';
 %stimDir = '/Users/iris/DataAnalyses_local/IRIS_H6_WeibullStop/tmp_stimuli';
 %stimDir = '/Volumes/GoogleDrive/My Drive/temp/sixcatlocalizer';
-stimDir = '/Users/winawerlab/Documents/temp/sixcatlocalizer';
+%stimDir = '/Users/winawerlab/Documents/temp/sixcatlocalizer';
+stimDir = '/Users/iris/fromNIHcomputer/groenii/Experiments_local/lateralizedSceneFace/stims';
 
 cd(stimDir);
 d = dir(stimDir);
@@ -24,5 +25,6 @@ for ii = 1:length(d)
 end
 
 clear I d d2 ii jj stimDir catDir varname stimArray
-save('sixcatlocalizer');
+%save('sixcatlocalizer');
+save('scenefacelateral');
 
