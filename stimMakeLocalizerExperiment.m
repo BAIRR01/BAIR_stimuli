@@ -111,10 +111,17 @@ if contains(stimulusType, 'SIXCATLOC')
                 %image8Bit = uint8((imageForThisTrial+.5)*255);
                 %images(:,:,imCount) = image8Bit;
                 %im_cell{categoryIndex(cc)}(:,:,ii) = image8Bit;
-
+                
                 inputImage = imageArray(:,:,:,imageIndex(ii));
+                
+                % Resize image
                 inputImage = imresize(inputImage, imageSizeInPixels);
-
+                
+                % Square the pixel values so the color images will show up
+                % correctly with a linearized gamma 
+                inputImage = uint8(255*(double(inputImage)/255).^2);
+                
+                % Add image to stimulus array
                 images(:,:,:,imCount) = inputImage;
                 im_cell{cc}(:,:,:,ii) = inputImage;
                 catindex(imCount) = cc+categoryNumberToAdd;
@@ -184,7 +191,7 @@ rng('shuffle');
 stim_seq = randperm(numberOfStimuli);
 
 % Add blank
-images(:,:,:,end+1) = mode(images(:));
+images(:,:,:,end+1) = 64;%mode(images(:));
 BLANK = size(images,4);
 
 

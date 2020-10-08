@@ -72,6 +72,11 @@ switch stimulusType
                     inputImage = imresize(inputImage, imageSizeInPixels);
                  end
 
+                
+                % Square the pixel values so the color images will show up
+                % correctly with a linearized gamma 
+                inputImage = uint8(255*(double(inputImage)/255).^2);
+                
                 images(:,:,:,imCount) = inputImage;
                 im_cell{cc}(:,:,:,ii) = inputImage;
                 catindex(imCount) = cc+categoryNumberToAdd;

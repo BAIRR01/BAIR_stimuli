@@ -102,8 +102,14 @@ if contains(stimulusType, 'SIXCATLOC')
             for ii = 1:numberOfImagesPerCat
 
                 inputImage = imageArray(:,:,:,imageIndex(ii));
-                inputImage = imresize(inputImage, imageSizeInPixels);
 
+                 % Resize image
+                inputImage = imresize(inputImage, imageSizeInPixels);
+                
+                % Square the pixel values so the color images will show up
+                % correctly with a linearized gamma 
+                inputImage = uint8(255*(double(inputImage)/255).^2);
+                               
                 images(:,:,:,imCount) = inputImage;
                 im_cell{cc}(:,:,:,ii) = inputImage;
                 catindex(imCount) = cc+categoryNumberToAdd;
@@ -170,7 +176,7 @@ rng('shuffle');
 stim_seq = randperm(numberOfStimuli);
 
 % Add blank
-images(:,:,:,end+1) = mode(images(:));
+images(:,:,:,end+1) = 64;%mode(images(:));
 BLANK = size(images,4);
 
 
@@ -214,13 +220,61 @@ end
 % different category images
 diff_idx = find(repeats == 0);
 seq2_leftover = setdiff(1:numberOfStimuli,stimseq2_long);
-perm_order = randperm(length(diff_idx));
-stimseq2_long(diff_idx) = seq2_leftover(perm_order);
 
-while any(stimcats(stimseq_long(diff_idx)) == stimcats(stimseq2_long(diff_idx)))
-    perm_order = randperm(length(diff_idx));
-    stimseq2_long(diff_idx) = seq2_leftover(perm_order);
+% NEW METHOD Oct 2020: pick images from different category such that they
+% are equally often paired with every other category
+
+% reshape into exemplars x categories, and shuffle within category
+seq2_leftover_col = reshape(seq2_leftover, [numberOfImagesPerCat/2 numberOfCategories]);
+for cc = 1:size(seq2_leftover_col,2)
+    ind = randperm(size(seq2_leftover_col,1));
+    seq2_leftover_col(:,cc) = seq2_leftover_col(ind,cc);
 end
+% match each category with equal set of images from every other category,
+% up to the number of divisible number of exemplars available
+tmp = nan(size(seq2_leftover_col));
+notselected = [];
+for cc = 1:numberOfCategories
+    other_cc = setdiff(1:numberOfCategories,cc);
+    numberOfExemplars = round((numberOfImagesPerCat/2)/numberOfCategories);
+    row_ind = [1 numberOfExemplars]+(cc-1)*numberOfExemplars;
+    selected = seq2_leftover_col(row_ind, other_cc);
+    notselected = [notselected seq2_leftover_col(row_ind, cc)];
+    matchedExemplars = numberOfExemplars*(numberOfCategories-1);
+    tmp(1:matchedExemplars,cc) = selected(:);
+end
+% for the remaining images, pick ones from the next category over
+for cc = 1:numberOfCategories
+    shiftorder = [cc:1:numberOfCategories 1:cc-1];
+    notselected_shifted = notselected(:,shiftorder);
+    selected = [];
+    for ee = 1:size(notselected,1)
+        selected(ee) = notselected_shifted(ee,ee+1);
+    end
+	tmp(matchedExemplars+1:end,cc) = selected;
+% % random elimination: can fail if only own category is left at the end    
+%	other_cc = setdiff(1:numberOfCategories,cc);
+%    a = notselected(:,other_cc);
+%     a = a(:);
+%     a = a(~isnan(a));
+%     rand_order = randperm(length(a),numberOfExemplars);
+%     rand_pick = a(rand_order);
+%     notselected(ismember(notselected,rand_pick)) = nan;
+%     tmp(matchedExemplars+1:end,cc) = rand_pick;
+end
+
+tmp = tmp(:);
+stimseq2_long(diff_idx) = tmp;
+
+% OLD method (pre Oct 2020): random assignment of different categories
+
+% perm_order = randperm(length(diff_idx));
+% stimseq2_long(diff_idx) = seq2_leftover(perm_order);
+% 
+% while any(stimcats(stimseq_long(diff_idx)) == stimcats(stimseq2_long(diff_idx)))
+%     perm_order = randperm(length(diff_idx));
+%     stimseq2_long(diff_idx) = seq2_leftover(perm_order);
+% end
 
 % permute order, but keep pairs
 trialorder = randperm(numberOfStimuli);    

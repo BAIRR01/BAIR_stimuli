@@ -1,12 +1,12 @@
 % Make Pilot Visual Experiment Files
-%
+% Currently impleme
 % 1. Six category localizer
 % 2. Six category localizer temporal
 % 3. Object detection
+% 4. Scene face lateral
 % Other options (To do):
-% 4. Eight category localizer
-% 5. Kalanit category localizer
-% 6. Scene face lateral
+% 5. Eight category localizer
+% 6. Kalanit category localizer
 % 7. Kravitz scene categories
 % 8. Bonner scene affordance
 
@@ -31,7 +31,7 @@ stimDiameterDeg = 16.6;       % degrees
 stimParams = stimInitialize(experimentSpecs, whichSite, stimDiameterDeg);
 
 switch experimentType
-    case {'SIXCATLOC', 'SIXCATLOCTEMPORAL', 'SIXCATLOCTEMPORALDIFF'} %
+    case {'SIXCATLOC', 'SIXCATLOCTEMPORAL'} %
         % Make SIXCATLOC experiment
 
         % We have two unique sets of stimuli for even and odd runs.
@@ -39,7 +39,7 @@ switch experimentType
         % For temporal, assignment of temporal condition to image is fixed
         % with a seed based on runnumber.
         % Fixation sequence is generated anew for each run.
-        numberOfRuns           = 6;        
+        numberOfRuns           = 2;        
         onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR (fMRI experiments only)
         
         for runNum = 1:numberOfRuns
@@ -53,7 +53,7 @@ switch experimentType
         % For temporal, assignment of temporal condition to image is fixed
         % with a seed based on runnumber.
         % Fixation sequence is generated anew for each run.
-        numberOfRuns           = 6;        
+        numberOfRuns           = 2;        
         onsetTimeMultiple      = 0.170; % make the onsets multiple of 170 ms, which is 1/5 of the TR (fMRI experiments only)
         
         for runNum = 1:numberOfRuns
