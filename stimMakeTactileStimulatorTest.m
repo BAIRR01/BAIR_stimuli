@@ -1,24 +1,6 @@
 function stimMakeTactileStimulatorTest(stimParams, runNum, directions, condition, makeFigure)
-% Makes a simple tactile hand experiment where the stimulators vibrate in
-% several patterns and assumes one stimulator per finger.
-%
-
-% set some stimulus properties related to the hardware
-stimulus = [];
-stimulus.NIdaqRate              = stimParams.NIdaqRate;
-stimulus.NIdaqNames             = stimParams.NIdaqNames;
-stimulus.numOfStimulators       = stimParams.numOfStimulators;
-stimulus.frameRate              = stimParams.display.frameRate;
-stimulus.cmap                   = stimParams.stimulus.cmap;
-stimulus.srcRect                = stimParams.stimulus.srcRect;
-stimulus.dstRect                = stimParams.stimulus.destRect;
-stimulus.display                = stimParams.display;
-
-stimParams.fingerIdx                = [1:stimulus.numOfStimulators];
-stimParams.fingers                  = {'thumb','index', 'middle', 'ring', 'little'};
-
-stimParams.tactileIntensity         = 1.0; % maximal value is 2, check state of amplifier, too
-
+% Makes a simple tactile experiment where the stimulators vibrate in
+% several patterns, used to check whether all stimulators are attached fine%
 
 switch lower(stimParams.modality)
     case 'fmri'
@@ -28,8 +10,6 @@ switch lower(stimParams.modality)
         stimParams.triggerSamples = 50;
 end
 
-stimParams.stimDurSamples            = stimParams.stimDurSecs * stimParams.NIdaqRate;
-
 
 %% stimulus sequence timing
 for jj = 1:length(directions)
@@ -37,14 +17,14 @@ for jj = 1:length(directions)
         case {'Ascending', 'Descending'}
             %% stimulus sequence timing
             %duration of the whole experiment
-            stimParams.expDurSecs = stimParams.numReps * ... %number of repetitions
-                stimParams.numOfStimulators * ... %number of fingers
-                (stimParams.stimDurSecs ...%duration of one stimulus
-                + stimParams.interStimIntervalSecs)...%pause after each stimulus
-                + stimParams.preScanDurSecs + stimParams.postScanDurSecs;%pauses at the beginning and the end of the experiment
+            stimParams.expDurSecs = stimParams.numReps * ... % number of repetitions
+                stimParams.numOfStimulators * ... % number of stimulators
+                (stimParams.stimDurSecs ...% duration of one stimulus
+                + stimParams.interStimIntervalSecs)...% pause after each stimulus
+                + stimParams.preScanDurSecs + stimParams.postScanDurSecs;% pauses at the beginning and the end of the experiment
             
             %onsets of tactile stimuli(
-            stimParams.stimOnsetsSecs = cumsum([stimParams.preScanDurSecs, ... %first stimulus starts after pre-experiment pause
+            stimParams.stimOnsetsSecs = cumsum([stimParams.preScanDurSecs, ... %first stimulus starts after pre-scan period
                 repmat(...
                 stimParams.stimDurSecs... %one stimulation
                 + stimParams.interStimIntervalSecs,... % add pause after each sweep = stimulation
@@ -59,11 +39,12 @@ for jj = 1:length(directions)
                 + stimParams.preScanDurSecs + stimParams.postScanDurSecs;%pauses at the beginning and the end of the experiment
             
             %onsets of tactile stimuli(
-            stimParams.stimOnsetsSecs = cumsum([stimParams.preScanDurSecs, ... %first stimulus starts after pre-experiment pause
+            stimParams.stimOnsetsSecs = cumsum([...
+                stimParams.preScanDurSecs, ... %first stimulus starts after pre-experiment pause
                 repmat(...
-                stimParams.stimDurSecs... %one stimulation
-                + stimParams.interStimIntervalSecs,... % add pause after each sweep = stimulation
-                1,(stimParams.numReps)-1)... % repeat for all sweeps
+                stimParams.stimDurSecs... % one stimulus
+                + stimParams.interStimIntervalSecs,... % pause after stimulus (ITI := end stimulus 1 to start stimulus 2)
+                1,(stimParams.numReps)-1)... % all repetitions
                 ]);
     end
     
@@ -83,23 +64,22 @@ for jj = 1:length(directions)
     stimParams.trigSeq(stimParams.stimOnsetsFrames + 1) = 1;
     stimParams.trigSeq(1) = 1;
     stimParams.trigSeq(end) = 1;
-    % store in stimulus structure
-    stimulus.seqtiming = stimParams.seqtiming;
-    stimulus.fixSeq = stimParams.fixSeq;
-    stimulus.seq = stimParams.seq;
-    stimulus.trigSeq = stimParams.trigSeq;
+    
     
     % make a blank to insert between simulus presentations
-    screenRect          = size(zeros(stimulus.dstRect(4)-stimulus.dstRect(2): stimulus.dstRect(3)-stimulus.dstRect(1)));
+    screenRect          = size(zeros(stimParams.stimulus.destRect(4)-stimParams.stimulus.destRect(2): stimParams.stimulus.destRect(3)-stimParams.stimulus.destRect(1)));
     images              = ones([screenRect 1], 'uint8');
     images(:,:,1)       = 127;
-    stimulus.images     = images;
+    stimParams.images   = images;
     
     %% Make stimulus for the experiment
     
     %initialize matrix to hold activation of each stimulator during each
     %sample of the nidaq for one whole experiment
     stimParams.vibrotactileStimulus = zeros(round(stimParams.expDurSecs*stimParams.NIdaqRate), stimParams.numOfStimulators);
+    
+    % calculate stimulus duration in samples
+    stimParams.stimDurSamples  = stimParams.stimDurSecs * stimParams.NIdaqRate;
     
     % signal for one tactile stimulus (e.g., per finger)
     % carrier signal for one tactile stimulus
@@ -171,11 +151,6 @@ for jj = 1:length(directions)
         saveas(f, fullfile(vistadispRootPath, 'StimFiles', sprintf('%s.png',fname(1:end-6))))
     end
     
-    % Sparsify the visual stimulus sequence and the triggers (apart
-    % from the tactile one)
-    maxUpdateInterval = 0.25;
-    stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
-    
     % Set TSV file information
     onsets          = round(stimParams.stimOnsetsSecs,3)';
     duration        = repmat(stimParams.stimDurSecs, length(stimParams.stimOnsetsSecs),1);
@@ -195,11 +170,34 @@ for jj = 1:length(directions)
     
     stimParams.tsv = table(onsets, duration, ISI, trial_type, trial_name, ...
         stim_frequency, stim_amplitude, stim_file, stim_order);
+    
+    % store every in stimulus structure that will called by the experiment
+    stimulus = [];
+    stimulus.NIdaqRate              = stimParams.NIdaqRate;
+    stimulus.NIdaqNames             = stimParams.NIdaqNames;
+    stimulus.numOfStimulators       = stimParams.numOfStimulators;
+    stimulus.frameRate              = stimParams.display.frameRate;
+    stimulus.cmap                   = stimParams.stimulus.cmap;
+    stimulus.srcRect                = stimParams.stimulus.srcRect;
+    stimulus.dstRect                = stimParams.stimulus.destRect;
+    stimulus.display                = stimParams.display;
+    stimulus.images                 = stimParams.images;
+    stimulus.seqtiming = stimParams.seqtiming;
+    stimulus.fixSeq = stimParams.fixSeq;
+    stimulus.seq = stimParams.seq;
+    stimulus.trigSeq = stimParams.trigSeq;
+    
     stimulus.tsv = table(onsets, duration, ISI, trial_type, trial_name, ...
         stim_frequency, stim_amplitude, stim_file, stim_order);
     
-    % store for main script calls
     stimulus.vibrotactileStimulus = stimParams.vibrotactileStimulus;
+    
+    % Sparsify the visual stimulus sequence and the triggers (apart
+    % from the tactile one)
+    maxUpdateInterval = 0.25;
+    stimulus = sparsifyStimulusStruct(stimulus, maxUpdateInterval);
+    
+    
     
     % Save
     if ~exist(fullfile(vistadispRootPath, 'StimFiles',  fname), 'file')
